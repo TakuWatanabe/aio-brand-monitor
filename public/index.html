@@ -127,6 +127,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
   display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;position:relative}
 .notif-dot{width:7px;height:7px;background:#EF4444;border-radius:50%;
   position:absolute;top:-2px;right:-2px;border:2px solid #fff}
+.measure-btn{
+  display:flex;align-items:center;gap:6px;padding:6px 14px;
+  background:linear-gradient(90deg,#1F3864,#2E75B6);color:#fff;
+  border:none;border-radius:8px;font-size:12px;font-weight:700;
+  cursor:pointer;transition:opacity .2s}
+.measure-btn:hover{opacity:.88}
+.measure-btn:disabled{opacity:.55;cursor:not-allowed}
+.measure-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
 .topbar-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;
   justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
 
@@ -355,6 +364,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
       <div class="topbar-right">
         <span class="badge badge-red">⚠️ 競合スコア急上昇中</span>
         <span class="badge badge-blue" id="dateBadge"></span>
+        <button class="measure-btn" id="measureBtn" onclick="doMeasure()">📡 AIスコア計測</button>
         <div class="notif-btn">🔔<div class="notif-dot"></div></div>
         <div class="topbar-avatar" id="topAva" style="background:#2E75B6"></div>
       </div>
@@ -559,6 +569,46 @@ async function doLogout() {
   document.getElementById("loginBtnLabel").textContent = "ログイン";
   hideError();
 }
+// ─── AI スコア計測 ─────────────────────────────────────────
+async function doMeasure() {
+  const btn = document.getElementById("measureBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<div class="measure-spinner"></div> 計測中...';
+
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) { alert("ログインが必要です"); return; }
+
+    const res = await fetch("/api/measure", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + session.access_token,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || "計測に失敗しました");
+
+    // ダッシュボードデータを再取得して画面を更新
+    await loadClientData(session.access_token);
+    showDashboard();
+
+    btn.innerHTML = "✅ 計測完了";
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = "📡 AIスコア計測";
+    }, 3000);
+
+    alert(`✅ 計測完了！\n\n📊 総合AIOスコア: ${body.overallScore}pt\n🤖 ChatGPT: ${body.chatgpt.score}pt (${body.chatgpt.mentions}/${body.chatgpt.total}件)\n🔍 Perplexity: ${body.perplexity.score}pt (${body.perplexity.mentions}/${body.perplexity.total}件)`);
+
+  } catch (err) {
+    alert("エラー: " + err.message);
+    btn.disabled = false;
+    btn.innerHTML = "📡 AIスコア計測";
+  }
+}
+
 
 // ─── 画面切替 ────────────────────────────────────────────────
 function showLogin() {

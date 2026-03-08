@@ -12,5 +12,11 @@
         { "key": "Cache-Control", "value": "no-store" }
       ]
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/weekly-scores",
+      "schedule": "0 9 * * 1"
+    }
   ]
 }
