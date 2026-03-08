@@ -1,0 +1,18 @@
+{
+  "name": "aio-brand-monitor",
+  "version": "1.0.0",
+  "description": "AIO Brand Monitor — AI検索ブランド露出管理 SaaS by BitStar",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.43.0"
+  },
+  "devDependencies": {
+    "vercel": "^34.0.0"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}

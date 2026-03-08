@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AIO Brand Monitor — BitStar</title>
+
+<!-- Supabase JS SDK (UMD build) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',sans-serif;background:#F0F4FF;color:#1a1a2e;font-size:14px}
+
+/* ══════════════════════════════
+   LOGIN PAGE
+══════════════════════════════ */
+#loginPage{
+  display:flex;min-height:100vh;
+}
+.login-left{
+  flex:1;background:linear-gradient(145deg,#1F3864 0%,#2E75B6 55%,#5DBBF5 100%);
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  padding:60px 48px;position:relative;overflow:hidden;
+}
+.login-left::before{
+  content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.login-left-inner{position:relative;z-index:1;max-width:400px;width:100%}
+.login-logo{font-size:28px;font-weight:700;color:#fff;margin-bottom:8px;letter-spacing:-.3px}
+.login-logo-sub{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:48px}
+.login-headline{font-size:36px;font-weight:700;color:#fff;line-height:1.25;margin-bottom:16px}
+.login-desc{font-size:15px;color:rgba(255,255,255,.75);line-height:1.7;margin-bottom:48px}
+.login-features{display:flex;flex-direction:column;gap:14px}
+.feat-item{display:flex;align-items:flex-start;gap:12px}
+.feat-icon{width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-top:1px}
+.feat-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px}
+.feat-desc{font-size:12px;color:rgba(255,255,255,.6);line-height:1.5}
+
+.login-right{
+  width:480px;flex-shrink:0;background:#fff;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px 48px;
+}
+.login-right-inner{width:100%;max-width:360px}
+.login-title{font-size:24px;font-weight:700;color:#1F3864;margin-bottom:6px}
+.login-subtitle{font-size:13px;color:#6B7280;margin-bottom:32px}
+
+.form-group{margin-bottom:18px}
+.form-label{font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;display:block}
+.form-input{width:100%;border:1.5px solid #E5E7EB;border-radius:10px;
+  padding:11px 14px;font-size:14px;outline:none;font-family:inherit;
+  transition:border .18s,box-shadow .18s;background:#FAFAFA;color:#1a1a2e}
+.form-input:focus{border-color:#2E75B6;background:#fff;box-shadow:0 0 0 3px rgba(46,117,182,.1)}
+.form-input.error{border-color:#EF4444;background:#FFF5F5}
+
+.login-btn{width:100%;padding:13px;background:linear-gradient(90deg,#1F3864,#2E75B6);
+  color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:opacity .2s,transform .1s;margin-top:4px;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.login-btn:hover{opacity:.92}
+.login-btn:active{transform:scale(.99)}
+.login-btn:disabled{opacity:.6;cursor:not-allowed}
+
+.error-msg{display:none;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;
+  padding:10px 14px;color:#DC2626;font-size:13px;margin-bottom:16px}
+.error-msg.show{display:block}
+
+.login-footer{text-align:center;margin-top:28px;font-size:12px;color:#9CA3AF}
+.login-footer a{color:#2E75B6;text-decoration:none}
+
+/* Loading spinner */
+.spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Page loading overlay */
+#pageLoading{
+  position:fixed;inset:0;background:#fff;z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+}
+#pageLoading.hidden{display:none}
+.page-loader{width:40px;height:40px;border:3.5px solid #E5E7EB;
+  border-top-color:#2E75B6;border-radius:50%;animation:spin .8s linear infinite}
+.page-loader-text{font-size:13px;color:#6B7280}
+
+/* ══════════════════════════════
+   DASHBOARD
+══════════════════════════════ */
+#dashboardPage{display:none}
+
+.sidebar{position:fixed;top:0;left:0;width:224px;height:100vh;
+  background:linear-gradient(170deg,#1F3864 0%,#2E75B6 100%);
+  display:flex;flex-direction:column;z-index:100;
+  box-shadow:4px 0 20px rgba(31,56,100,.18)}
+.sb-logo{padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,.12)}
+.sb-brand{font-size:17px;font-weight:700;color:#fff}
+.sb-sub{font-size:10px;color:rgba(255,255,255,.45);margin-top:2px}
+.sb-section{padding:12px 18px 3px;font-size:10px;font-weight:700;color:rgba(255,255,255,.32);letter-spacing:1px;text-transform:uppercase}
+.sb-nav{flex:1;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;
+  transition:all .16s;color:rgba(255,255,255,.65);border-left:3px solid transparent;font-size:13px}
+.nav-item:hover{background:rgba(255,255,255,.09);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.16);color:#fff;border-left:3px solid #5DBBF5}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sb-user{padding:12px 16px;border-top:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px}
+.sb-user-ava{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-user-name{font-size:12px;color:rgba(255,255,255,.8);font-weight:600;flex:1}
+.sb-user-role{font-size:10px;color:rgba(255,255,255,.45)}
+.logout-btn{background:rgba(255,255,255,.12);border:none;color:rgba(255,255,255,.7);
+  padding:5px 9px;border-radius:7px;cursor:pointer;font-size:11px;font-family:inherit;
+  transition:all .15s;flex-shrink:0}
+.logout-btn:hover{background:rgba(255,255,255,.22);color:#fff}
+
+.main{margin-left:224px;min-height:100vh}
+.topbar{background:#fff;padding:0 24px;height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 8px rgba(0,0,0,.07);position:sticky;top:0;z-index:50}
+.topbar-title{font-size:16px;font-weight:700;color:#1F3864}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-blue{background:#EBF3FB;color:#2E75B6}
+.badge-red{background:#FEF2F2;color:#DC2626}
+.notif-btn{width:32px;height:32px;border-radius:8px;background:#F9FAFB;border:1.5px solid #E5E7EB;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;position:relative}
+.notif-dot{width:7px;height:7px;background:#EF4444;border-radius:50%;
+  position:absolute;top:-2px;right:-2px;border:2px solid #fff}
+.topbar-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+
+.content{padding:20px 24px}
+.sec-title{font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:11px}
+
+/* BRAND HERO */
+.brand-hero{background:linear-gradient(135deg,#1F3864 0%,#2E75B6 60%,#5DBBF5 100%);
+  border-radius:16px;padding:20px 24px;color:#fff;margin-bottom:20px;
+  display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+.hero-company{font-size:12px;opacity:.65;margin-bottom:3px}
+.hero-name{font-size:21px;font-weight:700;margin-bottom:5px}
+.hero-meta{display:flex;gap:8px;flex-wrap:wrap}
+.hero-tag{background:rgba(255,255,255,.18);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.hero-score{font-size:60px;font-weight:700;line-height:1;letter-spacing:-2px}
+.hero-score-label{font-size:11px;opacity:.65;margin-top:2px}
+.hero-score-change{font-size:13px;font-weight:600;margin-top:3px}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:#fff;border-radius:13px;padding:15px 17px;
+  box-shadow:0 2px 10px rgba(0,0,0,.06);position:relative;overflow:hidden;transition:transform .2s}
+.kpi-card:hover{transform:translateY(-2px)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-card.blue::before{background:linear-gradient(90deg,#2E75B6,#5DBBF5)}
+.kpi-card.green::before{background:linear-gradient(90deg,#10B981,#34D399)}
+.kpi-card.purple::before{background:linear-gradient(90deg,#8B5CF6,#C4B5FD)}
+.kpi-card.orange::before{background:linear-gradient(90deg,#F59E0B,#FCD34D)}
+.kpi-icon{position:absolute;right:13px;top:11px;font-size:22px;opacity:.1}
+.kpi-label{font-size:11px;color:#6B7280;margin-bottom:5px;font-weight:500}
+.kpi-value{font-size:23px;font-weight:700;color:#1F3864;line-height:1}
+.kpi-unit{font-size:12px;color:#6B7280;margin-left:2px}
+.kpi-change{margin-top:5px;font-size:11px;display:flex;align-items:center;gap:3px}
+.kpi-up{color:#10B981}.kpi-down{color:#EF4444}
+
+/* CHARTS */
+.two-col{display:grid;grid-template-columns:3fr 2fr;gap:12px;margin-bottom:20px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+.card{background:#fff;border-radius:13px;box-shadow:0 2px 10px rgba(0,0,0,.06);overflow:hidden}
+.card-header{padding:14px 18px 0;display:flex;justify-content:space-between;align-items:center}
+.card-title{font-size:13px;font-weight:700;color:#1F3864}
+.card-sub{font-size:11px;color:#6B7280;margin-top:2px}
+.card-body{padding:11px 18px 16px}
+.tab-group{display:flex;gap:3px}
+.tab-btn{padding:3px 10px;border-radius:7px;font-size:11px;cursor:pointer;font-weight:500;
+  border:none;background:transparent;color:#6B7280;font-family:inherit;transition:all .15s}
+.tab-btn.active{background:#EBF3FB;color:#2E75B6}
+
+/* COMPETITORS */
+.comp-row{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid #F3F4F6}
+.comp-row:last-child{border-bottom:none}
+.comp-logo{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;
+  justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.comp-name{flex:1;font-weight:600;font-size:12px;color:#1F3864}
+.comp-bar-bg{width:90px;height:5px;background:#E5E7EB;border-radius:3px;overflow:hidden}
+.comp-bar{height:100%;border-radius:3px}
+.comp-score{font-weight:700;font-size:13px;min-width:24px;text-align:right}
+.trend-up{color:#10B981;font-size:11px;font-weight:600}
+.trend-down{color:#EF4444;font-size:11px;font-weight:600}
+
+/* KEYWORDS */
+.kw-table{width:100%;border-collapse:collapse}
+.kw-table thead th{padding:8px 11px;text-align:left;font-size:10px;font-weight:700;
+  color:#6B7280;text-transform:uppercase;letter-spacing:.4px;background:#F9FAFB;border-bottom:1px solid #E5E7EB}
+.kw-table tbody tr{border-bottom:1px solid #F3F4F6;transition:background .14s}
+.kw-table tbody tr:hover{background:#F9FAFB}
+.kw-table tbody td{padding:9px 11px;font-size:12px;vertical-align:middle}
+.presence-bar{width:70px;height:5px;background:#E5E7EB;border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle}
+.presence-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#2E75B6,#5DBBF5)}
+.kw-tag{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600}
+.kw-tag-high{background:#DCFCE7;color:#166534}.kw-tag-mid{background:#FEF9C3;color:#854D0E}.kw-tag-low{background:#FEE2E2;color:#991B1B}
+
+/* INFLUENCER */
+.inf-row{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid #F3F4F6}
+.inf-row:last-child{border-bottom:none}
+.inf-ava{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.inf-name{font-size:13px;font-weight:600;color:#1F3864}
+.inf-meta{font-size:11px;color:#9CA3AF}
+.impact-val{font-size:15px;font-weight:700;color:#10B981}
+.impact-label{font-size:10px;color:#6B7280}
+
+/* ENGINE */
+.engine-row{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.engine-name{font-size:12px;font-weight:600;color:#374151;width:130px;flex-shrink:0}
+.engine-bar-bg{flex:1;height:8px;background:#E5E7EB;border-radius:4px;overflow:hidden}
+.engine-fill{height:100%;border-radius:4px}
+.engine-val{font-size:12px;font-weight:700;color:#1F3864;min-width:32px;text-align:right}
+.engine-chg{font-size:11px;min-width:38px;text-align:right}
+
+/* INSIGHT */
+.insight-bar{background:linear-gradient(135deg,#1F3864,#2E75B6);border-radius:13px;
+  padding:16px 20px;color:#fff;display:flex;align-items:center;gap:12px}
+.insight-btn{margin-left:auto;background:rgba(255,255,255,.2);border:none;color:#fff;
+  padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;flex-shrink:0}
+
+/* TOOLTIP */
+.chart-tip{position:fixed;background:#1F3864;color:#fff;padding:5px 10px;border-radius:8px;
+  font-size:12px;pointer-events:none;z-index:300;display:none;white-space:nowrap;transform:translate(-50%,-130%)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:150;display:none;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:18px;width:520px;max-height:82vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.22)}
+.modal-head{padding:20px 24px 14px;border-bottom:1px solid #F3F4F6;display:flex;justify-content:space-between;align-items:flex-start}
+.modal-body{padding:20px 24px}
+.modal-close{border:none;background:#F3F4F6;border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:15px}
+.d-item{background:#F9FAFB;border-radius:10px;padding:11px}
+.d-label{font-size:11px;color:#6B7280;font-weight:500;margin-bottom:3px}
+.d-val{font-size:18px;font-weight:700}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- ページ読み込み中オーバーレイ（Firebase Auth 初期化待ち） -->
+<div id="pageLoading">
+  <div class="page-loader"></div>
+  <div class="page-loader-text">読み込み中...</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     LOGIN PAGE
+══════════════════════════════════════ -->
+<div id="loginPage" style="display:none">
+  <div class="login-left">
+    <div class="login-left-inner">
+      <div class="login-logo">✦ AIO Brand Monitor</div>
+      <div class="login-logo-sub">Powered by BitStar</div>
+      <div class="login-headline">AI検索時代の<br>ブランド露出を<br>見える化する</div>
+      <div class="login-desc">ChatGPT・Perplexity・Google AI Overviewでの自社ブランド言及数を一元管理。競合比較から施策改善まで、マーケターのための次世代ダッシュボード。</div>
+      <div class="login-features">
+        <div class="feat-item">
+          <div class="feat-icon">📊</div>
+          <div class="feat-text">
+            <div class="feat-title">AIOスコアで現状を把握</div>
+            <div class="feat-desc">AI検索での露出度をスコア化。競合との差を一目で確認できます</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">🔍</div>
+          <div class="feat-text">
+            <div class="feat-title">AIキーワード分析</div>
+            <div class="feat-desc">どのクエリでブランドが表示・非表示かをリアルタイムで追跡</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">🚀</div>
+          <div class="feat-text">
+            <div class="feat-title">インフルエンサー施策の効果計測</div>
+            <div class="feat-desc">BitStarのキャスティング施策がAI言及数に与える影響を可視化</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-right">
+    <div class="login-right-inner">
+      <div class="login-title">ログイン</div>
+      <div class="login-subtitle">メールアドレスとパスワードを入力してください</div>
+
+      <div class="error-msg" id="errorMsg">⚠ <span id="errorText">メールアドレスまたはパスワードが正しくありません</span></div>
+
+      <div class="form-group">
+        <label class="form-label" for="emailInput">メールアドレス</label>
+        <input class="form-input" id="emailInput" type="email" placeholder="example@company.com"
+          onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="passInput">パスワード</label>
+        <input class="form-input" id="passInput" type="password" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">
+        <span id="loginBtnLabel">ログイン</span>
+      </button>
+
+      <div class="login-footer">
+        ご不明な点は <a href="#">BitStar担当者</a> までお問い合わせください
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     DASHBOARD PAGE
+══════════════════════════════════════ -->
+<div id="dashboardPage">
+
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-brand">✦ AIO Brand Monitor</div>
+      <div class="sb-sub">Powered by BitStar</div>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-section">メイン</div>
+      <div class="nav-item active" onclick="setNav(this,'ブランドダッシュボード')"><span class="nav-icon">📊</span>ブランドダッシュボード</div>
+      <div class="nav-item" onclick="setNav(this,'競合分析')"><span class="nav-icon">🔍</span>競合分析</div>
+      <div class="nav-item" onclick="setNav(this,'AIキーワード')"><span class="nav-icon">💬</span>AIキーワード</div>
+      <div class="sb-section">施策</div>
+      <div class="nav-item" onclick="setNav(this,'インフルエンサー施策')"><span class="nav-icon">👥</span>インフルエンサー施策</div>
+      <div class="nav-item" onclick="setNav(this,'コンテンツ最適化')"><span class="nav-icon">✏️</span>コンテンツ最適化</div>
+      <div class="nav-item" onclick="setNav(this,'キャンペーン管理')"><span class="nav-icon">🚀</span>キャンペーン管理</div>
+      <div class="sb-section">レポート</div>
+      <div class="nav-item" onclick="setNav(this,'月次レポート')"><span class="nav-icon">📈</span>月次レポート</div>
+      <div class="nav-item" onclick="setNav(this,'設定')"><span class="nav-icon">⚙️</span>設定</div>
+    </div>
+    <div class="sb-user">
+      <div class="sb-user-ava" id="sbAva" style="background:#2E75B6"></div>
+      <div>
+        <div class="sb-user-name" id="sbName"></div>
+        <div class="sb-user-role" id="sbRole"></div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="pageTitle">ブランドダッシュボード</div>
+      <div class="topbar-right">
+        <span class="badge badge-red">⚠️ 競合スコア急上昇中</span>
+        <span class="badge badge-blue" id="dateBadge"></span>
+        <div class="notif-btn">🔔<div class="notif-dot"></div></div>
+        <div class="topbar-avatar" id="topAva" style="background:#2E75B6"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="sec-title">ブランド概要</div>
+      <div class="brand-hero" id="brandHero"></div>
+
+      <div class="sec-title">AI検索 KPI — 今月</div>
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="sec-title">AI検索トレンド ＆ 競合比較</div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">ブランドAI言及数トレンド（6ヶ月）</div>
+              <div class="card-sub">ChatGPT・Perplexity・Google AI Overview 合算</div>
+            </div>
+            <div class="tab-group">
+              <button class="tab-btn active" id="tabMen" onclick="switchTab('mentions')">言及数</button>
+              <button class="tab-btn" id="tabSco" onclick="switchTab('score')">AIOスコア</button>
+            </div>
+          </div>
+          <div class="card-body"><svg id="lineChart" width="100%" viewBox="0 0 460 155" style="display:block"></svg></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">競合 AIOスコアランキング</div></div>
+          <div class="card-body" id="compList"></div>
+        </div>
+      </div>
+
+      <div class="sec-title">AIエンジン別 ＆ キーワード分析</div>
+      <div class="three-col">
+        <div class="card">
+          <div class="card-header"><div class="card-title">AIエンジン別 言及シェア</div></div>
+          <div class="card-body" id="engineBreakdown"></div>
+        </div>
+        <div class="card" style="grid-column:span 2">
+          <div class="card-header">
+            <div class="card-title">AI検索キーワードランキング</div>
+            <div class="card-sub" id="kwSub"></div>
+          </div>
+          <div class="card-body" style="padding:0 0 4px">
+            <table class="kw-table"><thead><tr>
+              <th>#</th><th>キーワード</th><th>月間検索量</th><th>AI上の存在感</th><th>前月比</th><th>状態</th>
+            </tr></thead><tbody id="kwBody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-title">インフルエンサー施策 — AI言及への貢献</div>
+      <div class="two-col" style="margin-bottom:20px">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">施策別 AI言及増加数（今月）</div>
+            <div class="card-sub">インフルエンサー投稿によって誘発されたAI引用数</div>
+          </div>
+          <div class="card-body"><svg id="barChart" width="100%" viewBox="0 0 440 155" style="display:block"></svg></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">貢献上位インフルエンサー</div></div>
+          <div class="card-body" id="infList"></div>
+        </div>
+      </div>
+
+      <div class="insight-bar">
+        <span style="font-size:24px;flex-shrink:0">💡</span>
+        <div>
+          <div style="font-weight:700;font-size:13px;margin-bottom:3px">BitStar AIインサイト</div>
+          <div style="font-size:13px;opacity:.85;line-height:1.6" id="insightText"></div>
+        </div>
+        <button class="insight-btn" onclick="openModal()">改善プランを見る →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="chart-tip" id="chartTip"></div>
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div style="font-size:17px;font-weight:700;color:#1F3864" id="mTitle"></div>
+        <div style="font-size:12px;color:#6B7280;margin-top:3px">BitStar推奨の施策ロードマップ</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="mBody"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCRIPT
+══════════════════════════════════════ -->
+<script>
+// ─── Supabase 設定 ────────────────────────────────────────────
+// ⚠️ 以下の2つの値を Supabase プロジェクトの値に置き換えてください
+// Supabase ダッシュボード → Project Settings → API
+const SUPABASE_URL      = "https://rtogxzlodebzwnepakam.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_7_BEir1_WNwHRodigv0wLg_HAJSRk64";
+
+// Supabase クライアント初期化（UMD build では supabase.createClient）
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ─── STATE ──────────────────────────────────────────────────
+let clientData = null;
+let currentTab = "mentions";
+function cl(){ return clientData; }
+function scoreColor(s){ return s>=80?"#10B981":s>=65?"#F59E0B":"#EF4444"; }
+
+// ─── AUTH STATE 監視 ────────────────────────────────────────
+// ページ読み込み時、Supabase が既存セッションを復元するのを待つ
+_supabase.auth.onAuthStateChange(async (event, session) => {
+  if (session && session.user) {
+    // ログイン済み → API からデータを取得してダッシュボードを表示
+    try {
+      await loadClientData(session.access_token);
+      showDashboard();
+    } catch (err) {
+      console.error("Data load error:", err);
+      await _supabase.auth.signOut();
+      showLogin();
+    }
+  } else if (event === "SIGNED_OUT" || !session) {
+    // 未ログイン・ログアウト → ログイン画面を表示
+    showLogin();
+  }
+});
+
+// ─── データ取得（API） ────────────────────────────────────────
+async function loadClientData(accessToken) {
+  const res = await fetch("/api/client", {
+    headers: { Authorization: "Bearer " + accessToken },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || "データの取得に失敗しました");
+  }
+  const body = await res.json();
+  clientData = body.client;
+}
+
+// ─── LOGIN ──────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById("emailInput").value.trim();
+  const pass  = document.getElementById("passInput").value;
+  const btn   = document.getElementById("loginBtn");
+
+  if (!email || !pass) {
+    showError("メールアドレスとパスワードを入力してください");
+    return;
+  }
+
+  // ローディング状態
+  btn.disabled = true;
+  document.getElementById("loginBtnLabel").innerHTML = '<div class="spinner"></div>';
+  hideError();
+
+  // Supabase でログイン
+  const { data, error } = await _supabase.auth.signInWithPassword({ email, password: pass });
+
+  if (error) {
+    btn.disabled = false;
+    document.getElementById("loginBtnLabel").textContent = "ログイン";
+    showError(supabaseErrorMessage(error.message));
+    document.getElementById("emailInput").classList.add("error");
+    document.getElementById("passInput").classList.add("error");
+    return;
+  }
+  // onAuthStateChange が SIGNED_IN イベントを発火 → showDashboard() が呼ばれる
+}
+
+function supabaseErrorMessage(msg) {
+  if (msg.includes("Invalid login credentials")) return "メールアドレスまたはパスワードが正しくありません";
+  if (msg.includes("Email not confirmed"))       return "メールアドレスの確認が完了していません";
+  if (msg.includes("Too many requests"))         return "ログイン試行が多すぎます。しばらく待ってから再試行してください";
+  if (msg.includes("User not found"))            return "このメールアドレスは登録されていません";
+  return "ログインに失敗しました: " + msg;
+}
+
+function showError(msg) {
+  document.getElementById("errorText").textContent = msg;
+  document.getElementById("errorMsg").classList.add("show");
+}
+function hideError() {
+  document.getElementById("errorMsg").classList.remove("show");
+  document.getElementById("emailInput").classList.remove("error");
+  document.getElementById("passInput").classList.remove("error");
+}
+
+// ─── LOGOUT ─────────────────────────────────────────────────
+async function doLogout() {
+  await _supabase.auth.signOut();
+  // onAuthStateChange の SIGNED_OUT が発火して showLogin() が呼ばれる
+  clientData = null;
+  currentTab = "mentions";
+  document.getElementById("emailInput").value = "";
+  document.getElementById("passInput").value = "";
+  document.getElementById("loginBtn").disabled = false;
+  document.getElementById("loginBtnLabel").textContent = "ログイン";
+  hideError();
+}
+
+// ─── 画面切替 ────────────────────────────────────────────────
+function showLogin() {
+  document.getElementById("pageLoading").classList.add("hidden");
+  document.getElementById("loginPage").style.display = "flex";
+  document.getElementById("dashboardPage").style.display = "none";
+}
+
+function showDashboard() {
+  document.getElementById("pageLoading").classList.add("hidden");
+  document.getElementById("loginPage").style.display = "none";
+  document.getElementById("dashboardPage").style.display = "block";
+  renderDate();
+  renderSidebarUser();
+  renderAll();
+}
+
+// ─── SIDEBAR USER ───────────────────────────────────────────
+function renderSidebarUser(){
+  const c = cl();
+  document.getElementById("sbAva").style.background = c.color;
+  document.getElementById("sbAva").textContent = c.short;
+  document.getElementById("sbName").textContent = c.userName;
+  document.getElementById("sbRole").textContent = c.userRole;
+  document.getElementById("topAva").style.background = c.color;
+  document.getElementById("topAva").textContent = c.short;
+}
+
+// ─── NAV ────────────────────────────────────────────────────
+function setNav(el, label){
+  document.querySelectorAll(".nav-item").forEach(x=>x.classList.remove("active"));
+  el.classList.add("active");
+  document.getElementById("pageTitle").textContent = label;
+}
+
+// ─── DATE ───────────────────────────────────────────────────
+function renderDate(){
+  const d=new Date();
+  document.getElementById("dateBadge").textContent=
+    "📅 "+d.getFullYear()+"年"+(d.getMonth()+1)+"月"+d.getDate()+"日";
+}
+
+// ─── RENDER ALL ─────────────────────────────────────────────
+function renderAll(){
+  const c=cl();
+  renderHero(c); renderKPI(c); renderLine(c); renderCompetitors(c);
+  renderEngines(c); renderKeywords(c); renderBar(c); renderInfluencers(c);
+  document.getElementById("insightText").textContent = c.insight;
+}
+
+// ─── HERO ───────────────────────────────────────────────────
+function renderHero(c){
+  document.getElementById("brandHero").innerHTML=`
+    <div>
+      <div class="hero-company">${c.industry}</div>
+      <div class="hero-name">${c.name}</div>
+      <div class="hero-meta">
+        <span class="hero-tag">業界 ${c.rank}位</span>
+        <span class="hero-tag">AI検索シェア ${c.kpi[2].val}${c.kpi[2].unit}</span>
+        <span class="hero-tag">最終更新: 本日</span>
+      </div>
+    </div>
+    <div style="text-align:center">
+      <div class="hero-score">${c.score}</div>
+      <div class="hero-score-label">AIOスコア / 100</div>
+      <div class="hero-score-change">▲ ${c.scoreChange}pt 先月比</div>
+    </div>`;
+}
+
+// ─── KPI ────────────────────────────────────────────────────
+function renderKPI(c){
+  document.getElementById("kpiGrid").innerHTML=c.kpi.map(k=>`
+    <div class="kpi-card ${k.c}">
+      <span class="kpi-icon">${k.icon}</span>
+      <div class="kpi-label">${k.label}</div>
+      <div><span class="kpi-value">${k.val}</span><span class="kpi-unit">${k.unit}</span></div>
+      <div class="kpi-change ${k.dir==="up"?"kpi-up":"kpi-down"}">${k.dir==="up"?"▲":"▼"} ${k.change} 先月比</div>
+    </div>`).join("");
+}
+
+// ─── LINE CHART ─────────────────────────────────────────────
+function renderLine(c){
+  const svg=document.getElementById("lineChart");
+  const W=460,H=155,PL=52,PR=12,PT=12,PB=28,iW=W-PL-PR,iH=H-PT-PB;
+  const key=currentTab, color=key==="mentions"?"#2E75B6":"#10B981";
+  const vals=c.trend.map(d=>d[key]);
+  const min=Math.min(...vals),max=Math.max(...vals),range=max-min||1;
+  const pts=c.trend.map((d,i)=>({x:PL+i/(c.trend.length-1)*iW, y:PT+iH-(d[key]-min)/range*iH, d}));
+  const ld="M"+pts.map(p=>p.x.toFixed(1)+","+p.y.toFixed(1)).join("L");
+  const ad=ld+"L"+pts[pts.length-1].x.toFixed(1)+","+(PT+iH)+"L"+PL+","+(PT+iH)+"Z";
+  let out=`<defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${color}" stop-opacity=".18"/>
+    <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+  </linearGradient></defs>`;
+  [min,Math.round((min+max)/2),max].forEach(v=>{
+    const y=PT+iH-(v-min)/range*iH;
+    out+=`<line x1="${PL}" y1="${y.toFixed(1)}" x2="${W-PR}" y2="${y.toFixed(1)}" stroke="#F3F4F6" stroke-width="1"/>`;
+    out+=`<text x="${PL-5}" y="${(y+4).toFixed(1)}" font-size="10" fill="#9CA3AF" text-anchor="end">${v.toLocaleString()}</text>`;
+  });
+  c.trend.forEach((d,i)=>{
+    out+=`<text x="${(PL+i/(c.trend.length-1)*iW).toFixed(1)}" y="${H-5}" font-size="11" fill="#9CA3AF" text-anchor="middle">${d.month}</text>`;
+  });
+  out+=`<path d="${ad}" fill="url(#lg)"/>`;
+  out+=`<path d="${ld}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round"/>`;
+  pts.forEach((p,i)=>{
+    const lbl=c.trend[i].month+": "+(key==="mentions"?c.trend[i].mentions.toLocaleString():c.trend[i].score+"pt");
+    out+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="${color}" stroke="#fff" stroke-width="2"
+      style="cursor:pointer" onmouseenter="showTip(event,'${lbl}')" onmouseleave="hideTip()"/>`;
+  });
+  svg.innerHTML=out;
+}
+
+function switchTab(key){
+  currentTab=key;
+  document.getElementById("tabMen").classList.toggle("active",key==="mentions");
+  document.getElementById("tabSco").classList.toggle("active",key==="score");
+  renderLine(cl());
+}
+
+// ─── COMPETITORS ─────────────────────────────────────────────
+function renderCompetitors(c){
+  const sorted=[...c.competitors].sort((a,b)=>b.score-a.score);
+  document.getElementById("compList").innerHTML=sorted.map((comp,i)=>{
+    const col=scoreColor(comp.score);
+    const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":"#"+(i+1);
+    return `<div class="comp-row">
+      <span style="font-size:${i<3?'16':'12'}px;width:22px;text-align:center;flex-shrink:0">${medal}</span>
+      <div class="comp-logo" style="background:${comp.color}">${comp.name.charAt(0)}</div>
+      <div class="comp-name">${comp.name}${comp.self?" 👈":""}</div>
+      <div class="comp-bar-bg"><div class="comp-bar" style="width:${comp.score}%;background:${col}"></div></div>
+      <span class="comp-score" style="color:${col}">${comp.score}</span>
+      <span class="${comp.dir==="up"?"trend-up":"trend-down"}">${comp.trend}</span>
+    </div>`;
+  }).join("");
+}
+
+// ─── ENGINES ────────────────────────────────────────────────
+function renderEngines(c){
+  document.getElementById("engineBreakdown").innerHTML=c.engines.map(e=>`
+    <div class="engine-row">
+      <div class="engine-name">${e.name}</div>
+      <div class="engine-bar-bg"><div class="engine-fill" style="width:${e.val}%;background:${e.color}"></div></div>
+      <div class="engine-val">${e.val}%</div>
+      <div class="engine-chg trend-up">${e.change}</div>
+    </div>`).join("");
+}
+
+// ─── KEYWORDS ───────────────────────────────────────────────
+function renderKeywords(c){
+  const brand=c.name.replace("株式会社","").replace("（株）","").trim();
+  document.getElementById("kwSub").textContent=`「${brand}」が表示されるAI検索クエリ Top 8`;
+  document.getElementById("kwBody").innerHTML=c.keywords.map((kw,i)=>{
+    const tCls=kw.change.startsWith("-")?"trend-down":kw.change.startsWith("+")?"trend-up":"";
+    const tag=kw.status==="high"?'<span class="kw-tag kw-tag-high">強い</span>'
+      :kw.status==="mid"?'<span class="kw-tag kw-tag-mid">改善余地</span>'
+      :'<span class="kw-tag kw-tag-low">要強化</span>';
+    return `<tr>
+      <td style="font-size:11px;font-weight:700;color:#9CA3AF">${i+1}</td>
+      <td style="font-weight:600;color:#1F3864;font-size:13px">${kw.kw}</td>
+      <td style="color:#374151">${kw.vol}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="presence-bar"><div class="presence-fill" style="width:${kw.presence}%"></div></div>
+          <span style="font-size:12px;font-weight:700;color:#1F3864">${kw.presence}%</span>
+        </div>
+      </td>
+      <td class="${tCls}" style="font-size:12px;font-weight:600">${kw.change}</td>
+      <td>${tag}</td>
+    </tr>`;
+  }).join("");
+}
+
+// ─── BAR CHART ──────────────────────────────────────────────
+function renderBar(c){
+  const svg=document.getElementById("barChart");
+  const W=440,H=155,PL=50,PR=12,PT=10,PB=28,iW=W-PL-PR,iH=H-PT-PB;
+  const maxV=Math.max(...c.barData.map(d=>d.val))||1;
+  const bW=(iW/c.barData.length)*0.6, gap=(iW/c.barData.length)*0.4;
+  let out="";
+  c.barData.forEach((d,i)=>{
+    const x=PL+i*(iW/c.barData.length)+gap/2;
+    const bH=d.val/maxV*iH, y=PT+iH-bH;
+    out+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bW.toFixed(1)}" height="${bH.toFixed(1)}"
+      rx="4" fill="${d.color}" opacity=".85" style="cursor:pointer"
+      onmouseenter="this.setAttribute('opacity','1');showTip(event,'${d.label}: ${d.val}件')"
+      onmouseleave="this.setAttribute('opacity','.85');hideTip()"/>`;
+    out+=`<text x="${(x+bW/2).toFixed(1)}" y="${H-6}" font-size="10" fill="#6B7280" text-anchor="middle">${d.label}</text>`;
+    out+=`<text x="${(x+bW/2).toFixed(1)}" y="${(y-4).toFixed(1)}" font-size="11" font-weight="700" fill="${d.color}" text-anchor="middle">${d.val}</text>`;
+  });
+  [0,Math.round(maxV/2),maxV].forEach(v=>{
+    const y=PT+iH-v/maxV*iH;
+    out+=`<line x1="${PL}" y1="${y.toFixed(1)}" x2="${W-PR}" y2="${y.toFixed(1)}" stroke="#F3F4F6" stroke-width="1"/>`;
+    out+=`<text x="${PL-5}" y="${(y+4).toFixed(1)}" font-size="10" fill="#9CA3AF" text-anchor="end">${v}</text>`;
+  });
+  svg.innerHTML=out;
+}
+
+// ─── INFLUENCERS ─────────────────────────────────────────────
+function renderInfluencers(c){
+  document.getElementById("infList").innerHTML=c.influencers.map(inf=>`
+    <div class="inf-row">
+      <div class="inf-ava" style="background:${inf.bg}">${inf.emoji}</div>
+      <div style="flex:1">
+        <div class="inf-name">${inf.name} <span style="font-size:11px;color:#9CA3AF">${inf.cat}</span></div>
+        <div class="inf-meta">${inf.detail}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="impact-val">+${inf.impact}</div>
+        <div class="impact-label">AI言及増</div>
+      </div>
+    </div>`).join("");
+}
+
+// ─── MODAL ──────────────────────────────────────────────────
+function openModal(){
+  const c=cl();
+  document.getElementById("mTitle").textContent="AI改善プラン — "+c.name;
+  const weakKw=c.keywords.filter(k=>k.status!=="high").slice(0,3);
+  document.getElementById("mBody").innerHTML=`
+    <div class="d-grid">
+      <div class="d-item"><div class="d-label">現在のAIOスコア</div><div class="d-val" style="color:${scoreColor(c.score)}">${c.score} / 100</div></div>
+      <div class="d-item"><div class="d-label">目標スコア（3ヶ月後）</div><div class="d-val" style="color:#10B981">${Math.min(c.score+12,100)} / 100</div></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:#1F3864;margin-bottom:10px">📌 優先対応キーワード（AI存在感が弱い）</div>
+      ${weakKw.map(k=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#FEF9C3;border-radius:8px;margin-bottom:6px;font-size:13px">
+        <span style="font-weight:600;color:#1F3864">「${k.kw}」</span>
+        <span style="color:#854D0E;font-size:12px">現在 ${k.presence}% → 目標 60%</span>
+      </div>`).join("")}
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:#1F3864;margin-bottom:10px">🚀 推奨アクション</div>
+      ${["弱いキーワードに合わせたインフルエンサーの追加起用（BitStarが最適人選を提案）",
+         "AI検索で引用されやすいコンテンツ構成（FAQ形式・専門家コメント）へのリライト",
+         "Perplexityへの対応強化：構造化データ・引用元URLの整備",
+         "月次AIOスコアレビューの実施（このダッシュボードで毎月確認）",
+      ].map((a,i)=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6;font-size:13px">
+        <span style="font-weight:700;color:#2E75B6;flex-shrink:0">${i+1}.</span>
+        <span style="color:#374151">${a}</span>
+      </div>`).join("")}
+    </div>
+    <div style="background:#EBF3FB;border-radius:10px;padding:14px;font-size:13px;color:#1F3864">
+      📞 BitStarのコンサルタントが詳細な改善プランをご提案します。担当者へのご連絡はページ右上「お問い合わせ」からどうぞ。
+    </div>`;
+  document.getElementById("overlay").classList.add("open");
+}
+function closeModal(){ document.getElementById("overlay").classList.remove("open"); }
+
+// ─── TOOLTIP ────────────────────────────────────────────────
+function showTip(e,text){
+  const t=document.getElementById("chartTip");
+  t.textContent=text; t.style.display="block";
+  t.style.left=e.clientX+"px"; t.style.top=(e.clientY-10)+"px";
+}
+function hideTip(){ document.getElementById("chartTip").style.display="none"; }
+document.addEventListener("mousemove",function(e){
+  const t=document.getElementById("chartTip");
+  if(t.style.display==="block"){ t.style.left=e.clientX+"px"; t.style.top=(e.clientY-10)+"px"; }
+});
+</script>
+</body>
+</html>
