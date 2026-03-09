@@ -79,6 +79,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
 
 #editorArea{display:none}
 .empty-state{text-align:center;padding:40px 20px;color:#9CA3AF;font-size:13px}
+
+/* CSV IMPORT */
+.section-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.csv-btn{display:flex;align-items:center;gap:5px;padding:7px 13px;background:#F0FDF4;color:#059669;border:1.5px solid #A7F3D0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.csv-btn:hover{background:#DCFCE7}
+.tpl-btn{display:flex;align-items:center;gap:4px;padding:7px 13px;background:#F9FAFB;color:#6B7280;border:1.5px solid #E5E7EB;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.tpl-btn:hover{background:#F3F4F6}
 </style>
 </head>
 <body>
@@ -125,7 +132,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
             <div class="section-title">👥 貢献インフルエンサー</div>
             <div class="section-sub">AI言及増加に貢献したインフルエンサーを登録してください</div>
           </div>
-          <button class="add-btn" onclick="addInfluencer()">＋ 追加</button>
+          <div class="section-head-actions">
+            <button class="tpl-btn" onclick="downloadCSVTemplate()">📥 テンプレート</button>
+            <label class="csv-btn">
+              📂 CSVインポート
+              <input type="file" accept=".csv" style="display:none" onchange="importCSV(event)"/>
+            </label>
+            <button class="add-btn" onclick="addInfluencer()">＋ 追加</button>
+          </div>
         </div>
         <div class="section-body">
           <div class="inf-header">
@@ -306,6 +320,67 @@ function addInfluencer() {
   const container = document.getElementById('infList');
   const idx = container.children.length;
   container.appendChild(makeInfRow({ emoji: '✨', name: '', cat: '', detail: '', impact: 0, bg: '#F0F9FF' }, idx));
+}
+
+// ─── CSVテンプレートダウンロード ──────────────────────────────
+function downloadCSVTemplate() {
+  const header = 'emoji,name,cat,detail,impact';
+  const sample = [
+    '✨,田中なな,美容系,フォロワー50万 / 投稿3件,12',
+    '💄,鈴木りか,ライフスタイル,フォロワー20万 / 投稿2件,7',
+    '🌿,山田ゆい,健康・wellness,フォロワー30万 / 投稿4件,9',
+  ].join('\n');
+  const blob = new Blob(['\uFEFF' + header + '\n' + sample], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'influencer_template.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── CSVインポート ────────────────────────────────────────────
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const text = e.target.result.replace(/^\uFEFF/, ''); // BOM除去
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+      if (lines.length < 2) { alert('データが見つかりません'); return; }
+
+      // ヘッダー行を解析
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const idxOf = key => headers.indexOf(key);
+
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.trim());
+        const name = cols[idxOf('name')] || '';
+        if (!name) continue; // 名前が空の行はスキップ
+        rows.push({
+          emoji: cols[idxOf('emoji')] || '✨',
+          name,
+          cat:    cols[idxOf('cat')]    || '',
+          detail: cols[idxOf('detail')] || '',
+          impact: parseInt(cols[idxOf('impact')]) || 0,
+          bg: '#F0F9FF',
+        });
+      }
+
+      if (rows.length === 0) { alert('有効なデータが見つかりません\nCSVにname列が必要です'); return; }
+
+      renderInfluencers(rows);
+      document.getElementById('saveStatus').textContent = `✅ ${rows.length}件のインフルエンサーをインポートしました（まだ保存されていません）`;
+    } catch (err) {
+      alert('CSVの読み込みに失敗しました: ' + err.message);
+    }
+    // ファイル選択をリセット（同じファイルを再インポートできるように）
+    event.target.value = '';
+  };
+  reader.readAsText(file, 'UTF-8');
 }
 
 // ─── キャンペーン描画 ─────────────────────────────────────────
