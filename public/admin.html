@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>BitStar 管理者画面 — AIO Brand Monitor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',sans-serif;background:#F0F4FF;color:#1a1a2e;font-size:14px}
+
+/* LOGIN */
+#loginPage{display:flex;min-height:100vh;align-items:center;justify-content:center;background:linear-gradient(135deg,#1F3864,#2E75B6)}
+.login-box{background:#fff;border-radius:18px;padding:40px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.login-logo{font-size:20px;font-weight:700;color:#1F3864;margin-bottom:4px}
+.login-sub{font-size:12px;color:#6B7280;margin-bottom:28px}
+.form-label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px}
+.form-input{width:100%;border:1.5px solid #E5E7EB;border-radius:9px;padding:10px 13px;font-size:14px;outline:none;font-family:inherit;transition:border .15s;margin-bottom:14px}
+.form-input:focus{border-color:#2E75B6;box-shadow:0 0 0 3px rgba(46,117,182,.1)}
+.login-btn{width:100%;padding:12px;background:linear-gradient(90deg,#1F3864,#2E75B6);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.login-btn:hover{opacity:.9}
+.err{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:9px 13px;color:#DC2626;font-size:12px;margin-bottom:14px;display:none}
+.err.show{display:block}
+
+/* MAIN */
+#mainPage{display:none}
+.topbar{background:#1F3864;padding:0 28px;height:54px;display:flex;align-items:center;justify-content:space-between}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-logo{font-size:16px;font-weight:700;color:#fff}
+.topbar-badge{background:rgba(255,255,255,.18);color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.logout-btn{background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:12px;font-family:inherit}
+.logout-btn:hover{background:rgba(255,255,255,.25)}
+
+.content{max-width:900px;margin:28px auto;padding:0 20px}
+
+/* CLIENT SELECTOR */
+.client-select-card{background:#fff;border-radius:13px;padding:18px 22px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:20px;display:flex;align-items:center;gap:14px}
+.client-select-label{font-size:13px;font-weight:700;color:#1F3864;white-space:nowrap}
+.client-select{flex:1;border:1.5px solid #E5E7EB;border-radius:9px;padding:9px 13px;font-size:14px;font-family:inherit;outline:none;color:#1a1a2e;background:#FAFAFA}
+.client-select:focus{border-color:#2E75B6}
+.load-btn{padding:9px 20px;background:linear-gradient(90deg,#1F3864,#2E75B6);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.load-btn:hover{opacity:.9}
+.load-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* SECTION CARD */
+.section-card{background:#fff;border-radius:13px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:20px;overflow:hidden}
+.section-head{padding:16px 22px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between}
+.section-title{font-size:14px;font-weight:700;color:#1F3864}
+.section-sub{font-size:11px;color:#6B7280;margin-top:2px}
+.add-btn{display:flex;align-items:center;gap:5px;padding:7px 14px;background:#EBF3FB;color:#2E75B6;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.add-btn:hover{background:#DBEAFB}
+.section-body{padding:16px 22px}
+
+/* INFLUENCER ROW */
+.inf-row{display:grid;grid-template-columns:60px 1fr 1fr 1fr 80px 36px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #F3F4F6}
+.inf-row:last-child{border-bottom:none}
+.inf-header{display:grid;grid-template-columns:60px 1fr 1fr 1fr 80px 36px;gap:8px;padding:0 0 8px;border-bottom:2px solid #E5E7EB;margin-bottom:4px}
+.inf-header span{font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.5px}
+.row-input{border:1.5px solid #E5E7EB;border-radius:7px;padding:7px 9px;font-size:12px;font-family:inherit;width:100%;outline:none;color:#1a1a2e}
+.row-input:focus{border-color:#2E75B6}
+.del-btn{width:32px;height:32px;background:#FEF2F2;border:none;border-radius:7px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.del-btn:hover{background:#FEE2E2}
+
+/* BAR ROW */
+.bar-row{display:grid;grid-template-columns:1fr 80px 110px 36px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #F3F4F6}
+.bar-row:last-child{border-bottom:none}
+.bar-header{display:grid;grid-template-columns:1fr 80px 110px 36px;gap:8px;padding:0 0 8px;border-bottom:2px solid #E5E7EB;margin-bottom:4px}
+.bar-header span{font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.5px}
+.color-input{border:1.5px solid #E5E7EB;border-radius:7px;padding:4px;width:100%;height:34px;cursor:pointer}
+
+/* SAVE */
+.save-bar{background:#fff;border-radius:13px;padding:16px 22px;box-shadow:0 2px 10px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between}
+.save-status{font-size:13px;color:#6B7280}
+.save-btn{padding:11px 28px;background:linear-gradient(90deg,#10B981,#059669);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.save-btn:hover{opacity:.9}
+.save-btn:disabled{opacity:.5;cursor:not-allowed}
+
+.spinner{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#editorArea{display:none}
+.empty-state{text-align:center;padding:40px 20px;color:#9CA3AF;font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- ログイン画面 -->
+<div id="loginPage">
+  <div class="login-box">
+    <div class="login-logo">✦ AIO Brand Monitor</div>
+    <div class="login-sub">BitStar 管理者画面</div>
+    <div class="err" id="loginErr">パスワードが正しくありません</div>
+    <label class="form-label">管理者パスワード</label>
+    <input class="form-input" id="passInput" type="password" placeholder="••••••••"
+      onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">ログイン</button>
+  </div>
+</div>
+
+<!-- メイン画面 -->
+<div id="mainPage">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">✦ AIO Brand Monitor</div>
+      <span class="topbar-badge">BitStar 管理者</span>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+  </div>
+
+  <div class="content">
+
+    <!-- クライアント選択 -->
+    <div class="client-select-card">
+      <span class="client-select-label">📋 クライアント選択</span>
+      <select class="client-select" id="clientSelect">
+        <option value="">— クライアントを選んでください —</option>
+      </select>
+      <button class="load-btn" id="loadBtn" onclick="loadClient()" disabled>読み込む</button>
+    </div>
+
+    <div id="editorArea">
+      <!-- インフルエンサーリスト -->
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <div class="section-title">👥 貢献インフルエンサー</div>
+            <div class="section-sub">AI言及増加に貢献したインフルエンサーを登録してください</div>
+          </div>
+          <button class="add-btn" onclick="addInfluencer()">＋ 追加</button>
+        </div>
+        <div class="section-body">
+          <div class="inf-header">
+            <span>絵文字</span><span>名前</span><span>カテゴリ</span><span>詳細</span><span>AI言及増 (+件)</span><span></span>
+          </div>
+          <div id="infList"></div>
+        </div>
+      </div>
+
+      <!-- キャンペーン棒グラフ -->
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <div class="section-title">📊 施策別 AI言及増加数（今月）</div>
+            <div class="section-sub">キャンペーン・施策ごとのAI言及への貢献数を入力してください</div>
+          </div>
+          <button class="add-btn" onclick="addCampaign()">＋ 追加</button>
+        </div>
+        <div class="section-body">
+          <div class="bar-header">
+            <span>施策名</span><span>件数</span><span>カラー</span><span></span>
+          </div>
+          <div id="barList"></div>
+        </div>
+      </div>
+
+      <!-- 保存バー -->
+      <div class="save-bar">
+        <div class="save-status" id="saveStatus">変更を加えたら「保存する」を押してください</div>
+        <button class="save-btn" id="saveBtn" onclick="saveData()">💾 保存する</button>
+      </div>
+    </div>
+
+    <div id="emptyState" class="empty-state">
+      ← クライアントを選択してデータを編集してください
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── 設定 ─────────────────────────────────────────────────────
+const ADMIN_PASS_KEY = 'aio_admin_token';
+let currentClientId = null;
+
+// ─── ログイン ─────────────────────────────────────────────────
+async function doLogin() {
+  const pass = document.getElementById('passInput').value;
+  if (!pass) return;
+
+  const res = await fetch('/api/admin/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: pass }),
+  });
+
+  if (res.ok) {
+    const { token } = await res.json();
+    sessionStorage.setItem(ADMIN_PASS_KEY, token);
+    showMain();
+  } else {
+    document.getElementById('loginErr').classList.add('show');
+    document.getElementById('passInput').value = '';
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem(ADMIN_PASS_KEY);
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('mainPage').style.display = 'none';
+  document.getElementById('passInput').value = '';
+}
+
+function getToken() { return sessionStorage.getItem(ADMIN_PASS_KEY); }
+
+// ─── 初期化 ──────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  const token = getToken();
+  if (token) {
+    showMain();
+  }
+  // Enterキー対応
+  document.getElementById('passInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+});
+
+async function showMain() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('mainPage').style.display = 'block';
+  await loadClientList();
+}
+
+// ─── クライアント一覧取得 ────────────────────────────────────
+async function loadClientList() {
+  const res = await fetch('/api/admin/clients', {
+    headers: { Authorization: 'Bearer ' + getToken() },
+  });
+  if (!res.ok) {
+    if (res.status === 401) { doLogout(); return; }
+    return;
+  }
+  const { clients } = await res.json();
+  const sel = document.getElementById('clientSelect');
+  sel.innerHTML = '<option value="">— クライアントを選んでください —</option>';
+  clients.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', () => {
+    document.getElementById('loadBtn').disabled = !sel.value;
+  });
+}
+
+// ─── クライアントデータ読み込み ──────────────────────────────
+async function loadClient() {
+  const sel = document.getElementById('clientSelect');
+  const clientId = sel.value;
+  if (!clientId) return;
+
+  document.getElementById('loadBtn').disabled = true;
+  document.getElementById('loadBtn').textContent = '読み込み中...';
+
+  const res = await fetch(`/api/admin/clients?id=${clientId}`, {
+    headers: { Authorization: 'Bearer ' + getToken() },
+  });
+
+  document.getElementById('loadBtn').disabled = false;
+  document.getElementById('loadBtn').textContent = '読み込む';
+
+  if (!res.ok) { alert('データの取得に失敗しました'); return; }
+
+  const { client } = await res.json();
+  currentClientId = client.id;
+
+  renderInfluencers(client.influencers || []);
+  renderCampaigns(client.bar_data || []);
+
+  document.getElementById('editorArea').style.display = 'block';
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('saveStatus').textContent = `「${client.name}」のデータを編集中`;
+}
+
+// ─── インフルエンサー描画 ─────────────────────────────────────
+const INF_DEFAULTS = [
+  { emoji: '💄', name: '', cat: '', detail: '', impact: 0, bg: '#FFE4E1' },
+];
+
+function renderInfluencers(list) {
+  const container = document.getElementById('infList');
+  container.innerHTML = '';
+  if (list.length === 0) {
+    list = [{ emoji: '✨', name: '', cat: '', detail: '', impact: 0, bg: '#F0F9FF' }];
+  }
+  list.forEach((inf, i) => {
+    container.appendChild(makeInfRow(inf, i));
+  });
+}
+
+function makeInfRow(inf, i) {
+  const div = document.createElement('div');
+  div.className = 'inf-row';
+  div.dataset.idx = i;
+  div.innerHTML = `
+    <input class="row-input" data-field="emoji" value="${inf.emoji || '✨'}" style="text-align:center;font-size:18px" maxlength="4"/>
+    <input class="row-input" data-field="name"   value="${inf.name || ''}"   placeholder="田中なな"/>
+    <input class="row-input" data-field="cat"    value="${inf.cat || ''}"    placeholder="美容系"/>
+    <input class="row-input" data-field="detail" value="${inf.detail || ''}" placeholder="フォロワー50万 / 投稿3件"/>
+    <input class="row-input" data-field="impact" value="${inf.impact || 0}" type="number" min="0" style="text-align:right"/>
+    <button class="del-btn" onclick="deleteRow('inf',${i})">🗑</button>
+  `;
+  return div;
+}
+
+function addInfluencer() {
+  const container = document.getElementById('infList');
+  const idx = container.children.length;
+  container.appendChild(makeInfRow({ emoji: '✨', name: '', cat: '', detail: '', impact: 0, bg: '#F0F9FF' }, idx));
+}
+
+// ─── キャンペーン描画 ─────────────────────────────────────────
+const COLORS = ['#2E75B6','#10B981','#F59E0B','#8B5CF6','#EF4444','#06B6D4'];
+
+function renderCampaigns(list) {
+  const container = document.getElementById('barList');
+  container.innerHTML = '';
+  if (list.length === 0) {
+    list = [{ label: '', val: 0, color: '#2E75B6' }];
+  }
+  list.forEach((bar, i) => {
+    container.appendChild(makeBarRow(bar, i));
+  });
+}
+
+function makeBarRow(bar, i) {
+  const div = document.createElement('div');
+  div.className = 'bar-row';
+  div.dataset.idx = i;
+  div.innerHTML = `
+    <input class="row-input" data-field="label" value="${bar.label || ''}" placeholder="タイアップ投稿"/>
+    <input class="row-input" data-field="val"   value="${bar.val || 0}" type="number" min="0" style="text-align:right"/>
+    <input class="color-input" type="color" data-field="color" value="${bar.color || COLORS[i % COLORS.length]}"/>
+    <button class="del-btn" onclick="deleteRow('bar',${i})">🗑</button>
+  `;
+  return div;
+}
+
+function addCampaign() {
+  const container = document.getElementById('barList');
+  const idx = container.children.length;
+  container.appendChild(makeBarRow({ label: '', val: 0, color: COLORS[idx % COLORS.length] }, idx));
+}
+
+// ─── 行削除 ──────────────────────────────────────────────────
+function deleteRow(type, idx) {
+  const container = document.getElementById(type === 'inf' ? 'infList' : 'barList');
+  if (container.children.length <= 1) {
+    alert('最低1件は必要です');
+    return;
+  }
+  container.children[idx].remove();
+  // インデックス再割り当て
+  Array.from(container.children).forEach((row, i) => {
+    row.dataset.idx = i;
+    const delBtn = row.querySelector('.del-btn');
+    if (delBtn) delBtn.setAttribute('onclick', `deleteRow('${type}',${i})`);
+  });
+}
+
+// ─── データ収集 ──────────────────────────────────────────────
+function collectInfluencers() {
+  const BG_COLORS = ['#FFE4E1','#F0F9FF','#F0FDF4','#FEF9C3','#F3E8FF','#FFF7ED'];
+  return Array.from(document.getElementById('infList').children).map((row, i) => {
+    const get = f => row.querySelector(`[data-field="${f}"]`)?.value || '';
+    return {
+      emoji: get('emoji') || '✨',
+      name: get('name'),
+      cat: get('cat'),
+      detail: get('detail'),
+      impact: parseInt(get('impact')) || 0,
+      bg: BG_COLORS[i % BG_COLORS.length],
+    };
+  });
+}
+
+function collectCampaigns() {
+  return Array.from(document.getElementById('barList').children).map(row => {
+    const get = f => row.querySelector(`[data-field="${f}"]`)?.value || '';
+    return {
+      label: get('label'),
+      val: parseInt(get('val')) || 0,
+      color: get('color') || '#2E75B6',
+    };
+  });
+}
+
+// ─── 保存 ────────────────────────────────────────────────────
+async function saveData() {
+  if (!currentClientId) { alert('クライアントを選択してください'); return; }
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>保存中...';
+
+  const influencers = collectInfluencers();
+  const barData = collectCampaigns();
+
+  const res = await fetch('/api/admin/update-influencers', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + getToken(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ clientId: currentClientId, influencers, barData }),
+  });
+
+  if (res.ok) {
+    document.getElementById('saveStatus').textContent = '✅ ' + new Date().toLocaleTimeString('ja-JP') + ' に保存しました';
+    btn.innerHTML = '✅ 保存完了';
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = '💾 保存する';
+    }, 2000);
+  } else {
+    const body = await res.json().catch(() => ({}));
+    alert('保存に失敗しました: ' + (body.error || '不明なエラー'));
+    btn.disabled = false;
+    btn.innerHTML = '💾 保存する';
+  }
+}
+</script>
+</body>
+</html>
