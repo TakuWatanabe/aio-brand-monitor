@@ -3,6 +3,7 @@
 // ログイン中ユーザーのクライアントデータを Supabase DB から返す
 
 const supabase = require('../lib/supabaseAdmin');
+const { createClient } = require('@supabase/supabase-js');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,7 +20,15 @@ module.exports = async (req, res) => {
 
   const accessToken = authHeader.split('Bearer ')[1];
 
-  const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+  // ANON_KEY を使ってユーザーのトークンを検証（SERVICE_ROLE_KEY では検証できない場合の対策）
+  const supabaseUrl  = process.env.SUPABASE_URL;
+  const supabaseAnon = process.env.SUPABASE_ANON_KEY;
+  const userClient = createClient(supabaseUrl, supabaseAnon, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: { user }, error } = await userClient.auth.getUser();
   if (error || !user) {
     return res.status(401).json({
       error: 'トークンの検証に失敗しました',

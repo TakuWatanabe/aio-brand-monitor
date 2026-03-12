@@ -3,6 +3,7 @@
 // ログイン中クライアントのAIスコアをリアルタイムで計測し、Supabaseに保存する
 
 const supabaseAdmin = require('../lib/supabaseAdmin');
+const { createClient } = require('@supabase/supabase-js');
 const {
   measureWithChatGPT,
   measureWithPerplexity,
@@ -18,11 +19,15 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  // === 認証チェック ===
+  // === 認証チェック（ANON_KEY でユーザートークンを検証）===
   const token = req.headers.authorization?.split('Bearer ')[1];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
-  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+  const userClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data: { user }, error: authError } = await userClient.auth.getUser();
   if (authError || !user) return res.status(401).json({ error: 'トークンが無効です' });
 
   // === クライアント情報をDBから取得 ===
