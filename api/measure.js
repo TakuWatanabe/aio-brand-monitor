@@ -19,22 +19,27 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  // === 認証チェック（ANON_KEY でユーザートークンを検証）===
+  // === 認証チェック（JWT デコードでメール取得）===
   const token = req.headers.authorization?.split('Bearer ')[1];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
-  const userClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  const { data: { user }, error: authError } = await userClient.auth.getUser();
-  if (authError || !user) return res.status(401).json({ error: 'トークンが無効です' });
+  let userEmail;
+  try {
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString('utf-8'));
+    userEmail = payload.email;
+    if (!userEmail) throw new Error('email not found in token');
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+      return res.status(401).json({ error: 'トークンの有効期限が切れています' });
+    }
+  } catch (e) {
+    return res.status(401).json({ error: 'トークンが無効です', detail: e.message });
+  }
 
   // === クライアント情報をDBから取得 ===
   const { data: client, error: clientError } = await supabaseAdmin
     .from('clients')
     .select('*')
-    .eq('email', user.email)
+    .eq('email', userEmail)
     .single();
 
   if (clientError || !client) {

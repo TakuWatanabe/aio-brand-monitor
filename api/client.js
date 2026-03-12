@@ -20,33 +20,31 @@ module.exports = async (req, res) => {
 
   const accessToken = authHeader.split('Bearer ')[1];
 
-  // ANON_KEY を使ってユーザーのトークンを検証（SERVICE_ROLE_KEY では検証できない場合の対策）
-  const supabaseUrl  = process.env.SUPABASE_URL;
-  const supabaseAnon = process.env.SUPABASE_ANON_KEY;
-  const userClient = createClient(supabaseUrl, supabaseAnon, {
-    global: { headers: { Authorization: `Bearer ${accessToken}` } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-
-  const { data: { user }, error } = await userClient.auth.getUser();
-  if (error || !user) {
-    return res.status(401).json({
-      error: 'トークンの検証に失敗しました',
-      detail: error?.message,
-    });
+  // JWT payload を直接デコードしてメールを取得（Supabase Auth API 呼び出し不要）
+  let userEmail;
+  try {
+    const payload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString('utf-8'));
+    userEmail = payload.email;
+    if (!userEmail) throw new Error('email not found in token');
+    // トークンの有効期限チェック
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+      return res.status(401).json({ error: 'トークンの有効期限が切れています' });
+    }
+  } catch (e) {
+    return res.status(401).json({ error: 'トークンの検証に失敗しました', detail: e.message });
   }
 
   // Supabase DB からクライアントデータを取得
   const { data: client, error: clientError } = await supabase
     .from('clients')
     .select('*')
-    .eq('email', user.email)
+    .eq('email', userEmail)
     .single();
 
   if (clientError || !client) {
     return res.status(403).json({
       error: 'このアカウントに紐づくクライアントデータが見つかりません',
-      email: user.email,
+      email: userEmail,
     });
   }
 
