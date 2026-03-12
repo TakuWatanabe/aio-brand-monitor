@@ -7,6 +7,7 @@ const { createClient } = require('@supabase/supabase-js');
 const {
   measureWithChatGPT,
   measureWithPerplexity,
+  measureWithGoogleAI,
   getWeekStart,
   getCurrentMonth,
 } = require('../lib/aiMeasurement');
@@ -65,19 +66,23 @@ module.exports = async (req, res) => {
   try {
     console.log(`[計測開始] ${client.name} / ${industry} / brandNames: ${brandNames.join(', ')}`);
 
-    // === ChatGPT + Perplexity を並列で計測 ===
-    const [chatgptResult, perplexityResult] = await Promise.all([
+    // === ChatGPT + Perplexity + Google AI Overview を並列で計測 ===
+    const [chatgptResult, perplexityResult, googleAIResult] = await Promise.all([
       measureWithChatGPT(brandNames, industry),
       measureWithPerplexity(brandNames, industry),
+      measureWithGoogleAI(brandNames, industry),
     ]);
 
-    console.log(`[計測完了] ChatGPT: ${chatgptResult.score}pt / Perplexity: ${perplexityResult.score}pt`);
+    console.log(`[計測完了] ChatGPT: ${chatgptResult.score}pt / Perplexity: ${perplexityResult.score}pt / GoogleAI: ${googleAIResult.score}pt`);
 
-    // === 総合スコアを計算（ChatGPT 50% + Perplexity 50%）===
-    const overallScore = Math.round((chatgptResult.score + perplexityResult.score) / 2);
+    // === 総合スコアを計算 ===
+    // Google AI が有効なら3エンジン平均、無効なら2エンジン平均
+    const overallScore = googleAIResult.skipped
+      ? Math.round((chatgptResult.score + perplexityResult.score) / 2)
+      : Math.round((chatgptResult.score * 0.4 + perplexityResult.score * 0.4 + googleAIResult.score * 0.2));
 
     // === ai_scores テーブルに保存（同週は上書き）===
-    const { error: insertError } = await supabaseAdmin.from('ai_scores').upsert([
+    const scoresToUpsert = [
       {
         client_id: client.id,
         ai_engine: 'chatgpt',
@@ -94,7 +99,22 @@ module.exports = async (req, res) => {
         total_queries: perplexityResult.totalQueries,
         week_start: weekStart,
       },
-    ], { onConflict: 'client_id,ai_engine,week_start' });
+    ];
+    // Google AI が有効な場合のみ保存
+    if (!googleAIResult.skipped) {
+      scoresToUpsert.push({
+        client_id: client.id,
+        ai_engine: 'google_ai',
+        score: googleAIResult.score,
+        mention_count: googleAIResult.mentionCount,
+        total_queries: googleAIResult.totalQueries,
+        week_start: weekStart,
+      });
+    }
+    const { error: insertError } = await supabaseAdmin.from('ai_scores').upsert(
+      scoresToUpsert,
+      { onConflict: 'client_id,ai_engine,week_start' }
+    );
 
     if (insertError) console.error('[DB] ai_scores 保存エラー:', insertError);
 
@@ -102,8 +122,10 @@ module.exports = async (req, res) => {
     const engines = JSON.parse(JSON.stringify(client.engines || []));
     const chatgptEngine = engines.find(e => e.name === 'ChatGPT');
     const perplexityEngine = engines.find(e => e.name === 'Perplexity');
+    const googleAIEngine = engines.find(e => e.name === 'Google AI Overview');
     if (chatgptEngine) chatgptEngine.val = chatgptResult.score;
     if (perplexityEngine) perplexityEngine.val = perplexityResult.score;
+    if (googleAIEngine && !googleAIResult.skipped) googleAIEngine.val = googleAIResult.score;
 
     // === trend データを更新（最新6ヶ月を保持）===
     const trend = JSON.parse(JSON.stringify(client.trend || []));
@@ -151,6 +173,12 @@ module.exports = async (req, res) => {
         score: perplexityResult.score,
         mentions: perplexityResult.mentionCount,
         total: perplexityResult.totalQueries,
+      },
+      googleAI: {
+        score: googleAIResult.score,
+        mentions: googleAIResult.mentionCount,
+        total: googleAIResult.totalQueries,
+        skipped: googleAIResult.skipped || false,
       },
     });
   } catch (err) {
