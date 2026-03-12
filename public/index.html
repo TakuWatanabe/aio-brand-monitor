@@ -661,20 +661,23 @@ function renderAll(){
 
 // ─── HERO ───────────────────────────────────────────────────
 function renderHero(c){
+  const shareKpi = c.kpi && c.kpi[2];
+  const shareVal  = shareKpi ? shareKpi.val  : '—';
+  const shareUnit = shareKpi ? shareKpi.unit : '';
   document.getElementById("brandHero").innerHTML=`
     <div>
-      <div class="hero-company">${c.industry}</div>
-      <div class="hero-name">${c.name}</div>
+      <div class="hero-company">${c.industry || ''}</div>
+      <div class="hero-name">${c.name || ''}</div>
       <div class="hero-meta">
-        <span class="hero-tag">業界 ${c.rank}位</span>
-        <span class="hero-tag">AI検索シェア ${c.kpi[2].val}${c.kpi[2].unit}</span>
+        <span class="hero-tag">業界 ${c.rank || '—'}位</span>
+        <span class="hero-tag">AI検索シェア ${shareVal}${shareUnit}</span>
         <span class="hero-tag">最終更新: 本日</span>
       </div>
     </div>
     <div style="text-align:center">
-      <div class="hero-score">${c.score}</div>
+      <div class="hero-score">${c.score || 0}</div>
       <div class="hero-score-label">AIOスコア / 100</div>
-      <div class="hero-score-change">▲ ${c.scoreChange}pt 先月比</div>
+      <div class="hero-score-change">▲ ${c.scoreChange || '+0'}pt 先月比</div>
     </div>`;
 }
 
@@ -692,6 +695,7 @@ function renderKPI(c){
 // ─── LINE CHART ─────────────────────────────────────────────
 function renderLine(c){
   const svg=document.getElementById("lineChart");
+  if(!c.trend || c.trend.length < 2){ svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="#9CA3AF" font-size="13">データがありません</text>'; return; }
   const W=460,H=155,PL=52,PR=12,PT=12,PB=28,iW=W-PL-PR,iH=H-PT-PB;
   const key=currentTab, color=key==="mentions"?"#2E75B6":"#10B981";
   const vals=c.trend.map(d=>d[key]);
@@ -784,6 +788,7 @@ function renderKeywords(c){
 // ─── BAR CHART ──────────────────────────────────────────────
 function renderBar(c){
   const svg=document.getElementById("barChart");
+  if(!c.barData || c.barData.length===0){ svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="#9CA3AF" font-size="13">データがありません</text>'; return; }
   const W=440,H=155,PL=50,PR=12,PT=10,PB=28,iW=W-PL-PR,iH=H-PT-PB;
   const maxV=Math.max(...c.barData.map(d=>d.val))||1;
   const bW=(iW/c.barData.length)*0.6, gap=(iW/c.barData.length)*0.4;
