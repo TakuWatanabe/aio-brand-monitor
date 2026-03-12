@@ -9,6 +9,7 @@ const {
   measureWithPerplexity,
   measureWithGoogleAI,
   measureWithGemini,
+  measureKeywordPresences,
   getWeekStart,
   getCurrentMonth,
 } = require('../lib/aiMeasurement');
@@ -170,6 +171,14 @@ module.exports = async (req, res) => {
       scoreKpi.dir = diff >= 0 ? 'up' : 'down';
     }
 
+    // === キーワード別 presence を自動計測・更新 ===
+    let updatedKeywords = client.keywords || [];
+    if (updatedKeywords.length > 0) {
+      console.log(`[KW計測開始] ${updatedKeywords.length}件のキーワードを計測します`);
+      updatedKeywords = await measureKeywordPresences(updatedKeywords, brandNames);
+      console.log('[KW計測完了]');
+    }
+
     // === clients テーブルを更新 ===
     const { error: updateError } = await supabaseAdmin.from('clients').update({
       current_score: overallScore,
@@ -177,6 +186,7 @@ module.exports = async (req, res) => {
       engines,
       trend: recentTrend,
       kpi,
+      keywords: updatedKeywords,
       updated_at: new Date().toISOString(),
     }).eq('id', client.id);
 
