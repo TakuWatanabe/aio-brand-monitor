@@ -602,8 +602,11 @@ async function doMeasure() {
 
     const googleLine = body.googleAI && !body.googleAI.skipped
       ? `\n🔎 Google AI: ${body.googleAI.score}pt (${body.googleAI.mentions}/${body.googleAI.total}件)`
-      : '\n🔎 Google AI: 未設定（SerpAPIキーを追加すると計測可能）';
-    alert(`✅ 計測完了！\n\n📊 総合AIOスコア: ${body.overallScore}pt\n🤖 ChatGPT: ${body.chatgpt.score}pt (${body.chatgpt.mentions}/${body.chatgpt.total}件)\n🔍 Perplexity: ${body.perplexity.score}pt (${body.perplexity.mentions}/${body.perplexity.total}件)${googleLine}`);
+      : '\n🔎 Google AI: 未設定（SERPAPI_KEYを追加すると計測可能）';
+    const geminiLine = body.gemini && !body.gemini.skipped
+      ? `\n✨ Gemini: ${body.gemini.score}pt (${body.gemini.mentions}/${body.gemini.total}件)`
+      : '\n✨ Gemini: 未設定（GEMINI_API_KEYを追加すると計測可能）';
+    alert(`✅ 計測完了！\n\n📊 総合AIOスコア: ${body.overallScore}pt\n🤖 ChatGPT: ${body.chatgpt.score}pt (${body.chatgpt.mentions}/${body.chatgpt.total}件)\n🔍 Perplexity: ${body.perplexity.score}pt (${body.perplexity.mentions}/${body.perplexity.total}件)${googleLine}${geminiLine}`);
 
   } catch (err) {
     alert("エラー: " + err.message);

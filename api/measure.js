@@ -8,6 +8,7 @@ const {
   measureWithChatGPT,
   measureWithPerplexity,
   measureWithGoogleAI,
+  measureWithGemini,
   getWeekStart,
   getCurrentMonth,
 } = require('../lib/aiMeasurement');
@@ -66,20 +67,28 @@ module.exports = async (req, res) => {
   try {
     console.log(`[計測開始] ${client.name} / ${industry} / brandNames: ${brandNames.join(', ')}`);
 
-    // === ChatGPT + Perplexity + Google AI Overview を並列で計測 ===
-    const [chatgptResult, perplexityResult, googleAIResult] = await Promise.all([
+    // === 4エンジン並列計測 ===
+    const [chatgptResult, perplexityResult, googleAIResult, geminiResult] = await Promise.all([
       measureWithChatGPT(brandNames, industry),
       measureWithPerplexity(brandNames, industry),
       measureWithGoogleAI(brandNames, industry),
+      measureWithGemini(brandNames, industry),
     ]);
 
-    console.log(`[計測完了] ChatGPT: ${chatgptResult.score}pt / Perplexity: ${perplexityResult.score}pt / GoogleAI: ${googleAIResult.score}pt`);
+    console.log(`[計測完了] ChatGPT: ${chatgptResult.score}pt / Perplexity: ${perplexityResult.score}pt / GoogleAI: ${googleAIResult.score}pt / Gemini: ${geminiResult.score}pt`);
 
-    // === 総合スコアを計算 ===
-    // Google AI が有効なら3エンジン平均、無効なら2エンジン平均
-    const overallScore = googleAIResult.skipped
-      ? Math.round((chatgptResult.score + perplexityResult.score) / 2)
-      : Math.round((chatgptResult.score * 0.4 + perplexityResult.score * 0.4 + googleAIResult.score * 0.2));
+    // === 総合スコアを計算（有効なエンジンのみ加重平均）===
+    const activeEngines = [
+      { result: chatgptResult,    weight: 0.35 },
+      { result: perplexityResult, weight: 0.35 },
+      { result: googleAIResult,   weight: 0.15 },
+      { result: geminiResult,     weight: 0.15 },
+    ].filter(e => !e.result.skipped);
+
+    const totalWeight = activeEngines.reduce((sum, e) => sum + e.weight, 0);
+    const overallScore = totalWeight > 0
+      ? Math.round(activeEngines.reduce((sum, e) => sum + e.result.score * (e.weight / totalWeight), 0))
+      : 0;
 
     // === ai_scores テーブルに保存（同週は上書き）===
     const scoresToUpsert = [
@@ -111,6 +120,17 @@ module.exports = async (req, res) => {
         week_start: weekStart,
       });
     }
+    // Gemini が有効な場合のみ保存
+    if (!geminiResult.skipped) {
+      scoresToUpsert.push({
+        client_id: client.id,
+        ai_engine: 'gemini',
+        score: geminiResult.score,
+        mention_count: geminiResult.mentionCount,
+        total_queries: geminiResult.totalQueries,
+        week_start: weekStart,
+      });
+    }
     const { error: insertError } = await supabaseAdmin.from('ai_scores').upsert(
       scoresToUpsert,
       { onConflict: 'client_id,ai_engine,week_start' }
@@ -120,12 +140,14 @@ module.exports = async (req, res) => {
 
     // === engines データを更新 ===
     const engines = JSON.parse(JSON.stringify(client.engines || []));
-    const chatgptEngine = engines.find(e => e.name === 'ChatGPT');
+    const chatgptEngine    = engines.find(e => e.name === 'ChatGPT');
     const perplexityEngine = engines.find(e => e.name === 'Perplexity');
-    const googleAIEngine = engines.find(e => e.name === 'Google AI Overview');
+    const googleAIEngine   = engines.find(e => e.name === 'Google AI Overview');
+    const geminiEngine     = engines.find(e => e.name === 'Gemini');
     if (chatgptEngine) chatgptEngine.val = chatgptResult.score;
     if (perplexityEngine) perplexityEngine.val = perplexityResult.score;
     if (googleAIEngine && !googleAIResult.skipped) googleAIEngine.val = googleAIResult.score;
+    if (geminiEngine && !geminiResult.skipped) geminiEngine.val = geminiResult.score;
 
     // === trend データを更新（最新6ヶ月を保持）===
     const trend = JSON.parse(JSON.stringify(client.trend || []));
@@ -179,6 +201,12 @@ module.exports = async (req, res) => {
         mentions: googleAIResult.mentionCount,
         total: googleAIResult.totalQueries,
         skipped: googleAIResult.skipped || false,
+      },
+      gemini: {
+        score: geminiResult.score,
+        mentions: geminiResult.mentionCount,
+        total: geminiResult.totalQueries,
+        skipped: geminiResult.skipped || false,
       },
     });
   } catch (err) {
