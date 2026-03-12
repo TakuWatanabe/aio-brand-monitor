@@ -25,9 +25,21 @@ module.exports = async (req, res) => {
 
   let userEmail;
   try {
-    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString('utf-8'));
-    userEmail = payload.email;
-    if (!userEmail) throw new Error('email not found in token');
+    const payloadBase64 = token.split('.')[1];
+    // base64url → base64 変換（パディング補完）
+    const padded = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = padded.length % 4 === 0 ? '' : '='.repeat(4 - (padded.length % 4));
+    const payload = JSON.parse(Buffer.from(padded + pad, 'base64').toString('utf-8'));
+
+    // 複数の場所からメールを取得（Supabase バージョンによって異なる）
+    userEmail = payload.email
+      || payload.user_metadata?.email
+      || payload.identities?.[0]?.identity_data?.email;
+
+    if (!userEmail) {
+      console.log('[JWT measure] email not found. keys:', Object.keys(payload));
+      throw new Error('email not found in token');
+    }
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
       return res.status(401).json({ error: 'トークンの有効期限が切れています' });
     }

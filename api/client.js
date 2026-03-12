@@ -23,9 +23,26 @@ module.exports = async (req, res) => {
   // JWT payload を直接デコードしてメールを取得（Supabase Auth API 呼び出し不要）
   let userEmail;
   try {
-    const payload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString('utf-8'));
-    userEmail = payload.email;
-    if (!userEmail) throw new Error('email not found in token');
+    const payloadBase64 = accessToken.split('.')[1];
+    // base64url → base64 変換（パディング補完）
+    const padded = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = padded.length % 4 === 0 ? '' : '='.repeat(4 - (padded.length % 4));
+    const payload = JSON.parse(Buffer.from(padded + pad, 'base64').toString('utf-8'));
+
+    // デバッグ: ペイロードのキーを出力
+    console.log('[JWT] payload keys:', Object.keys(payload));
+    console.log('[JWT] sub:', payload.sub, '/ email:', payload.email, '/ user_metadata:', JSON.stringify(payload.user_metadata));
+
+    // 複数の場所からメールを取得（Supabase バージョンによって異なる）
+    userEmail = payload.email
+      || payload.user_metadata?.email
+      || payload.identities?.[0]?.identity_data?.email;
+
+    if (!userEmail) {
+      console.log('[JWT] email not found. Full payload:', JSON.stringify(payload));
+      throw new Error('email not found in token');
+    }
+
     // トークンの有効期限チェック
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
       return res.status(401).json({ error: 'トークンの有効期限が切れています' });
