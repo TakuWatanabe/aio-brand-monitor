@@ -10,7 +10,7 @@ const {
   measureWithGoogleAI,
   measureWithGemini,
   measureKeywordPresences,
-  measureCompetitors,
+  scoreCompetitorsFromResponses,
   getWeekStart,
   getCurrentMonth,
 } = require('../lib/aiMeasurement');
@@ -180,12 +180,18 @@ module.exports = async (req, res) => {
       console.log('[KW計測完了]');
     }
 
-    // === 競合スコアを自動計測・更新 ===
+    // === 競合スコアを算出（自社計測の既存レスポンスを再利用・追加API呼び出しなし）===
     let updatedCompetitors = client.competitors || [];
     if (updatedCompetitors.length > 0) {
-      console.log(`[競合計測開始] ${updatedCompetitors.filter(c => !c.self).length}社を計測します`);
-      updatedCompetitors = await measureCompetitors(updatedCompetitors, industry, overallScore);
-      console.log('[競合計測完了]');
+      // ChatGPT + Perplexity + Gemini の全レスポンスを結合
+      const allResponses = [
+        ...chatgptResult.details,
+        ...perplexityResult.details,
+        ...(geminiResult.skipped ? [] : geminiResult.details),
+        ...(googleAIResult.skipped ? [] : googleAIResult.details.map(d => ({ response: d.query }))),
+      ];
+      console.log(`[競合計測] ${allResponses.length}件のレスポンスから競合スコアを算出`);
+      updatedCompetitors = scoreCompetitorsFromResponses(updatedCompetitors, allResponses, overallScore);
     }
 
     // === clients テーブルを更新 ===
