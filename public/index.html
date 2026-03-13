@@ -576,6 +576,16 @@ async function doMeasure() {
   btn.disabled = true;
   btn.innerHTML = '<div class="measure-spinner"></div> 計測中...';
 
+  // ボタンのステータスを段階的に更新
+  const stepMessages = [
+    { delay: 3000,  text: '<div class="measure-spinner"></div> ChatGPT 計測中...' },
+    { delay: 12000, text: '<div class="measure-spinner"></div> Perplexity 計測中...' },
+    { delay: 22000, text: '<div class="measure-spinner"></div> Gemini 計測中...' },
+    { delay: 32000, text: '<div class="measure-spinner"></div> 競合スコア計測中...' },
+    { delay: 45000, text: '<div class="measure-spinner"></div> キーワード解析中...' },
+  ];
+  const stepTimers = stepMessages.map(s => setTimeout(() => { if (btn.disabled) btn.innerHTML = s.text; }, s.delay));
+
   try {
     const { data: { session } } = await _supabase.auth.getSession();
     if (!session) { alert("ログインが必要です"); return; }
@@ -587,6 +597,9 @@ async function doMeasure() {
         "Content-Type": "application/json",
       },
     });
+
+    // 段階タイマーをクリア
+    stepTimers.forEach(t => clearTimeout(t));
 
     const body = await res.json();
     if (!res.ok) throw new Error(body.error || "計測に失敗しました");
@@ -607,9 +620,13 @@ async function doMeasure() {
     const geminiLine = body.gemini && !body.gemini.skipped
       ? `\n✨ Gemini: ${body.gemini.score}pt (${body.gemini.mentions}/${body.gemini.total}件)`
       : '\n✨ Gemini: 未設定（GEMINI_API_KEYを追加すると計測可能）';
-    alert(`✅ 計測完了！\n\n📊 総合AIOスコア: ${body.overallScore}pt\n🤖 ChatGPT: ${body.chatgpt.score}pt (${body.chatgpt.mentions}/${body.chatgpt.total}件)\n🔍 Perplexity: ${body.perplexity.score}pt (${body.perplexity.mentions}/${body.perplexity.total}件)${googleLine}${geminiLine}`);
+    const rankLine = body.selfRank
+      ? `\n\n🏆 競合ランキング: ${body.selfRank}位 / ${body.totalCompetitors}社`
+      : '';
+    alert(`✅ 計測完了！\n\n📊 総合AIOスコア: ${body.overallScore}pt\n🤖 ChatGPT: ${body.chatgpt.score}pt (${body.chatgpt.mentions}/${body.chatgpt.total}件)\n🔍 Perplexity: ${body.perplexity.score}pt (${body.perplexity.mentions}/${body.perplexity.total}件)${googleLine}${geminiLine}${rankLine}`);
 
   } catch (err) {
+    stepTimers.forEach(t => clearTimeout(t));
     alert("エラー: " + err.message);
     btn.disabled = false;
     btn.innerHTML = "📡 AIスコア計測";

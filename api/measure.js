@@ -10,6 +10,7 @@ const {
   measureWithGoogleAI,
   measureWithGemini,
   measureKeywordPresences,
+  measureCompetitors,
   getWeekStart,
   getCurrentMonth,
 } = require('../lib/aiMeasurement');
@@ -179,6 +180,14 @@ module.exports = async (req, res) => {
       console.log('[KW計測完了]');
     }
 
+    // === 競合スコアを自動計測・更新 ===
+    let updatedCompetitors = client.competitors || [];
+    if (updatedCompetitors.length > 0) {
+      console.log(`[競合計測開始] ${updatedCompetitors.filter(c => !c.self).length}社を計測します`);
+      updatedCompetitors = await measureCompetitors(updatedCompetitors, industry, overallScore);
+      console.log('[競合計測完了]');
+    }
+
     // === clients テーブルを更新 ===
     const { error: updateError } = await supabaseAdmin.from('clients').update({
       current_score: overallScore,
@@ -187,10 +196,15 @@ module.exports = async (req, res) => {
       trend: recentTrend,
       kpi,
       keywords: updatedKeywords,
+      competitors: updatedCompetitors,
       updated_at: new Date().toISOString(),
     }).eq('id', client.id);
 
     if (updateError) console.error('[DB] clients 更新エラー:', updateError);
+
+    // 競合ランキング情報をレスポンスに含める
+    const sorted = [...updatedCompetitors].sort((a, b) => b.score - a.score);
+    const selfRank = sorted.findIndex(c => c.self) + 1;
 
     return res.status(200).json({
       success: true,
@@ -218,6 +232,9 @@ module.exports = async (req, res) => {
         total: geminiResult.totalQueries,
         skipped: geminiResult.skipped || false,
       },
+      competitors: updatedCompetitors,
+      selfRank,
+      totalCompetitors: updatedCompetitors.length,
     });
   } catch (err) {
     console.error('[計測エラー]', err);
