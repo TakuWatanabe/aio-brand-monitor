@@ -1,5 +1,6 @@
--- 競合他社の names（別名リスト）を追加・更新
--- ChatGPT/Gemini が日本語クエリで使う表記ゆれに対応
+-- 競合他社の names（別名リスト）を更新
+-- ※ Groveの「グローブ」を削除（野球グローブ等との誤検知防止）
+-- ※ 競合計測専用クエリに会社名が直接含まれるため namesの網羅性はそこまで重要でなくなった
 
 UPDATE clients
 SET competitors = '[
@@ -46,7 +47,7 @@ SET competitors = '[
   },
   {
     "name": "Grove",
-    "names": ["Grove", "グローブ", "株式会社Grove", "グローブ株式会社"],
+    "names": ["Grove", "株式会社Grove", "グローブ株式会社"],
     "score": 0,
     "trend": "+0pt",
     "dir": "up",
@@ -58,7 +59,6 @@ WHERE email = 't.watanabe@bitstar.tokyo';
 -- 確認
 SELECT
   name,
-  competitors->0->>'name' AS first_comp,
-  competitors->0->'names' AS first_comp_names
+  competitors->5->'names' AS grove_names
 FROM clients
 WHERE email = 't.watanabe@bitstar.tokyo';
