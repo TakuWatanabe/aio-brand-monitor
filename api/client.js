@@ -65,6 +65,42 @@ module.exports = async (req, res) => {
     });
   }
 
+  // ai_scores テーブルから週次データを取得（直近10週分）
+  const { data: weeklyScores } = await supabase
+    .from('ai_scores')
+    .select('week_start, ai_engine, score, mention_count, total_queries')
+    .eq('client_id', client.id)
+    .order('week_start', { ascending: true })
+    .limit(60); // 最大15週 × 4エンジン
+
+  // 週ごとにまとめて加重平均スコアを計算
+  const weeklyTrend = [];
+  if (weeklyScores && weeklyScores.length > 0) {
+    const weeks = [...new Set(weeklyScores.map(r => r.week_start))].sort();
+    const WEIGHTS = { chatgpt: 0.35, perplexity: 0.35, google_ai: 0.15, gemini: 0.15 };
+
+    for (const week of weeks) {
+      const rows = weeklyScores.filter(r => r.week_start === week);
+      let weightedSum = 0, totalWeight = 0, totalMentions = 0;
+      const engines = {};
+
+      for (const row of rows) {
+        const w = WEIGHTS[row.ai_engine] || 0;
+        weightedSum += row.score * w;
+        totalWeight += w;
+        totalMentions += row.mention_count || 0;
+        engines[row.ai_engine] = row.score;
+      }
+
+      const score = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+      // 表示用ラベル: "3/10" 形式
+      const d = new Date(week);
+      const label = `${d.getMonth() + 1}/${d.getDate()}`;
+
+      weeklyTrend.push({ week, label, score, mentions: totalMentions, engines });
+    }
+  }
+
   // ダッシュボード用フォーマットに変換
   const dashboardClient = {
     id: client.id,
@@ -80,6 +116,7 @@ module.exports = async (req, res) => {
     rank: client.rank || 1,
     kpi: client.kpi || [],
     trend: client.trend || [],
+    weeklyTrend,
     engines: client.engines || [],
     keywords: client.keywords || [],
     competitors: client.competitors || [],

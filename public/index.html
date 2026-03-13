@@ -386,8 +386,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
               <div class="card-sub">ChatGPT・Perplexity・Google AI Overview 合算</div>
             </div>
             <div class="tab-group">
-              <button class="tab-btn active" id="tabMen" onclick="switchTab('mentions')">言及数</button>
-              <button class="tab-btn" id="tabSco" onclick="switchTab('score')">AIOスコア</button>
+              <button class="tab-btn active" id="tabMen" onclick="switchTab('mentions')">月次言及数</button>
+              <button class="tab-btn" id="tabSco" onclick="switchTab('score')">月次スコア</button>
+              <button class="tab-btn" id="tabWkl" onclick="switchTab('weekly')">週次スコア</button>
             </div>
           </div>
           <div class="card-body"><svg id="lineChart" width="100%" viewBox="0 0 460 155" style="display:block"></svg></div>
@@ -701,12 +702,28 @@ function renderKPI(c){
 // ─── LINE CHART ─────────────────────────────────────────────
 function renderLine(c){
   const svg=document.getElementById("lineChart");
+
+  // 週次モード
+  if(currentTab==="weekly"){
+    const wt=c.weeklyTrend||[];
+    if(wt.length < 2){ svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="#9CA3AF" font-size="13">計測データがまだありません（計測を実施すると表示されます）</text>'; return; }
+    drawLineChart(svg, wt.map(d=>d.score), wt.map(d=>d.label),
+      wt.map(d=>`${d.label}週: ${d.score}pt`), "#8B5CF6");
+    return;
+  }
+
+  // 月次モード
   if(!c.trend || c.trend.length < 2){ svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="#9CA3AF" font-size="13">データがありません</text>'; return; }
-  const W=460,H=155,PL=52,PR=12,PT=12,PB=28,iW=W-PL-PR,iH=H-PT-PB;
   const key=currentTab, color=key==="mentions"?"#2E75B6":"#10B981";
-  const vals=c.trend.map(d=>d[key]);
+  drawLineChart(svg, c.trend.map(d=>d[key]), c.trend.map(d=>d.month),
+    c.trend.map((d,i)=>c.trend[i].month+": "+(key==="mentions"?c.trend[i].mentions.toLocaleString():c.trend[i].score+"pt")),
+    color);
+}
+
+function drawLineChart(svg, vals, labels, tooltips, color){
+  const W=460,H=155,PL=52,PR=12,PT=12,PB=28,iW=W-PL-PR,iH=H-PT-PB;
   const min=Math.min(...vals),max=Math.max(...vals),range=max-min||1;
-  const pts=c.trend.map((d,i)=>({x:PL+i/(c.trend.length-1)*iW, y:PT+iH-(d[key]-min)/range*iH, d}));
+  const pts=vals.map((v,i)=>({x:PL+i/(vals.length-1)*iW, y:PT+iH-(v-min)/range*iH}));
   const ld="M"+pts.map(p=>p.x.toFixed(1)+","+p.y.toFixed(1)).join("L");
   const ad=ld+"L"+pts[pts.length-1].x.toFixed(1)+","+(PT+iH)+"L"+PL+","+(PT+iH)+"Z";
   let out=`<defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
@@ -718,15 +735,17 @@ function renderLine(c){
     out+=`<line x1="${PL}" y1="${y.toFixed(1)}" x2="${W-PR}" y2="${y.toFixed(1)}" stroke="#F3F4F6" stroke-width="1"/>`;
     out+=`<text x="${PL-5}" y="${(y+4).toFixed(1)}" font-size="10" fill="#9CA3AF" text-anchor="end">${v.toLocaleString()}</text>`;
   });
-  c.trend.forEach((d,i)=>{
-    out+=`<text x="${(PL+i/(c.trend.length-1)*iW).toFixed(1)}" y="${H-5}" font-size="11" fill="#9CA3AF" text-anchor="middle">${d.month}</text>`;
+  // X軸ラベル（多すぎる場合は間引く）
+  const step=vals.length>8?Math.ceil(vals.length/6):1;
+  labels.forEach((lbl,i)=>{
+    if(i%step!==0 && i!==labels.length-1) return;
+    out+=`<text x="${(PL+i/(vals.length-1)*iW).toFixed(1)}" y="${H-5}" font-size="11" fill="#9CA3AF" text-anchor="middle">${lbl}</text>`;
   });
   out+=`<path d="${ad}" fill="url(#lg)"/>`;
   out+=`<path d="${ld}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round"/>`;
   pts.forEach((p,i)=>{
-    const lbl=c.trend[i].month+": "+(key==="mentions"?c.trend[i].mentions.toLocaleString():c.trend[i].score+"pt");
     out+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="${color}" stroke="#fff" stroke-width="2"
-      style="cursor:pointer" onmouseenter="showTip(event,'${lbl}')" onmouseleave="hideTip()"/>`;
+      style="cursor:pointer" onmouseenter="showTip(event,'${tooltips[i]}')" onmouseleave="hideTip()"/>`;
   });
   svg.innerHTML=out;
 }
@@ -735,6 +754,7 @@ function switchTab(key){
   currentTab=key;
   document.getElementById("tabMen").classList.toggle("active",key==="mentions");
   document.getElementById("tabSco").classList.toggle("active",key==="score");
+  document.getElementById("tabWkl").classList.toggle("active",key==="weekly");
   renderLine(cl());
 }
 
