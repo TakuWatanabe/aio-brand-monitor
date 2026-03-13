@@ -47,7 +47,7 @@ SET competitors = '[
   },
   {
     "name": "Grove",
-    "names": ["Grove", "株式会社Grove", "グローブ株式会社"],
+    "names": ["Grove", "株式会社Grove"],
     "score": 0,
     "trend": "+0pt",
     "dir": "up",
