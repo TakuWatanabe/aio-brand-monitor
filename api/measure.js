@@ -10,6 +10,7 @@ const {
   measureWithGoogleAI,
   measureWithGemini,
   measureKeywordPresences,
+  measureKeywordGoogleAI,
   scoreCompetitorsFromResponses,
   getWeekStart,
   getCurrentMonth,
@@ -172,11 +173,15 @@ module.exports = async (req, res) => {
       scoreKpi.dir = diff >= 0 ? 'up' : 'down';
     }
 
-    // === キーワード別 presence を自動計測・更新 ===
+    // === キーワード別 presence を自動計測・更新（ChatGPT + Gemini）===
     let updatedKeywords = client.keywords || [];
     if (updatedKeywords.length > 0) {
       console.log(`[KW計測開始] ${updatedKeywords.length}件のキーワードを計測します`);
+      // AI 上の存在感（ChatGPT + Gemini）
       updatedKeywords = await measureKeywordPresences(updatedKeywords, brandNames);
+      // Google AI Overview での言及確認（SerpAPI）
+      // ※ SerpAPI 無料プラン 100クエリ/月: キーワード数×計測回数を管理すること
+      updatedKeywords = await measureKeywordGoogleAI(updatedKeywords, brandNames);
       console.log('[KW計測完了]');
     }
 

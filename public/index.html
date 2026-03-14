@@ -412,7 +412,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
           </div>
           <div class="card-body" style="padding:0 0 4px">
             <table class="kw-table"><thead><tr>
-              <th>#</th><th>キーワード</th><th>月間検索量</th><th>AI上の存在感</th><th>前月比</th><th>状態</th>
+              <th>#</th><th>キーワード</th><th>月間検索量</th><th>AI上の存在感</th><th>前月比</th><th>Google AI概要</th><th>状態</th>
             </tr></thead><tbody id="kwBody"></tbody></table>
           </div>
         </div>
@@ -812,6 +812,12 @@ function renderKeywords(c){
     const tag=kw.status==="high"?'<span class="kw-tag kw-tag-high">強い</span>'
       :kw.status==="mid"?'<span class="kw-tag kw-tag-mid">改善余地</span>'
       :'<span class="kw-tag kw-tag-low">要強化</span>';
+    // Google AI Overview の言及状態
+    const googleAIBadge = kw.google_ai === true
+      ? '<span title="Google AI概要に言及あり" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:#DCFCE7;color:#166534">✓ 掲載中</span>'
+      : kw.google_ai === false
+        ? '<span title="Google AI概要に言及なし" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:#FEE2E2;color:#991B1B">✗ 未掲載</span>'
+        : '<span style="color:#9CA3AF;font-size:11px">--</span>';
     return `<tr>
       <td style="font-size:11px;font-weight:700;color:#9CA3AF">${i+1}</td>
       <td style="font-weight:600;color:#1F3864;font-size:13px">${kw.kw}</td>
@@ -823,6 +829,7 @@ function renderKeywords(c){
         </div>
       </td>
       <td class="${tCls}" style="font-size:12px;font-weight:600">${kw.change}</td>
+      <td>${googleAIBadge}</td>
       <td>${tag}</td>
     </tr>`;
   }).join("");
