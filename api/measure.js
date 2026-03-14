@@ -15,6 +15,7 @@ const {
   getWeekStart,
   getCurrentMonth,
 } = require('../lib/aiMeasurement');
+const { updateKeywordsWithGSC } = require('../lib/gscClient');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -177,11 +178,24 @@ module.exports = async (req, res) => {
     let updatedKeywords = client.keywords || [];
     if (updatedKeywords.length > 0) {
       console.log(`[KW計測開始] ${updatedKeywords.length}件のキーワードを計測します`);
-      // AI 上の存在感（ChatGPT + Gemini）
+
+      // ① AI 上の存在感（ChatGPT + Gemini）
       updatedKeywords = await measureKeywordPresences(updatedKeywords, brandNames);
-      // Google AI Overview での言及確認（SerpAPI）
-      // ※ SerpAPI 無料プラン 100クエリ/月: キーワード数×計測回数を管理すること
+
+      // ② Google AI Overview での言及確認（SerpAPI）
+      //    ※ SerpAPI 無料プラン 100クエリ/月: キーワード数×計測回数を管理すること
       updatedKeywords = await measureKeywordGoogleAI(updatedKeywords, brandNames);
+
+      // ③ Google Search Console からインプレッション数を取得（vol を自動更新）
+      //    ※ GSC_SERVICE_ACCOUNT / GSC_SITE_URL が設定されている場合のみ実行
+      const gscServiceAccount = process.env.GSC_SERVICE_ACCOUNT;
+      const gscSiteUrl = process.env.GSC_SITE_URL;
+      if (gscServiceAccount && gscSiteUrl) {
+        updatedKeywords = await updateKeywordsWithGSC(updatedKeywords, gscSiteUrl, gscServiceAccount);
+      } else {
+        console.log('[GSC] 環境変数未設定のためスキップします（GSC_SERVICE_ACCOUNT / GSC_SITE_URL）');
+      }
+
       console.log('[KW計測完了]');
     }
 
