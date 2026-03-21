@@ -1,14 +1,23 @@
 // api/cron/weekly-scores.js
 // GET /api/cron/weekly-scores
-// 毎週月曜日に全クライアントのAIスコアを自動計測する (Vercel Cron Job)
+// 毎週月曜日に全クライアントのAIスコアを自動計測し、週次レポートメールを送信する (Vercel Cron Job)
+// vercel.json: { "path": "/api/cron/weekly-scores", "schedule": "0 9 * * 1" }
 
 const supabaseAdmin = require('../../lib/supabaseAdmin');
 const {
   measureWithChatGPT,
   measureWithPerplexity,
+  measureWithGoogleAI,
+  measureWithGemini,
+  measureKeywordPresences,
+  measureKeywordGoogleAI,
+  measureCompetitorListings,
+  scoreCompetitorsFromResponses,
   getWeekStart,
   getCurrentMonth,
 } = require('../../lib/aiMeasurement');
+const { updateKeywordsWithGSC } = require('../../lib/gscClient');
+const { buildReportHtml, sendReportEmail } = require('../../lib/emailReport');
 
 module.exports = async (req, res) => {
   // Vercel Cron は Authorization ヘッダーに CRON_SECRET をセットして呼び出す
@@ -39,43 +48,56 @@ module.exports = async (req, res) => {
     const industry = client.industry || '食品・調味料';
 
     try {
-      console.log(`[計測中] ${client.name}`);
+      console.log(`[計測中] ${client.name} / brandNames: ${brandNames.join(', ')}`);
 
-      const [chatgptResult, perplexityResult] = await Promise.all([
+      // === 4エンジン並列計測 ===
+      const [chatgptResult, perplexityResult, googleAIResult, geminiResult] = await Promise.all([
         measureWithChatGPT(brandNames, industry),
         measureWithPerplexity(brandNames, industry),
+        measureWithGoogleAI(brandNames, industry),
+        measureWithGemini(brandNames, industry),
       ]);
 
-      const overallScore = Math.round((chatgptResult.score + perplexityResult.score) / 2);
+      console.log(`[計測完了] ${client.name}: ChatGPT ${chatgptResult.score}pt / Perplexity ${perplexityResult.score}pt / GoogleAI ${googleAIResult.score}pt / Gemini ${geminiResult.score}pt`);
 
-      // ai_scores に保存
-      await supabaseAdmin.from('ai_scores').upsert([
-        {
-          client_id: client.id,
-          ai_engine: 'chatgpt',
-          score: chatgptResult.score,
-          mention_count: chatgptResult.mentionCount,
-          total_queries: chatgptResult.totalQueries,
-          week_start: weekStart,
-        },
-        {
-          client_id: client.id,
-          ai_engine: 'perplexity',
-          score: perplexityResult.score,
-          mention_count: perplexityResult.mentionCount,
-          total_queries: perplexityResult.totalQueries,
-          week_start: weekStart,
-        },
-      ], { onConflict: 'client_id,ai_engine,week_start' });
+      // === 総合スコアを計算（有効エンジンの加重平均）===
+      const activeEngines = [
+        { result: chatgptResult,    weight: 0.35 },
+        { result: perplexityResult, weight: 0.35 },
+        { result: googleAIResult,   weight: 0.15 },
+        { result: geminiResult,     weight: 0.15 },
+      ].filter(e => !e.result.skipped);
 
-      // engines 更新
+      const totalWeight = activeEngines.reduce((sum, e) => sum + e.weight, 0);
+      const overallScore = totalWeight > 0
+        ? Math.round(activeEngines.reduce((sum, e) => sum + e.result.score * (e.weight / totalWeight), 0))
+        : 0;
+
+      // === ai_scores に保存 ===
+      const scoresToUpsert = [
+        { client_id: client.id, ai_engine: 'chatgpt',    score: chatgptResult.score,    mention_count: chatgptResult.mentionCount,    total_queries: chatgptResult.totalQueries,    week_start: weekStart },
+        { client_id: client.id, ai_engine: 'perplexity', score: perplexityResult.score, mention_count: perplexityResult.mentionCount, total_queries: perplexityResult.totalQueries, week_start: weekStart },
+      ];
+      if (!googleAIResult.skipped) {
+        scoresToUpsert.push({ client_id: client.id, ai_engine: 'google_ai', score: googleAIResult.score, mention_count: googleAIResult.mentionCount, total_queries: googleAIResult.totalQueries, week_start: weekStart });
+      }
+      if (!geminiResult.skipped) {
+        scoresToUpsert.push({ client_id: client.id, ai_engine: 'gemini', score: geminiResult.score, mention_count: geminiResult.mentionCount, total_queries: geminiResult.totalQueries, week_start: weekStart });
+      }
+      await supabaseAdmin.from('ai_scores').upsert(scoresToUpsert, { onConflict: 'client_id,ai_engine,week_start' });
+
+      // === engines 更新 ===
       const engines = JSON.parse(JSON.stringify(client.engines || []));
-      const chatgptEngine = engines.find(e => e.name === 'ChatGPT');
+      const chatgptEngine    = engines.find(e => e.name === 'ChatGPT');
       const perplexityEngine = engines.find(e => e.name === 'Perplexity');
+      const googleAIEngine   = engines.find(e => e.name === 'Google AI Overview');
+      const geminiEngine     = engines.find(e => e.name === 'Gemini');
       if (chatgptEngine) chatgptEngine.val = chatgptResult.score;
       if (perplexityEngine) perplexityEngine.val = perplexityResult.score;
+      if (googleAIEngine && !googleAIResult.skipped) googleAIEngine.val = googleAIResult.score;
+      if (geminiEngine && !geminiResult.skipped) geminiEngine.val = geminiResult.score;
 
-      // trend 更新
+      // === trend 更新（最新6ヶ月）===
       const trend = JSON.parse(JSON.stringify(client.trend || []));
       const existing = trend.find(t => t.month === currentMonth);
       if (existing) {
@@ -84,16 +106,90 @@ module.exports = async (req, res) => {
         trend.push({ month: currentMonth, mentions: 0, score: overallScore });
       }
 
+      // === KPI 更新 ===
+      const kpi = JSON.parse(JSON.stringify(client.kpi || []));
+      const scoreKpi = kpi.find(k => k.label === 'AIOスコア');
+      if (scoreKpi) {
+        const diff = overallScore - (client.current_score || 0);
+        scoreKpi.val = String(overallScore);
+        scoreKpi.change = `${diff >= 0 ? '+' : ''}${diff}pt`;
+        scoreKpi.dir = diff >= 0 ? 'up' : 'down';
+      }
+
+      // === キーワード計測 ===
+      let updatedKeywords = client.keywords || [];
+      if (updatedKeywords.length > 0) {
+        updatedKeywords = await measureKeywordPresences(updatedKeywords, brandNames);
+        updatedKeywords = await measureKeywordGoogleAI(updatedKeywords, brandNames);
+        const gscServiceAccount = process.env.GSC_SERVICE_ACCOUNT;
+        const gscSiteUrl = process.env.GSC_SITE_URL;
+        if (gscServiceAccount && gscSiteUrl) {
+          updatedKeywords = await updateKeywordsWithGSC(updatedKeywords, gscSiteUrl, gscServiceAccount);
+        }
+      }
+
+      // === 競合スコア算出 ===
+      let updatedCompetitors = client.competitors || [];
+      if (updatedCompetitors.length > 0) {
+        const selfResponses = [
+          ...chatgptResult.details,
+          ...perplexityResult.details,
+          ...(geminiResult.skipped ? [] : geminiResult.details),
+        ];
+        const listingResponses = await measureCompetitorListings(industry);
+        const allResponses = [...selfResponses, ...listingResponses];
+        updatedCompetitors = scoreCompetitorsFromResponses(updatedCompetitors, allResponses, overallScore);
+      }
+
+      // === clients テーブル更新 ===
       await supabaseAdmin.from('clients').update({
         current_score: overallScore,
-        score_change: `${overallScore - client.current_score >= 0 ? '+' : ''}${overallScore - client.current_score}`,
+        score_change: `${overallScore - (client.current_score || 0) >= 0 ? '+' : ''}${overallScore - (client.current_score || 0)}`,
         engines,
         trend: trend.slice(-6),
+        kpi,
+        keywords: updatedKeywords,
+        competitors: updatedCompetitors,
         updated_at: new Date().toISOString(),
       }).eq('id', client.id);
 
-      results.push({ id: client.id, name: client.name, overallScore, status: 'success' });
-      console.log(`[完了] ${client.name}: ${overallScore}pt`);
+      // === 週次レポートメール送信 ===
+      // client.email がある場合のみ送信
+      let emailResult = { ok: false, error: 'no email address' };
+      if (client.email) {
+        const enginesPayload = {
+          chatgpt:    { score: chatgptResult.score,    mentions: chatgptResult.mentionCount,    total: chatgptResult.totalQueries,    skipped: false },
+          perplexity: { score: perplexityResult.score, mentions: perplexityResult.mentionCount, total: perplexityResult.totalQueries, skipped: false },
+          googleAI:   { score: googleAIResult.score,   mentions: googleAIResult.mentionCount,   total: googleAIResult.totalQueries,   skipped: googleAIResult.skipped || false },
+          gemini:     { score: geminiResult.score,     mentions: geminiResult.mentionCount,     total: geminiResult.totalQueries,     skipped: geminiResult.skipped || false },
+        };
+
+        // 更新後のデータ（keywords・competitors）をレポート用クライアントに反映
+        const clientForReport = {
+          ...client,
+          keywords: updatedKeywords,
+          competitors: updatedCompetitors,
+          current_score: overallScore,
+        };
+
+        const html = buildReportHtml(clientForReport, overallScore, enginesPayload);
+        emailResult = await sendReportEmail({
+          to: client.email,
+          clientName: client.name,
+          html,
+        });
+      } else {
+        console.log(`[Email] ${client.name}: email アドレス未設定のためスキップ`);
+      }
+
+      results.push({
+        id: client.id,
+        name: client.name,
+        overallScore,
+        email: emailResult.ok ? 'sent' : `skipped (${emailResult.error})`,
+        status: 'success',
+      });
+      console.log(`[完了] ${client.name}: ${overallScore}pt / email: ${emailResult.ok ? '送信済み' : 'スキップ'}`);
 
     } catch (err) {
       console.error(`[エラー] ${client.name}: ${err.message}`);
@@ -104,6 +200,6 @@ module.exports = async (req, res) => {
     await new Promise(r => setTimeout(r, 1000));
   }
 
-  console.log('[週次クロン] 計測完了:', results);
+  console.log('[週次クロン] 全処理完了:', results);
   return res.status(200).json({ success: true, weekStart, results });
 };
