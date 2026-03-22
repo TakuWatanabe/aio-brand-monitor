@@ -234,7 +234,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
 /* CITATIONS */
 .cite-row{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid #F3F4F6}
 .cite-row:last-child{border-bottom:none}
-.cite-domain{font-size:12px;font-weight:600;color:#2563EB;word-break:break-all}
+.cite-domain{font-size:12px;font-weight:600;color:#2563EB;word-break:break-all;text-decoration:none}.cite-domain:hover{text-decoration:underline}
 .cite-count{background:#EBF3FB;color:#1F3864;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;white-space:nowrap}
 .cite-engine{font-size:10px;color:#9CA3AF;margin-top:2px}
 
@@ -1009,7 +1009,7 @@ function renderCitations(c){
     return `<div class="cite-row">
       <img src="${favicon}" width="16" height="16" style="border-radius:3px;flex-shrink:0;margin-top:2px" onerror="this.style.display='none'">
       <div style="flex:1;min-width:0">
-        <div class="cite-domain">${cite.domain}</div>
+        <a class="cite-domain" href="https://${cite.domain}" target="_blank" rel="noopener noreferrer">${cite.domain}</a>
         <div class="cite-engine">${engines}</div>
       </div>
       <div class="cite-count">${cite.count}回引用</div>
