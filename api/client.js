@@ -120,6 +120,7 @@ module.exports = async (req, res) => {
     engines: client.engines || [],
     keywords: client.keywords || [],
     competitors: client.competitors || [],
+    citations: client.citations || [],
     influencers: client.influencers || [],
     barData: client.bar_data || [],
     insight: client.insight || '',
