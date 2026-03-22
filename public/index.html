@@ -693,7 +693,9 @@ async function doMeasure() {
       : '\n🔎 Google AI: 未設定（SERPAPI_KEYを追加すると計測可能）';
     const geminiLine = body.gemini && !body.gemini.skipped
       ? `\n✨ Gemini: ${body.gemini.score}pt (${body.gemini.mentions}/${body.gemini.total}件)`
-      : '\n✨ Gemini: 未設定（GEMINI_API_KEYを追加すると計測可能）';
+      : body.gemini && body.gemini.skipReason === 'quota_exceeded'
+        ? '\n✨ Gemini: クォータ超過（本日の無料枠が上限に達しました。明日リセットされます）'
+        : '\n✨ Gemini: 未設定（GEMINI_API_KEYを追加すると計測可能）';
     const rankLine = body.selfRank
       ? `\n\n🏆 競合ランキング: ${body.selfRank}位 / ${body.totalCompetitors}社`
       : '';
@@ -1008,11 +1010,18 @@ function renderCitations(c){
     const favicon = `https://www.google.com/s2/favicons?domain=${cite.domain}&sz=16`;
     const urls = cite.urls || [];
 
-    // 記事URLをパス部分だけ短縮して個別リンク表示
-    const articleLinks = urls.map(url => {
+    // ルートURL（パスが/のみ）は記事なし扱い
+    const articleUrls = urls.filter(url => {
+      try { const p = new URL(url).pathname; return p && p !== '/' && p !== ''; }
+      catch(e) { return false; }
+    });
+    const hasArticles = articleUrls.length > 0;
+
+    // 記事URLをパス部分だけ短縮して個別リンク表示（ルートURLは除外）
+    const articleLinks = articleUrls.map(url => {
       try {
         const u = new URL(url);
-        const path = (u.pathname + u.search).replace(/\/$/, '') || '/';
+        const path = (u.pathname + u.search).replace(/\/$/, '');
         const short = path.length > 44 ? path.slice(0, 42) + '…' : path;
         return `<a href="${url}" target="_blank" rel="noopener noreferrer"
           style="display:block;font-size:10px;color:#6B7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:95%;margin-top:2px;text-decoration:none;"
@@ -1022,14 +1031,17 @@ function renderCitations(c){
       } catch(e) { return ''; }
     }).join('');
 
-    // ドメイン名は最初の記事URLへリンク（記事URLなければドメインルート）
-    const mainUrl = urls.length > 0 ? urls[0] : `https://${cite.domain}`;
+    // 記事URLがない場合はドメインルートへリンクし「記事URLなし」を表示
+    const mainUrl = hasArticles ? articleUrls[0] : `https://${cite.domain}`;
+    const noArticleNote = !hasArticles
+      ? `<span style="font-size:10px;color:#D1D5DB;font-style:italic">記事URLなし（ドメイン参照）</span>` : '';
 
     return `<div class="cite-row">
       <img src="${favicon}" width="16" height="16" style="border-radius:3px;flex-shrink:0;margin-top:3px" onerror="this.style.display='none'">
       <div style="flex:1;min-width:0">
         <a class="cite-domain" href="${mainUrl}" target="_blank" rel="noopener noreferrer">${cite.domain}</a>
         ${articleLinks}
+        ${noArticleNote}
         ${engines ? `<div class="cite-engine" style="margin-top:3px">${engines}</div>` : ''}
       </div>
       <div class="cite-count">${cite.count}回引用</div>
