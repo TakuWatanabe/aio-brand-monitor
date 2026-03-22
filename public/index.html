@@ -380,7 +380,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
     <div class="topbar">
       <div class="topbar-title" id="pageTitle">ブランドダッシュボード</div>
       <div class="topbar-right">
-        <span class="badge badge-red">⚠️ 競合スコア急上昇中</span>
+        <span class="badge badge-red" id="alertBadge" style="display:none"></span>
         <span class="badge badge-blue" id="dateBadge"></span>
         <button class="measure-btn" id="measureBtn" onclick="doMeasure()">📡 AIスコア計測</button>
         <div class="notif-btn">🔔<div class="notif-dot"></div></div>
@@ -401,7 +401,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
           <div class="card-header">
             <div>
               <div class="card-title">ブランドAI言及数トレンド（6ヶ月）</div>
-              <div class="card-sub">ChatGPT・Perplexity・Google AI Overview 合算</div>
+              <div class="card-sub">ChatGPT・Perplexity・Google AI Overview・Gemini・Claude 合算</div>
             </div>
             <div class="tab-group">
               <button class="tab-btn active" id="tabMen" onclick="switchTab('mentions')">月次言及数</button>
@@ -655,7 +655,7 @@ async function doMeasure() {
   const stepMessages = [
     { delay: 3000,  text: '<div class="measure-spinner"></div> ChatGPT 計測中...' },
     { delay: 12000, text: '<div class="measure-spinner"></div> Perplexity 計測中...' },
-    { delay: 22000, text: '<div class="measure-spinner"></div> Gemini 計測中...' },
+    { delay: 22000, text: '<div class="measure-spinner"></div> Gemini / Claude 計測中...' },
     { delay: 32000, text: '<div class="measure-spinner"></div> 競合スコア計測中...' },
     { delay: 45000, text: '<div class="measure-spinner"></div> キーワード解析中...' },
   ];
@@ -692,19 +692,22 @@ async function doMeasure() {
     const googleLine = body.googleAI && !body.googleAI.skipped
       ? `\n🔎 Google AI: ${body.googleAI.score}pt (${body.googleAI.mentions}/${body.googleAI.total}件)`
       : '\n🔎 Google AI: 未設定（SERPAPI_KEYを追加すると計測可能）';
-    const geminiDebug = body.gemini ? ` [key=${body.gemini._debug_key_set}, len=${body.gemini._debug_key_len}, skip=${body.gemini.skipped}, reason=${body.gemini.skipReason}]` : '';
     const geminiLine = body.gemini && !body.gemini.skipped
       ? `\n✨ Gemini: ${body.gemini.score}pt (${body.gemini.mentions}/${body.gemini.total}件)`
       : body.gemini && body.gemini.skipReason === 'quota_exceeded'
         ? '\n✨ Gemini: クォータ超過（本日の無料枠が上限に達しました。明日リセットされます）'
-        : `\n✨ Gemini: 未設定（GEMINI_API_KEYを追加すると計測可能）${geminiDebug}`;
+        : '\n✨ Gemini: 未設定（GEMINI_API_KEYを追加すると計測可能）';
+    const claudeLine = body.claude && !body.claude.skipped
+      ? `\n🟠 Claude: ${body.claude.score}pt (${body.claude.mentions}/${body.claude.total}件)`
+      : '\n🟠 Claude: 未設定（ANTHROPIC_API_KEYを追加すると計測可能）';
+    const copilotLine = '\n🔵 Copilot: 準備中（Microsoft公開API待ち）';
     const rankLine = body.selfRank
       ? `\n\n🏆 競合ランキング: ${body.selfRank}位 / ${body.totalCompetitors}社`
       : '';
     const citeLine = body.citations && body.citations.length > 0
       ? `\n🔗 引用URL: ${body.citations.length}ドメインを検出`
       : '';
-    alert(`✅ 計測完了！\n\n📊 総合AIOスコア: ${body.overallScore}pt\n🤖 ChatGPT: ${body.chatgpt.score}pt (${body.chatgpt.mentions}/${body.chatgpt.total}件)\n🔍 Perplexity: ${body.perplexity.score}pt (${body.perplexity.mentions}/${body.perplexity.total}件)${googleLine}${geminiLine}${rankLine}${citeLine}`);
+    alert(`✅ 計測完了！\n\n📊 総合AIOスコア: ${body.overallScore}pt\n🤖 ChatGPT: ${body.chatgpt.score}pt (${body.chatgpt.mentions}/${body.chatgpt.total}件)\n🔍 Perplexity: ${body.perplexity.score}pt (${body.perplexity.mentions}/${body.perplexity.total}件)${googleLine}${geminiLine}${claudeLine}${copilotLine}${rankLine}${citeLine}`);
 
   } catch (err) {
     stepTimers.forEach(t => clearTimeout(t));
@@ -740,6 +743,15 @@ function renderSidebarUser(){
   document.getElementById("sbRole").textContent = c.userRole;
   document.getElementById("topAva").style.background = c.color;
   document.getElementById("topAva").textContent = c.short;
+
+  // 日次アラートバッジ（score_alert フィールドがある場合に表示）
+  const alertBadge = document.getElementById("alertBadge");
+  if (c.score_alert) {
+    alertBadge.textContent = `⚠️ ${c.score_alert}`;
+    alertBadge.style.display = '';
+  } else {
+    alertBadge.style.display = 'none';
+  }
 }
 
 // ─── NAV ────────────────────────────────────────────────────
@@ -1087,7 +1099,7 @@ function renderAdvice(c){
     advices.push({
       icon: '📈', priority: 'mid',
       title: 'Perplexity対応を強化する',
-      desc: '引用元URLを整備し、構造化データ（Schema.org）を実装することでPerplexityでの引用率が向上します。Perplexityはスコアの35%を占めます。',
+      desc: '引用元URLを整備し、構造化データ（Schema.org）を実装することでPerplexityでの引用率が向上します。Perplexityはスコアの30%を占めます。',
     });
     advices.push({
       icon: '🔗', priority: 'mid',

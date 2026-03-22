@@ -9,6 +9,7 @@ const {
   measureWithPerplexity,
   measureWithGoogleAI,
   measureWithGemini,
+  measureWithClaude,
   measureKeywordPresences,
   measureKeywordGoogleAI,
   measureCompetitorListings,
@@ -73,22 +74,24 @@ module.exports = async (req, res) => {
   try {
     console.log(`[計測開始] ${client.name} / ${industry} / brandNames: ${brandNames.join(', ')}`);
 
-    // === 4エンジン並列計測 ===
-    const [chatgptResult, perplexityResult, googleAIResult, geminiResult] = await Promise.all([
+    // === 5エンジン並列計測 ===
+    const [chatgptResult, perplexityResult, googleAIResult, geminiResult, claudeResult] = await Promise.all([
       measureWithChatGPT(brandNames, industry),
       measureWithPerplexity(brandNames, industry),
       measureWithGoogleAI(brandNames, industry),
       measureWithGemini(brandNames, industry),
+      measureWithClaude(brandNames, industry),
     ]);
 
-    console.log(`[計測完了] ChatGPT: ${chatgptResult.score}pt / Perplexity: ${perplexityResult.score}pt / GoogleAI: ${googleAIResult.score}pt / Gemini: ${geminiResult.score}pt`);
+    console.log(`[計測完了] ChatGPT: ${chatgptResult.score}pt / Perplexity: ${perplexityResult.score}pt / GoogleAI: ${googleAIResult.score}pt / Gemini: ${geminiResult.score}pt / Claude: ${claudeResult.score}pt`);
 
     // === 総合スコアを計算（有効なエンジンのみ加重平均）===
     const activeEngines = [
-      { result: chatgptResult,    weight: 0.35 },
-      { result: perplexityResult, weight: 0.35 },
+      { result: chatgptResult,    weight: 0.30 },
+      { result: perplexityResult, weight: 0.30 },
       { result: googleAIResult,   weight: 0.15 },
-      { result: geminiResult,     weight: 0.15 },
+      { result: geminiResult,     weight: 0.10 },
+      { result: claudeResult,     weight: 0.15 },
     ].filter(e => !e.result.skipped);
 
     const totalWeight = activeEngines.reduce((sum, e) => sum + e.weight, 0);
@@ -102,6 +105,7 @@ module.exports = async (req, res) => {
       ...(perplexityResult.citations || []),
       ...(googleAIResult.skipped ? [] : (googleAIResult.citations || [])),
       ...(geminiResult.skipped ? [] : (geminiResult.citations || [])),
+      ...(claudeResult.skipped ? [] : (claudeResult.citations || [])),
     ];
     const citations = aggregateCitationsByDomain(allCitationUrls);
     console.log(`[引用URL] ${citations.length}ドメインを集約`);
@@ -147,6 +151,17 @@ module.exports = async (req, res) => {
         week_start: weekStart,
       });
     }
+    // Claude が有効な場合のみ保存
+    if (!claudeResult.skipped) {
+      scoresToUpsert.push({
+        client_id: client.id,
+        ai_engine: 'claude',
+        score: claudeResult.score,
+        mention_count: claudeResult.mentionCount,
+        total_queries: claudeResult.totalQueries,
+        week_start: weekStart,
+      });
+    }
     const { error: insertError } = await supabaseAdmin.from('ai_scores').upsert(
       scoresToUpsert,
       { onConflict: 'client_id,ai_engine,week_start' }
@@ -160,10 +175,20 @@ module.exports = async (req, res) => {
     const perplexityEngine = engines.find(e => e.name === 'Perplexity');
     const googleAIEngine   = engines.find(e => e.name === 'Google AI Overview');
     const geminiEngine     = engines.find(e => e.name === 'Gemini');
+    let claudeEngine       = engines.find(e => e.name === 'Claude');
     if (chatgptEngine) chatgptEngine.val = chatgptResult.score;
     if (perplexityEngine) perplexityEngine.val = perplexityResult.score;
     if (googleAIEngine && !googleAIResult.skipped) googleAIEngine.val = googleAIResult.score;
     if (geminiEngine && !geminiResult.skipped) geminiEngine.val = geminiResult.score;
+    // Claude エンジンが未登録の場合は自動追加
+    if (!claudeResult.skipped) {
+      if (!claudeEngine) {
+        engines.push({ name: 'Claude', val: claudeResult.score, color: '#D97706' });
+        claudeEngine = engines[engines.length - 1];
+      } else {
+        claudeEngine.val = claudeResult.score;
+      }
+    }
 
     // === trend データを更新（最新6ヶ月を保持）===
     const trend = JSON.parse(JSON.stringify(client.trend || []));
@@ -216,11 +241,12 @@ module.exports = async (req, res) => {
     // === 競合スコアを算出 ===
     let updatedCompetitors = client.competitors || [];
     if (updatedCompetitors.length > 0) {
-      // ① 自社計測レスポンス（ChatGPT + Perplexity + Gemini）を結合
+      // ① 自社計測レスポンス（ChatGPT + Perplexity + Gemini + Claude）を結合
       const selfResponses = [
         ...chatgptResult.details,
         ...perplexityResult.details,
         ...(geminiResult.skipped ? [] : geminiResult.details),
+        ...(claudeResult.skipped ? [] : claudeResult.details),
       ];
 
       // ② Perplexityで「業界全社リストアップ」クエリを追加実行（中小競合の検出精度向上）
@@ -277,8 +303,12 @@ module.exports = async (req, res) => {
         total: geminiResult.totalQueries,
         skipped: geminiResult.skipped || false,
         skipReason: geminiResult.skipReason || null,
-        _debug_key_set: !!process.env.GEMINI_API_KEY,
-        _debug_key_len: (process.env.GEMINI_API_KEY || '').length,
+      },
+      claude: {
+        score: claudeResult.score,
+        mentions: claudeResult.mentionCount,
+        total: claudeResult.totalQueries,
+        skipped: claudeResult.skipped || false,
       },
       citations,
       competitors: updatedCompetitors,
