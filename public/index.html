@@ -1005,19 +1005,30 @@ function renderCitations(c){
     el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:24px 8px">AIスコア計測を実施すると<br>AIが引用したURLが表示されます</div>';
     return;
   }
-  el.innerHTML = citations.map(cite => {
+  // 記事URLのある引用元のみに絞る（ルートURL /のみは除外）
+  const citationsWithArticles = citations.filter(cite =>
+    (cite.urls || []).some(url => {
+      try { const p = new URL(url).pathname; return p && p !== '/' && p !== ''; }
+      catch(e) { return false; }
+    })
+  );
+
+  if (citationsWithArticles.length === 0) {
+    el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:24px 8px">引用された記事URLが見つかりませんでした</div>';
+    return;
+  }
+
+  el.innerHTML = citationsWithArticles.map(cite => {
     const engines = (cite.engines || []).join(' · ');
     const favicon = `https://www.google.com/s2/favicons?domain=${cite.domain}&sz=16`;
-    const urls = cite.urls || [];
 
-    // ルートURL（パスが/のみ）は記事なし扱い
-    const articleUrls = urls.filter(url => {
+    // 記事URLのみ（ルートURL除外）
+    const articleUrls = (cite.urls || []).filter(url => {
       try { const p = new URL(url).pathname; return p && p !== '/' && p !== ''; }
       catch(e) { return false; }
     });
-    const hasArticles = articleUrls.length > 0;
 
-    // 記事URLをパス部分だけ短縮して個別リンク表示（ルートURLは除外）
+    // 記事URLをパス部分だけ短縮して個別リンク表示
     const articleLinks = articleUrls.map(url => {
       try {
         const u = new URL(url);
@@ -1031,17 +1042,11 @@ function renderCitations(c){
       } catch(e) { return ''; }
     }).join('');
 
-    // 記事URLがない場合はドメインルートへリンクし「記事URLなし」を表示
-    const mainUrl = hasArticles ? articleUrls[0] : `https://${cite.domain}`;
-    const noArticleNote = !hasArticles
-      ? `<span style="font-size:10px;color:#D1D5DB;font-style:italic">記事URLなし（ドメイン参照）</span>` : '';
-
     return `<div class="cite-row">
       <img src="${favicon}" width="16" height="16" style="border-radius:3px;flex-shrink:0;margin-top:3px" onerror="this.style.display='none'">
       <div style="flex:1;min-width:0">
-        <a class="cite-domain" href="${mainUrl}" target="_blank" rel="noopener noreferrer">${cite.domain}</a>
+        <a class="cite-domain" href="${articleUrls[0]}" target="_blank" rel="noopener noreferrer">${cite.domain}</a>
         ${articleLinks}
-        ${noArticleNote}
         ${engines ? `<div class="cite-engine" style="margin-top:3px">${engines}</div>` : ''}
       </div>
       <div class="cite-count">${cite.count}回引用</div>
