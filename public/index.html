@@ -231,6 +231,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
 .insight-btn{margin-left:auto;background:rgba(255,255,255,.2);border:none;color:#fff;
   padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;flex-shrink:0}
 
+/* CITATIONS */
+.cite-row{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid #F3F4F6}
+.cite-row:last-child{border-bottom:none}
+.cite-domain{font-size:12px;font-weight:600;color:#2563EB;word-break:break-all}
+.cite-count{background:#EBF3FB;color:#1F3864;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;white-space:nowrap}
+.cite-engine{font-size:10px;color:#9CA3AF;margin-top:2px}
+
+/* ADVICE */
+.advice-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #F3F4F6}
+.advice-item:last-child{border-bottom:none}
+.advice-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.advice-title{font-size:12px;font-weight:700;color:#1F3864;margin-bottom:3px}
+.advice-desc{font-size:12px;color:#374151;line-height:1.55}
+.advice-tag{display:inline-block;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;margin-left:6px;vertical-align:middle}
+.advice-tag-high{background:#FEE2E2;color:#991B1B}
+.advice-tag-mid{background:#FEF9C3;color:#854D0E}
+.advice-tag-low{background:#DCFCE7;color:#166534}
+
 /* TOOLTIP */
 .chart-tip{position:fixed;background:#1F3864;color:#fff;padding:5px 10px;border-radius:8px;
   font-size:12px;pointer-events:none;z-index:300;display:none;white-space:nowrap;transform:translate(-50%,-130%)}
@@ -418,6 +436,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
               <th>#</th><th>キーワード</th><th>Google表示回数</th><th>Google順位</th><th>AI上の存在感</th><th>前月比</th><th>Google AI概要</th><th>状態</th>
             </tr></thead><tbody id="kwBody"></tbody></table>
           </div>
+        </div>
+      </div>
+
+      <!-- ══ 引用URLソース ＆ 改善アドバイス ══ -->
+      <div class="sec-title">AIが引用したURLソース ＆ コンテンツ改善アドバイス</div>
+      <div class="two-col" style="margin-bottom:20px">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🔗 AIが引用したURLソース</div>
+              <div class="card-sub">計測時にAIレスポンスから抽出（ドメイン別・引用回数順）</div>
+            </div>
+          </div>
+          <div class="card-body" id="citationList"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">💡 AIOスコア改善アドバイス</div>
+              <div class="card-sub">スコアとキーワード状況に基づく自動診断</div>
+            </div>
+          </div>
+          <div class="card-body" id="adviceList"></div>
         </div>
       </div>
 
@@ -656,7 +697,10 @@ async function doMeasure() {
     const rankLine = body.selfRank
       ? `\n\n🏆 競合ランキング: ${body.selfRank}位 / ${body.totalCompetitors}社`
       : '';
-    alert(`✅ 計測完了！\n\n📊 総合AIOスコア: ${body.overallScore}pt\n🤖 ChatGPT: ${body.chatgpt.score}pt (${body.chatgpt.mentions}/${body.chatgpt.total}件)\n🔍 Perplexity: ${body.perplexity.score}pt (${body.perplexity.mentions}/${body.perplexity.total}件)${googleLine}${geminiLine}${rankLine}`);
+    const citeLine = body.citations && body.citations.length > 0
+      ? `\n🔗 引用URL: ${body.citations.length}ドメインを検出`
+      : '';
+    alert(`✅ 計測完了！\n\n📊 総合AIOスコア: ${body.overallScore}pt\n🤖 ChatGPT: ${body.chatgpt.score}pt (${body.chatgpt.mentions}/${body.chatgpt.total}件)\n🔍 Perplexity: ${body.perplexity.score}pt (${body.perplexity.mentions}/${body.perplexity.total}件)${googleLine}${geminiLine}${rankLine}${citeLine}`);
 
   } catch (err) {
     stepTimers.forEach(t => clearTimeout(t));
@@ -786,6 +830,7 @@ function renderAll(){
   const c=cl();
   renderHero(c); renderKPI(c); renderLine(c); renderCompetitors(c);
   renderEngines(c); renderKeywords(c); renderBar(c); renderInfluencers(c);
+  renderCitations(c); renderAdvice(c);
   document.getElementById("insightText").textContent = c.insight;
 }
 
@@ -947,6 +992,116 @@ function renderKeywords(c){
       <td>${tag}</td>
     </tr>`;
   }).join("");
+}
+
+// ─── CITATIONS ───────────────────────────────────────────────
+function renderCitations(c){
+  const el = document.getElementById("citationList");
+  if (!el) return;
+  const citations = c.citations || [];
+  if (citations.length === 0) {
+    el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:24px 8px">AIスコア計測を実施すると<br>AIが引用したURLが表示されます</div>';
+    return;
+  }
+  el.innerHTML = citations.map(cite => {
+    const engines = (cite.engines || []).join(' · ');
+    const favicon = `https://www.google.com/s2/favicons?domain=${cite.domain}&sz=16`;
+    return `<div class="cite-row">
+      <img src="${favicon}" width="16" height="16" style="border-radius:3px;flex-shrink:0;margin-top:2px" onerror="this.style.display='none'">
+      <div style="flex:1;min-width:0">
+        <div class="cite-domain">${cite.domain}</div>
+        <div class="cite-engine">${engines}</div>
+      </div>
+      <div class="cite-count">${cite.count}回引用</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── ADVICE ─────────────────────────────────────────────────
+function renderAdvice(c){
+  const el = document.getElementById("adviceList");
+  if (!el) return;
+  const score    = c.score || 0;
+  const keywords = c.keywords || [];
+  const weakKw   = keywords.filter(k => k.status === 'low');
+  const midKw    = keywords.filter(k => k.status === 'mid');
+  const noGoogleAI = keywords.filter(k => k.google_ai === false);
+
+  const advices = [];
+
+  // ── スコア帯別アドバイス ──
+  if (score < 30) {
+    advices.push({
+      icon: '🚨', priority: 'high',
+      title: 'AIへの基本情報登録が急務です',
+      desc: 'Googleビジネスプロフィール・Wikipedia・業界メディアなど、AIが参照する権威ある情報源に基本情報を掲載しましょう。',
+    });
+    advices.push({
+      icon: '📝', priority: 'high',
+      title: 'FAQ形式コンテンツを作成する',
+      desc: 'AIは「〇〇とは？」「〇〇のおすすめは？」などのQ&A形式コンテンツを引用しやすい傾向があります。自社サイトにFAQページを充実させましょう。',
+    });
+  } else if (score < 60) {
+    advices.push({
+      icon: '📈', priority: 'mid',
+      title: 'Perplexity対応を強化する',
+      desc: '引用元URLを整備し、構造化データ（Schema.org）を実装することでPerplexityでの引用率が向上します。Perplexityはスコアの35%を占めます。',
+    });
+    advices.push({
+      icon: '🔗', priority: 'mid',
+      title: '被リンク・メディア掲載を増やす',
+      desc: '業界メディアやプレスリリースへの掲載を増やすことで、AIが自社を「権威ある情報源」として認識しやすくなります。',
+    });
+  } else {
+    advices.push({
+      icon: '🏆', priority: 'low',
+      title: 'スコアを維持しつつ新領域へ拡大',
+      desc: '現在のスコアは良好です。コンテンツの鮮度を保ちながら、新しいキーワードでのAI言及を狙って領域を広げましょう。',
+    });
+  }
+
+  // ── キーワード弱点アドバイス ──
+  if (weakKw.length > 0) {
+    advices.push({
+      icon: '🔑', priority: 'high',
+      title: `「${weakKw[0].kw}」などのキーワードでAI存在感が低い`,
+      desc: `${weakKw.length}件のキーワードでAI存在感が低い状態です。これらのキーワードに関連するコンテンツをBlogやLPで充実させましょう。`,
+    });
+  } else if (midKw.length > 0) {
+    advices.push({
+      icon: '⚡', priority: 'mid',
+      title: `「${midKw[0].kw}」の存在感をさらに高める`,
+      desc: `${midKw.length}件のキーワードで存在感が30〜60%台（改善余地あり）。インフルエンサー施策でブランド言及を増やすことが有効です。`,
+    });
+  }
+
+  // ── Google AI Overview 未掲載アドバイス ──
+  if (noGoogleAI.length > 0) {
+    advices.push({
+      icon: '🔎', priority: 'mid',
+      title: `${noGoogleAI.length}件のキーワードでGoogle AI概要に未掲載`,
+      desc: 'Google AI Overviewに掲載されるにはE-E-A-T（経験・専門性・権威性・信頼性）の向上が有効です。著者情報・引用データ・専門家コメントを追加しましょう。',
+    });
+  }
+
+  // ── インフルエンサー施策アドバイス（BitStar固有）──
+  advices.push({
+    icon: '🎯', priority: 'low',
+    title: 'インフルエンサー施策でAI言及を加速',
+    desc: 'SNS上のインフルエンサー投稿はAIが学習するコンテンツの重要な源泉です。BitStarのキャスティング施策でブランド言及を組織的に増やせます。',
+  });
+
+  const priorityLabel = { high: '優先', mid: '推奨', low: '参考' };
+  const priorityCls   = { high: 'advice-tag-high', mid: 'advice-tag-mid', low: 'advice-tag-low' };
+
+  el.innerHTML = advices.slice(0, 5).map(a => `
+    <div class="advice-item">
+      <div class="advice-icon">${a.icon}</div>
+      <div>
+        <div class="advice-title">${a.title}<span class="advice-tag ${priorityCls[a.priority]}">${priorityLabel[a.priority]}</span></div>
+        <div class="advice-desc">${a.desc}</div>
+      </div>
+    </div>`).join('');
 }
 
 // ─── BAR CHART ──────────────────────────────────────────────

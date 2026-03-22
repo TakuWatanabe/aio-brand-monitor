@@ -11,7 +11,9 @@ const {
   measureWithGemini,
   measureKeywordPresences,
   measureKeywordGoogleAI,
+  measureCompetitorListings,
   scoreCompetitorsFromResponses,
+  aggregateCitationsByDomain,
   getWeekStart,
   getCurrentMonth,
 } = require('../lib/aiMeasurement');
@@ -93,6 +95,16 @@ module.exports = async (req, res) => {
     const overallScore = totalWeight > 0
       ? Math.round(activeEngines.reduce((sum, e) => sum + e.result.score * (e.weight / totalWeight), 0))
       : 0;
+
+    // === 引用URLを全エンジンから集約 ===
+    const allCitationUrls = [
+      ...(chatgptResult.citations || []),
+      ...(perplexityResult.citations || []),
+      ...(googleAIResult.skipped ? [] : (googleAIResult.citations || [])),
+      ...(geminiResult.skipped ? [] : (geminiResult.citations || [])),
+    ];
+    const citations = aggregateCitationsByDomain(allCitationUrls);
+    console.log(`[引用URL] ${citations.length}ドメインを集約`);
 
     // === ai_scores テーブルに保存（同週は上書き）===
     const scoresToUpsert = [
@@ -199,21 +211,26 @@ module.exports = async (req, res) => {
       console.log('[KW計測完了]');
     }
 
-    // === 競合スコアを算出（自社計測の既存レスポンスを再利用・追加API呼び出しなし）===
+    // === 競合スコアを算出 ===
     let updatedCompetitors = client.competitors || [];
     if (updatedCompetitors.length > 0) {
-      // ChatGPT + Perplexity + Gemini の全レスポンスを結合
-      const allResponses = [
+      // ① 自社計測レスポンス（ChatGPT + Perplexity + Gemini）を結合
+      const selfResponses = [
         ...chatgptResult.details,
         ...perplexityResult.details,
         ...(geminiResult.skipped ? [] : geminiResult.details),
-        ...(googleAIResult.skipped ? [] : googleAIResult.details.map(d => ({ response: d.query }))),
       ];
-      console.log(`[競合計測] ${allResponses.length}件のレスポンスから競合スコアを算出`);
+
+      // ② Perplexityで「業界全社リストアップ」クエリを追加実行（中小競合の検出精度向上）
+      const listingResponses = await measureCompetitorListings(industry);
+
+      // ③ 自社計測 + リストアップ結果を合算してスコア算出
+      const allResponses = [...selfResponses, ...listingResponses];
+      console.log(`[競合計測] 自社計測${selfResponses.length}件 + リストアップ${listingResponses.length}件 = 合計${allResponses.length}件から算出`);
       updatedCompetitors = scoreCompetitorsFromResponses(updatedCompetitors, allResponses, overallScore);
     }
 
-    // === clients テーブルを更新 ===
+    // === clients テーブルを更新（citations も保存）===
     const { error: updateError } = await supabaseAdmin.from('clients').update({
       current_score: overallScore,
       score_change: `${overallScore - client.current_score >= 0 ? '+' : ''}${overallScore - client.current_score}`,
@@ -222,6 +239,7 @@ module.exports = async (req, res) => {
       kpi,
       keywords: updatedKeywords,
       competitors: updatedCompetitors,
+      citations,
       updated_at: new Date().toISOString(),
     }).eq('id', client.id);
 
@@ -257,6 +275,7 @@ module.exports = async (req, res) => {
         total: geminiResult.totalQueries,
         skipped: geminiResult.skipped || false,
       },
+      citations,
       competitors: updatedCompetitors,
       selfRank,
       totalCompetitors: updatedCompetitors.length,
