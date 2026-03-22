@@ -194,9 +194,11 @@ module.exports = async (req, res) => {
       // ① AI 上の存在感（ChatGPT + Gemini）
       updatedKeywords = await measureKeywordPresences(updatedKeywords, brandNames);
 
-      // ② Google AI Overview での言及確認（SerpAPI）
+      // ② Google AI Overview での言及確認・オーガニック順位取得（SerpAPI）
       //    ※ SerpAPI 無料プラン 100クエリ/月: キーワード数×計測回数を管理すること
-      updatedKeywords = await measureKeywordGoogleAI(updatedKeywords, brandNames);
+      const _siteUrl = process.env.GSC_SITE_URL;
+      const brandDomain = _siteUrl ? (() => { try { return new URL(_siteUrl).hostname; } catch { return null; } })() : null;
+      updatedKeywords = await measureKeywordGoogleAI(updatedKeywords, brandNames, brandDomain);
 
       // ③ Google Search Console からインプレッション数を取得（vol を自動更新）
       //    ※ GSC_SERVICE_ACCOUNT / GSC_SITE_URL が設定されている場合のみ実行
@@ -274,6 +276,9 @@ module.exports = async (req, res) => {
         mentions: geminiResult.mentionCount,
         total: geminiResult.totalQueries,
         skipped: geminiResult.skipped || false,
+        skipReason: geminiResult.skipReason || null,
+        _debug_key_set: !!process.env.GEMINI_API_KEY,
+        _debug_key_len: (process.env.GEMINI_API_KEY || '').length,
       },
       citations,
       competitors: updatedCompetitors,

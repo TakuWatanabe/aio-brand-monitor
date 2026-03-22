@@ -433,8 +433,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
           </div>
           <div class="card-body" style="padding:0 0 4px">
             <table class="kw-table"><thead><tr>
-              <th>#</th><th>キーワード</th><th>Google表示回数</th><th>Google順位</th><th>AI上の存在感</th><th>前月比</th><th>Google AI概要</th><th>状態</th>
+              <th>#</th><th>キーワード</th><th>Google表示回数</th><th>Google順位 <span title="* はGoogle検索順位（SerpAPI）。GSCデータがある場合は上書きされます" style="font-size:10px;font-weight:400;color:#9CA3AF;cursor:help">*とは?</span></th><th>AI上の存在感</th><th>前月比</th><th>Google AI概要</th><th>状態</th>
             </tr></thead><tbody id="kwBody"></tbody></table>
+            <div style="font-size:10px;color:#9CA3AF;padding:4px 8px">* はGoogle検索結果の掲載順位（SerpAPI取得・上位10位以内のみ表示）。表示回数はGoogle Search Consoleの実測値のみ対応。</div>
           </div>
         </div>
       </div>
@@ -691,11 +692,12 @@ async function doMeasure() {
     const googleLine = body.googleAI && !body.googleAI.skipped
       ? `\n🔎 Google AI: ${body.googleAI.score}pt (${body.googleAI.mentions}/${body.googleAI.total}件)`
       : '\n🔎 Google AI: 未設定（SERPAPI_KEYを追加すると計測可能）';
+    const geminiDebug = body.gemini ? ` [key=${body.gemini._debug_key_set}, len=${body.gemini._debug_key_len}, skip=${body.gemini.skipped}, reason=${body.gemini.skipReason}]` : '';
     const geminiLine = body.gemini && !body.gemini.skipped
       ? `\n✨ Gemini: ${body.gemini.score}pt (${body.gemini.mentions}/${body.gemini.total}件)`
       : body.gemini && body.gemini.skipReason === 'quota_exceeded'
         ? '\n✨ Gemini: クォータ超過（本日の無料枠が上限に達しました。明日リセットされます）'
-        : '\n✨ Gemini: 未設定（GEMINI_API_KEYを追加すると計測可能）';
+        : `\n✨ Gemini: 未設定（GEMINI_API_KEYを追加すると計測可能）${geminiDebug}`;
     const rankLine = body.selfRank
       ? `\n\n🏆 競合ランキング: ${body.selfRank}位 / ${body.totalCompetitors}社`
       : '';
@@ -975,9 +977,12 @@ function renderKeywords(c){
     const gscVol = kw.gsc_impressions != null
       ? `<span style="font-weight:700;color:#1F3864">${kw.vol}</span><br><span style="font-size:10px;color:#6B7280">${kw.gsc_clicks ?? 0}クリック</span>`
       : `<span style="color:#9CA3AF;font-size:11px">${kw.vol}</span>`;
+    // Google順位: GSCデータ優先 → なければ SerpAPI オーガニック順位をフォールバック表示
     const gscPos = kw.gsc_position != null
       ? `<span style="font-weight:700;color:#${kw.gsc_position <= 3 ? '166534' : kw.gsc_position <= 10 ? '854D0E' : '991B1B'}">${kw.gsc_position}位</span>`
-      : '<span style="color:#9CA3AF;font-size:11px">--</span>';
+      : kw.serp_position != null
+        ? `<span title="Googleオーガニック検索順位（SerpAPI）" style="font-weight:700;color:#${kw.serp_position <= 3 ? '166534' : kw.serp_position <= 10 ? '854D0E' : '991B1B'}">${kw.serp_position}位*</span>`
+        : '<span style="color:#9CA3AF;font-size:11px">圏外</span>';
     return `<tr>
       <td style="font-size:11px;font-weight:700;color:#9CA3AF">${i+1}</td>
       <td style="font-weight:600;color:#1F3864;font-size:13px">${kw.kw}</td>
