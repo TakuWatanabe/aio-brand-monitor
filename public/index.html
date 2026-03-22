@@ -1006,11 +1006,31 @@ function renderCitations(c){
   el.innerHTML = citations.map(cite => {
     const engines = (cite.engines || []).join(' · ');
     const favicon = `https://www.google.com/s2/favicons?domain=${cite.domain}&sz=16`;
+    const urls = cite.urls || [];
+
+    // 記事URLをパス部分だけ短縮して個別リンク表示
+    const articleLinks = urls.map(url => {
+      try {
+        const u = new URL(url);
+        const path = (u.pathname + u.search).replace(/\/$/, '') || '/';
+        const short = path.length > 44 ? path.slice(0, 42) + '…' : path;
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer"
+          style="display:block;font-size:10px;color:#6B7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:95%;margin-top:2px;text-decoration:none;"
+          onmouseover="this.style.color='#2563EB';this.style.textDecoration='underline'"
+          onmouseout="this.style.color='#6B7280';this.style.textDecoration='none'"
+          title="${url}">${short}</a>`;
+      } catch(e) { return ''; }
+    }).join('');
+
+    // ドメイン名は最初の記事URLへリンク（記事URLなければドメインルート）
+    const mainUrl = urls.length > 0 ? urls[0] : `https://${cite.domain}`;
+
     return `<div class="cite-row">
-      <img src="${favicon}" width="16" height="16" style="border-radius:3px;flex-shrink:0;margin-top:2px" onerror="this.style.display='none'">
+      <img src="${favicon}" width="16" height="16" style="border-radius:3px;flex-shrink:0;margin-top:3px" onerror="this.style.display='none'">
       <div style="flex:1;min-width:0">
-        <a class="cite-domain" href="https://${cite.domain}" target="_blank" rel="noopener noreferrer">${cite.domain}</a>
-        <div class="cite-engine">${engines}</div>
+        <a class="cite-domain" href="${mainUrl}" target="_blank" rel="noopener noreferrer">${cite.domain}</a>
+        ${articleLinks}
+        ${engines ? `<div class="cite-engine" style="margin-top:3px">${engines}</div>` : ''}
       </div>
       <div class="cite-count">${cite.count}回引用</div>
     </div>`;
