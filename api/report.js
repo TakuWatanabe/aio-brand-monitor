@@ -163,7 +163,10 @@ module.exports = async (req, res) => {
       }
     }
 
-    return `<div class="page-comment"><span class="comment-icon">${icon}</span><div class="comment-text">${text}</div></div>`;
+    return `<div class="page-comment">
+      <div class="comment-header">📋 このページのポイント</div>
+      <div class="comment-body"><span class="comment-icon">${icon}</span><div class="comment-text">${text}</div></div>
+    </div>`;
   }
 
   // エンジン棒グラフHTML
@@ -309,10 +312,12 @@ body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','ヒラギノ角ゴ
 .ps-val.neutral{color:#D1D5DB}
 
 /* ─── 定性コメントボックス ─── */
-.page-comment{background:#EFF6FF;border-left:4px solid #2E75B6;border-radius:0 8px 8px 0;padding:9px 14px;margin-bottom:7mm;display:flex;gap:10px;align-items:flex-start}
-.page-comment .comment-icon{font-size:16px;flex-shrink:0;margin-top:1px}
-.page-comment .comment-text{font-size:12px;color:#1E3A5F;line-height:1.65}
-.page-comment .comment-text strong{font-weight:700;color:#1F3864}
+.page-comment{background:linear-gradient(135deg,#EFF6FF 0%,#DBEAFE 100%);border:1.5px solid #93C5FD;border-radius:10px;padding:12px 16px;margin-bottom:7mm}
+.page-comment .comment-header{font-size:10px;font-weight:700;color:#1E40AF;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.page-comment .comment-body{display:flex;gap:10px;align-items:flex-start}
+.page-comment .comment-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.page-comment .comment-text{font-size:12.5px;color:#1E3A5F;line-height:1.7}
+.page-comment .comment-text strong{font-weight:700;color:#1E40AF}
 
 /* ─── セクションヘッダー ─── */
 .sec-head{border-left:4px solid #2E75B6;padding-left:10px;margin-bottom:10mm}
@@ -421,6 +426,26 @@ tbody tr:nth-child(even):hover{background:#EFF6FF}
         </tr>`).join('')}
       </tbody>
     </table>
+    <!-- カバーページ 総評コメント -->
+    ${(() => {
+      const activeCount = engines.filter(e => e.val > 0).length;
+      const strongKwCount = keywords.filter(k => k.status === 'high').length;
+      let icon, text;
+      if (score >= 60) {
+        icon = '✅';
+        text = `<strong>良好な状態です。</strong>主要AIエンジンでのブランド認知が確立されています。引き続き現状維持と競合優位性の強化を進めましょう。`;
+      } else if (score >= 30) {
+        icon = '📈';
+        text = `<strong>成長フェーズです。</strong>一部のAIエンジンで認知が始まっています（${activeCount}エンジン対応済）。コンテンツの充実とインフルエンサー施策でさらなるスコア向上が見込めます。`;
+      } else {
+        icon = '🚀';
+        text = `<strong>スコア向上の余地が大きい状況です。</strong>AIエンジンへの基本情報整備と、追跡キーワードに対応したコンテンツ作成が最優先課題です。BitStarのキャスティング施策を組み合わせることで、効率的な認知拡大が可能です。`;
+      }
+      return `<div class="page-comment" style="margin-top:6mm">
+        <div class="comment-header">📋 今月の総評</div>
+        <div class="comment-body"><span class="comment-icon">${icon}</span><div class="comment-text">${text}</div></div>
+      </div>`;
+    })()}
   </div>
   <div class="page-footer">
     <span>AIO Brand Monitor — Confidential</span>
