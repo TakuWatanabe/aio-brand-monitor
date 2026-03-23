@@ -159,12 +159,10 @@ module.exports = async (req, res) => {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AIO Brand Monitor — ${reportDate} レポート — ${client.name}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 /* ─── 基本 ─── */
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Noto Sans JP',sans-serif;background:#F0F4FF;color:#1a1a2e;font-size:13px;line-height:1.6}
+body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','ヒラギノ角ゴ ProN W3','Meiryo','メイリオ','Yu Gothic','YuGothic','BIZ UDGothic','Noto Sans CJK JP','Noto Sans JP',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F0F4FF;color:#1a1a2e;font-size:13px;line-height:1.6}
 .page{width:210mm;min-height:297mm;background:#fff;margin:0 auto 16px;padding:12mm 14mm;page-break-after:always;position:relative}
 .page:last-child{page-break-after:auto}
 

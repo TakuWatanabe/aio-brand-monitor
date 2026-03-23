@@ -865,14 +865,15 @@ async function downloadReport(event) {
       throw new Error(e.error || 'レポート生成失敗');
     }
     const html = await res.text();
-    const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
-    const url  = URL.createObjectURL(blob);
-    const win  = window.open(url, '_blank');
-    // タブが開いたらBlobURLを解放（少し遅延）
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    // 新しいウィンドウを先に開いてから書き込む（ポップアップブロック回避 + フォント正常読込）
+    const win = window.open('', '_blank');
     if (!win) {
       alert('ポップアップがブロックされました。ブラウザのポップアップ許可設定をご確認ください。');
+      return;
     }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
   } catch (err) {
     alert('❌ レポート生成に失敗しました: ' + err.message);
   } finally {
