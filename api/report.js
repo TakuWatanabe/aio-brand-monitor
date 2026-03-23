@@ -83,6 +83,89 @@ module.exports = async (req, res) => {
       </div>
     </div>`;
 
+  // ── ページごとの定性コメント生成 ──
+  function pageComment(page) {
+    let icon = '💬', text = '';
+
+    if (page === 'engine') {
+      const activeEngines = engines.filter(e => e.val > 0);
+      const topEngine     = engines.reduce((a, b) => (b.val > a.val ? b : a), { val: 0, name: '' });
+      const weakEngines   = engines.filter(e => e.val === 0).map(e => e.name);
+      if (activeEngines.length === 0) {
+        icon = '⚠️';
+        text = `まだどのAIエンジンにも言及されていません。まずは<strong>基本情報の整備（Googleビジネスプロフィール・公式サイトのFAQページ作成）</strong>から始めることを推奨します。`;
+      } else if (score >= 60) {
+        icon = '✅';
+        text = `<strong>${topEngine.name}（${topEngine.val}%）</strong>をはじめ、複数のAIエンジンで安定した露出を確保できています。引き続き現状維持とコンテンツ鮮度の向上を意識しましょう。`;
+      } else if (activeEngines.length === 1) {
+        icon = '📈';
+        text = `現在は<strong>${topEngine.name}</strong>のみで認知されています。${weakEngines.slice(0,2).join('・')}への対応コンテンツを追加することで、スコアの大幅な向上が見込めます。`;
+      } else {
+        icon = '📊';
+        const weak = weakEngines.length > 0 ? `<strong>${weakEngines.slice(0,2).join('・')}</strong>での露出がまだゼロです。` : '';
+        text = `<strong>${topEngine.name}（${topEngine.val}%）</strong>が最も貢献しています。${weak}各エンジンに合わせたコンテンツ最適化で総合スコアを引き上げましょう。`;
+      }
+    }
+
+    else if (page === 'keywords') {
+      const strongKw = keywords.filter(k => k.status === 'high');
+      const weakKw   = keywords.filter(k => k.status === 'low');
+      const midKw    = keywords.filter(k => k.status === 'mid');
+      const withAI   = keywords.filter(k => k.google_ai === true);
+      const total    = keywords.length;
+      if (total === 0) {
+        icon = '⚠️';
+        text = `追跡キーワードがまだ設定されていません。ダッシュボードの「キーワードを編集」から、競合他社が意識しているキーワードを登録しましょう。`;
+      } else if (strongKw.length === 0) {
+        icon = '🚨';
+        text = `${total}件中、AI検索で十分な存在感を持つキーワードがまだありません。<strong>「${weakKw.slice(0,2).map(k=>k.kw).join('」「')}」</strong>を優先的に強化することを推奨します。`;
+      } else {
+        const strongPct = Math.round(strongKw.length / total * 100);
+        icon = strongPct >= 50 ? '✅' : '📈';
+        const aiNote = withAI.length > 0 ? `Google AI概要にも<strong>${withAI.length}件</strong>が掲載中。` : 'Google AI概要への掲載はまだありません。';
+        text = `${total}件中<strong>${strongKw.length}件（${strongPct}%）</strong>で良好な露出を確保。${aiNote}${weakKw.length > 0 ? `残り<strong>${weakKw.length}件</strong>の「要強化」キーワードへの対応が次の優先課題です。` : 'すべてのキーワードで安定した露出が実現できています。'}`;
+      }
+    }
+
+    else if (page === 'citations') {
+      const totalCites = citations.length;
+      const topCite    = citations[0];
+      const chatgptCites = citations.filter(c => (c.engines||[]).includes('ChatGPT')).length;
+      const perplexCites = citations.filter(c => (c.engines||[]).includes('Perplexity')).length;
+      if (totalCites === 0) {
+        icon = '⚠️';
+        text = `AIが引用するURLがまだ検出されていません。<strong>自社サイトに構造化データ（Schema.org）を実装</strong>し、AIが参照しやすいコンテンツを整備することが第一ステップです。`;
+      } else {
+        icon = '🔗';
+        const engineNote = [chatgptCites > 0 ? `ChatGPT ${chatgptCites}件` : '', perplexCites > 0 ? `Perplexity ${perplexCites}件` : ''].filter(Boolean).join('・');
+        text = `<strong>${totalCites}ドメイン</strong>がAIに引用されています。${engineNote ? `（${engineNote}）` : ''}${topCite ? `最多引用元は<strong>${topCite.domain}（${topCite.count}回）</strong>です。` : ''}引用されているURLを分析し、同様の形式でコンテンツを拡充することでさらなる露出向上が期待できます。`;
+      }
+    }
+
+    else if (page === 'trend') {
+      const recentScores = trend.slice(-3).map(t => t.score);
+      const isRising  = recentScores.length >= 2 && recentScores[recentScores.length-1] > recentScores[0];
+      const isFalling = recentScores.length >= 2 && recentScores[recentScores.length-1] < recentScores[0];
+      const allZero   = trend.every(t => t.score === 0);
+      const maxScore  = trend.reduce((m, t) => Math.max(m, t.score), 0);
+      if (allZero || trend.length < 2) {
+        icon = '📋';
+        text = `まだトレンドデータが蓄積されていません。月次計測を継続することで、施策の効果と長期的なスコア推移が可視化されます。`;
+      } else if (isRising) {
+        icon = '📈';
+        text = `直近3ヶ月でスコアが<strong>上昇傾向</strong>にあります（最新: <strong>${recentScores[recentScores.length-1]}pt</strong>）。現在の施策を継続しながら、弱いエンジンへの対応を加えることでさらなる向上が見込めます。`;
+      } else if (isFalling) {
+        icon = '📉';
+        text = `直近3ヶ月でスコアが<strong>下降傾向</strong>にあります。競合の台頭やコンテンツの陳腐化が原因として考えられます。キーワード戦略の見直しとコンテンツのアップデートを推奨します。`;
+      } else {
+        icon = '➡️';
+        text = `スコアは<strong>横ばい傾向</strong>で推移しています（直近: <strong>${recentScores[recentScores.length-1]}pt</strong> / 最高: <strong>${maxScore}pt</strong>）。インフルエンサー施策やFAQコンテンツ強化など、新たな施策の投入タイミングです。`;
+      }
+    }
+
+    return `<div class="page-comment"><span class="comment-icon">${icon}</span><div class="comment-text">${text}</div></div>`;
+  }
+
   // エンジン棒グラフHTML
   function engineBar(e) {
     const pct = Math.min(100, Math.max(0, e.val || 0));
@@ -225,6 +308,12 @@ body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','ヒラギノ角ゴ
 .ps-val.red{color:#FCA5A5}
 .ps-val.neutral{color:#D1D5DB}
 
+/* ─── 定性コメントボックス ─── */
+.page-comment{background:#EFF6FF;border-left:4px solid #2E75B6;border-radius:0 8px 8px 0;padding:9px 14px;margin-bottom:7mm;display:flex;gap:10px;align-items:flex-start}
+.page-comment .comment-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.page-comment .comment-text{font-size:12px;color:#1E3A5F;line-height:1.65}
+.page-comment .comment-text strong{font-weight:700;color:#1F3864}
+
 /* ─── セクションヘッダー ─── */
 .sec-head{border-left:4px solid #2E75B6;padding-left:10px;margin-bottom:10mm}
 .sec-head h2{font-size:17px;font-weight:900;color:#1F3864}
@@ -345,6 +434,7 @@ tbody tr:nth-child(even):hover{background:#EFF6FF}
 ════════════════════════════ -->
 <div class="page">
   ${topSummary}
+  ${pageComment('engine')}
   <div class="sec-head">
     <h2>📊 AIエンジン別 言及シェア</h2>
     <p>各AIエンジンでの自社ブランド言及率（計測クエリに対する言及割合）</p>
@@ -377,6 +467,7 @@ tbody tr:nth-child(even):hover{background:#EFF6FF}
 ════════════════════════════ -->
 <div class="page">
   ${topSummary}
+  ${pageComment('keywords')}
   <div class="sec-head">
     <h2>💬 AIキーワードランキング</h2>
     <p>追跡キーワードごとのAI検索上での存在感と状態</p>
@@ -408,6 +499,7 @@ tbody tr:nth-child(even):hover{background:#EFF6FF}
 ════════════════════════════ -->
 <div class="page">
   ${topSummary}
+  ${pageComment('citations')}
   <div class="sec-head">
     <h2>🔗 AIが引用したURLソース</h2>
     <p>ChatGPT・Perplexity・Claude などが自社関連クエリに対して引用したドメイン一覧</p>
@@ -478,6 +570,7 @@ tbody tr:nth-child(even):hover{background:#EFF6FF}
 ════════════════════════════ -->
 <div class="page">
   ${topSummary}
+  ${pageComment('trend')}
   <div class="sec-head">
     <h2>📈 AIOスコア トレンド（直近6ヶ月）</h2>
     <p>月次スコアの推移。ChatGPT・Perplexity・Google AI Overview・Gemini・Claude の合算</p>
