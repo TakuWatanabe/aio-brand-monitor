@@ -56,6 +56,33 @@ module.exports = async (req, res) => {
   const changeIsPlus = scoreChange.startsWith('+');
   const changeColor  = changeIsPlus ? '#166534' : scoreChange.startsWith('-') ? '#991B1B' : '#374151';
 
+  // ── ページ上部サマリーバー ──
+  const changeValColor = changeIsPlus ? 'green' : scoreChange.startsWith('-') ? 'red' : 'neutral';
+  const topSummary = `
+    <div class="page-summary">
+      <div class="ps-client">${client.name}</div>
+      <div class="ps-item">
+        <span class="ps-label">AIOスコア</span>
+        <span class="ps-val">${score}pt</span>
+      </div>
+      <div class="ps-item">
+        <span class="ps-label">先月比</span>
+        <span class="ps-val ${changeValColor}">${scoreChange}</span>
+      </div>
+      <div class="ps-item">
+        <span class="ps-label">競合順位</span>
+        <span class="ps-val">${selfRank}位 / ${competitors.length}社</span>
+      </div>
+      <div class="ps-item">
+        <span class="ps-label">業種</span>
+        <span class="ps-val neutral" style="font-size:11px">${client.industry || '未設定'}</span>
+      </div>
+      <div class="ps-item" style="margin-left:auto;border-left:none">
+        <span class="ps-label">レポート対象月</span>
+        <span class="ps-val neutral" style="font-size:12px">${reportDate}</span>
+      </div>
+    </div>`;
+
   // エンジン棒グラフHTML
   function engineBar(e) {
     const pct = Math.min(100, Math.max(0, e.val || 0));
@@ -188,6 +215,16 @@ body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','ヒラギノ角ゴ
 .cover-box-unit{font-size:13px;font-weight:400;margin-left:4px;opacity:.7}
 .cover-box-sub{font-size:11px;margin-top:4px;opacity:.7}
 
+/* ─── ページ上部サマリーバー ─── */
+.page-summary{display:flex;align-items:center;gap:0;margin:-12mm -14mm 8mm;background:#1F3864;padding:7px 14mm}
+.ps-client{font-size:12px;font-weight:700;color:#fff;margin-right:14px;white-space:nowrap}
+.ps-item{display:flex;flex-direction:column;align-items:center;padding:0 12px;border-left:1px solid rgba(255,255,255,.2)}
+.ps-label{font-size:9px;color:rgba(255,255,255,.55);font-weight:500;white-space:nowrap}
+.ps-val{font-size:14px;font-weight:900;color:#fff;line-height:1.2;white-space:nowrap}
+.ps-val.green{color:#6EE7B7}
+.ps-val.red{color:#FCA5A5}
+.ps-val.neutral{color:#D1D5DB}
+
 /* ─── セクションヘッダー ─── */
 .sec-head{border-left:4px solid #2E75B6;padding-left:10px;margin-bottom:10mm}
 .sec-head h2{font-size:17px;font-weight:900;color:#1F3864}
@@ -307,6 +344,7 @@ tbody tr:nth-child(even):hover{background:#EFF6FF}
      P2: AIエンジン詳細
 ════════════════════════════ -->
 <div class="page">
+  ${topSummary}
   <div class="sec-head">
     <h2>📊 AIエンジン別 言及シェア</h2>
     <p>各AIエンジンでの自社ブランド言及率（計測クエリに対する言及割合）</p>
@@ -338,6 +376,7 @@ tbody tr:nth-child(even):hover{background:#EFF6FF}
      P3: キーワードランキング
 ════════════════════════════ -->
 <div class="page">
+  ${topSummary}
   <div class="sec-head">
     <h2>💬 AIキーワードランキング</h2>
     <p>追跡キーワードごとのAI検索上での存在感と状態</p>
@@ -368,6 +407,7 @@ tbody tr:nth-child(even):hover{background:#EFF6FF}
      P4: AIが引用したURL
 ════════════════════════════ -->
 <div class="page">
+  ${topSummary}
   <div class="sec-head">
     <h2>🔗 AIが引用したURLソース</h2>
     <p>ChatGPT・Perplexity・Claude などが自社関連クエリに対して引用したドメイン一覧</p>
@@ -437,6 +477,7 @@ tbody tr:nth-child(even):hover{background:#EFF6FF}
      P5: スコアトレンド
 ════════════════════════════ -->
 <div class="page">
+  ${topSummary}
   <div class="sec-head">
     <h2>📈 AIOスコア トレンド（直近6ヶ月）</h2>
     <p>月次スコアの推移。ChatGPT・Perplexity・Google AI Overview・Gemini・Claude の合算</p>
