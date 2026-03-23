@@ -865,15 +865,19 @@ async function downloadReport(event) {
       throw new Error(e.error || 'レポート生成失敗');
     }
     const html = await res.text();
-    // 新しいウィンドウを先に開いてから書き込む（ポップアップブロック回避 + フォント正常読込）
-    const win = window.open('', '_blank');
+    // ① まず空タブを開く（ポップアップブロッカー対策）
+    const win = window.open('about:blank', '_blank');
     if (!win) {
       alert('ポップアップがブロックされました。ブラウザのポップアップ許可設定をご確認ください。');
       return;
     }
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
+    // ② TextEncoderでUTF-8バイト列に変換してBlobを作成（日本語文字化け防止）
+    const encoded = new TextEncoder().encode(html);
+    const blob = new Blob([encoded], { type: 'text/html; charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    // ③ 開いたタブをBlobURLに遷移させる
+    win.location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch (err) {
     alert('❌ レポート生成に失敗しました: ' + err.message);
   } finally {
