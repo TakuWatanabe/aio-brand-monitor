@@ -267,6 +267,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
 
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
+
+/* ══ ADMIN PANEL ══ */
+.admin-modal{background:#fff;border-radius:18px;width:860px;max-width:96vw;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.admin-modal-head{padding:20px 24px 14px;border-bottom:1px solid #F3F4F6;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.admin-modal-body{flex:1;overflow-y:auto;padding:16px 24px}
+.admin-client-card{background:#fff;border:1.5px solid #E5E7EB;border-radius:12px;padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:14px;transition:border-color .18s,box-shadow .18s;cursor:pointer}
+.admin-client-card:hover{border-color:#2E75B6;box-shadow:0 4px 16px rgba(46,117,182,.12)}
+.admin-client-card.has-alert{border-left:4px solid #EF4444}
+.admin-score-pill{font-size:22px;font-weight:800;min-width:46px;text-align:center;line-height:1}
+.admin-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.admin-badge-industry{background:#EBF3FB;color:#1E40AF}
+.admin-badge-rank{background:#DCFCE7;color:#166534}
+.admin-badge-alert{background:#FEE2E2;color:#991B1B}
+.admin-create-form{background:#F9FAFB;border-radius:12px;border:1.5px dashed #D1D5DB;padding:18px;margin-bottom:16px}
+.admin-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.admin-form-input{width:100%;border:1.5px solid #E5E7EB;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;font-family:inherit;color:#1F3864;background:#fff}
+.admin-form-input:focus{border-color:#2E75B6;box-shadow:0 0 0 3px rgba(46,117,182,.1)}
 </style>
 </head>
 <body>
@@ -365,6 +382,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
       <div class="sb-section">レポート</div>
       <div class="nav-item" onclick="setNav(this,'月次レポート')"><span class="nav-icon">📈</span>月次レポート</div>
       <div class="nav-item" onclick="setNav(this,'設定')"><span class="nav-icon">⚙️</span>設定</div>
+      <div class="nav-item" id="adminNavItem" style="display:none" onclick="openAdminPanel()"><span class="nav-icon">🛠</span>管理者パネル</div>
     </div>
     <div class="sb-user">
       <div class="sb-user-ava" id="sbAva" style="background:#2E75B6"></div>
@@ -382,6 +400,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
       <div class="topbar-right">
         <span class="badge badge-red" id="alertBadge" style="display:none"></span>
         <span class="badge badge-blue" id="dateBadge"></span>
+        <button onclick="downloadReport()" style="padding:7px 14px;border-radius:8px;border:none;background:#1F3864;color:#fff;font-size:12px;font-weight:700;cursor:pointer;margin-right:6px">📄 PDF出力</button>
         <button class="measure-btn" id="measureBtn" onclick="doMeasure()">📡 AIスコア計測</button>
         <div class="notif-btn">🔔<div class="notif-dot"></div></div>
         <div class="topbar-avatar" id="topAva" style="background:#2E75B6"></div>
@@ -440,6 +459,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
         </div>
       </div>
 
+      <!-- ══ センチメント分析 ══ -->
+      <div class="sec-title">AI言及センチメント分析</div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div>
+            <div class="card-title">😊 AI言及のポジ/ネガ判定</div>
+            <div class="card-sub">AIが自社を言及する際のトーン分析（計測時に自動更新）</div>
+          </div>
+        </div>
+        <div class="card-body" id="sentimentPanel" style="padding:16px">
+          <div style="color:#9CA3AF;font-size:13px;text-align:center;padding:16px">AIスコア計測を実施するとセンチメントが表示されます</div>
+        </div>
+      </div>
+
       <!-- ══ 引用URLソース ＆ 改善アドバイス ══ -->
       <div class="sec-title">AIが引用したURLソース ＆ コンテンツ改善アドバイス</div>
       <div class="two-col" style="margin-bottom:20px">
@@ -492,6 +525,83 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
 
 <div class="chart-tip" id="chartTip"></div>
 
+<!-- ══ 管理者パネル モーダル ══ -->
+<div class="overlay" id="adminOverlay" onclick="if(event.target===this)closeAdminPanel()" style="display:none">
+  <div class="admin-modal">
+    <div class="admin-modal-head">
+      <div>
+        <div style="font-size:18px;font-weight:700;color:#1F3864">🛠 管理者パネル — クライアント管理</div>
+        <div style="font-size:12px;color:#6B7280;margin-top:2px" id="adminClientCount"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="toggleCreateClientForm()" id="createClientToggleBtn"
+          style="padding:7px 14px;border-radius:8px;background:#1F3864;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer">
+          ＋ 新規クライアント
+        </button>
+        <button class="modal-close" onclick="closeAdminPanel()">✕</button>
+      </div>
+    </div>
+    <div class="admin-modal-body">
+
+      <!-- 新規作成フォーム（初期は非表示） -->
+      <div class="admin-create-form" id="createClientForm" style="display:none">
+        <div style="font-size:13px;font-weight:700;color:#1F3864;margin-bottom:12px">新規クライアント作成</div>
+        <div class="admin-form-row">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">会社名 *</div>
+            <input class="admin-form-input" id="newClientName" type="text" placeholder="株式会社〇〇">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">メールアドレス *</div>
+            <input class="admin-form-input" id="newClientEmail" type="email" placeholder="client@company.com">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">業種</div>
+            <select class="admin-form-input" id="newClientIndustry" style="cursor:pointer">
+              <option value="インフルエンサーマーケティング">インフルエンサーマーケティング</option>
+              <option value="採用・HR">採用・HR</option>
+              <option value="EC・通販">EC・通販</option>
+              <option value="不動産">不動産</option>
+              <option value="飲食・外食">飲食・外食</option>
+              <option value="SaaS・IT">SaaS・IT</option>
+              <option value="化粧品・スキンケア">化粧品・スキンケア</option>
+              <option value="ファッション・アパレル">ファッション・アパレル</option>
+              <option value="食品・調味料">食品・調味料</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">ブランド名（カンマ区切り）</div>
+            <input class="admin-form-input" id="newClientBrands" type="text" placeholder="例: BitStar, ビットスター">
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <button onclick="toggleCreateClientForm()"
+            style="padding:7px 16px;border-radius:7px;border:1.5px solid #E5E7EB;background:#fff;color:#374151;font-size:12px;cursor:pointer">キャンセル</button>
+          <button onclick="createClient()" id="createClientBtn"
+            style="padding:7px 16px;border-radius:7px;background:#2E75B6;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer">✅ 作成する</button>
+        </div>
+      </div>
+
+      <!-- 検索フィルター -->
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+        <input id="adminSearch" type="text" placeholder="🔍 クライアント名・メールアドレスで検索..."
+          oninput="filterAdminClients()"
+          style="flex:1;padding:8px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;font-family:inherit">
+        <button onclick="loadAdminClients()"
+          style="padding:8px 14px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;font-size:12px;cursor:pointer;color:#374151">🔄 更新</button>
+      </div>
+
+      <!-- クライアント一覧 -->
+      <div id="adminClientList">
+        <div style="text-align:center;padding:32px;color:#9CA3AF">読み込み中...</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- ══ キーワード管理モーダル ══ -->
 <div class="overlay" id="kwOverlay" onclick="if(event.target===this)closeKwModal()" style="display:none">
   <div class="modal" style="max-width:560px;width:92%">
@@ -503,6 +613,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
       <button class="modal-close" onclick="closeKwModal()">✕</button>
     </div>
     <div class="modal-body" style="padding:16px">
+      <!-- 業種セレクター -->
+      <div style="background:#EFF6FF;border-radius:8px;padding:12px;border:1px solid #BFDBFE;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:#1E40AF;margin-bottom:8px">🏭 業種設定（AIクエリの最適化に使用）</div>
+        <select id="industrySelect" style="width:100%;padding:7px 10px;border:1px solid #BFDBFE;border-radius:6px;font-size:13px;background:#fff;color:#1F3864;outline:none">
+          <option value="インフルエンサーマーケティング">インフルエンサーマーケティング</option>
+          <option value="採用・HR">採用・HR</option>
+          <option value="EC・通販">EC・通販</option>
+          <option value="不動産">不動産</option>
+          <option value="飲食・外食">飲食・外食</option>
+          <option value="SaaS・IT">SaaS・IT</option>
+          <option value="化粧品・スキンケア">化粧品・スキンケア</option>
+          <option value="ファッション・アパレル">ファッション・アパレル</option>
+          <option value="食品・調味料">食品・調味料</option>
+        </select>
+      </div>
       <!-- キーワード一覧 -->
       <div id="kwEditList" style="margin-bottom:14px"></div>
       <!-- 新規追加フォーム -->
@@ -707,6 +832,9 @@ async function doMeasure() {
     const citeLine = body.citations && body.citations.length > 0
       ? `\n🔗 引用URL: ${body.citations.length}ドメインを検出`
       : '';
+    // センチメントパネルを更新
+    if (body.sentiment) renderSentiment(body.sentiment);
+
     alert(`✅ 計測完了！\n\n📊 総合AIOスコア: ${body.overallScore}pt\n🤖 ChatGPT: ${body.chatgpt.score}pt (${body.chatgpt.mentions}/${body.chatgpt.total}件)\n🔍 Perplexity: ${body.perplexity.score}pt (${body.perplexity.mentions}/${body.perplexity.total}件)${googleLine}${geminiLine}${claudeLine}${copilotLine}${rankLine}${citeLine}`);
 
   } catch (err) {
@@ -717,6 +845,38 @@ async function doMeasure() {
   }
 }
 
+
+// ─── PDF出力 ─────────────────────────────────────────────────
+async function downloadReport() {
+  try {
+    const session = await _supabase.auth.getSession();
+    const token = session.data.session?.access_token;
+    if (!token) { alert('ログインが必要です'); return; }
+    const btn = event.target;
+    btn.textContent = '⏳ 生成中...';
+    btn.disabled = true;
+    const res = await fetch('/api/report', {
+      headers: { 'Authorization': 'Bearer ' + token },
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'PDF生成失敗'); }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const cd = res.headers.get('Content-Disposition') || '';
+    const match = cd.match(/filename="([^"]+)"/);
+    a.download = match ? decodeURIComponent(match[1]) : 'AIO_Report.pdf';
+    a.href = url;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('❌ PDF出力に失敗しました: ' + err.message);
+  } finally {
+    const btn = document.querySelector('[onclick="downloadReport()"]');
+    if (btn) { btn.textContent = '📄 PDF出力'; btn.disabled = false; }
+  }
+}
 
 // ─── 画面切替 ────────────────────────────────────────────────
 function showLogin() {
@@ -732,6 +892,8 @@ function showDashboard() {
   renderDate();
   renderSidebarUser();
   renderAll();
+  // 管理者チェック（非同期・初回のみ）
+  if (!isAdmin) checkAdminStatus();
 }
 
 // ─── SIDEBAR USER ───────────────────────────────────────────
@@ -767,6 +929,9 @@ let kwEditData = []; // 編集中のキーワード配列
 function openKwModal() {
   kwEditData = JSON.parse(JSON.stringify(cl().keywords || []));
   renderKwEditList();
+  // 現在の業種をセレクターに反映
+  const sel = document.getElementById('industrySelect');
+  if (sel && cl().industry) sel.value = cl().industry;
   document.getElementById('kwOverlay').style.display = 'flex';
 }
 
@@ -817,15 +982,19 @@ async function saveKeywords() {
     const res = await fetch('/api/keywords', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keywords: kwEditData }),
+      body: JSON.stringify({
+        keywords: kwEditData,
+        industry: document.getElementById('industrySelect')?.value || cl().industry,
+      }),
     });
     const body = await res.json();
     if (!res.ok) throw new Error(body.error || '保存失敗');
     // ローカルデータも更新
     clientData.keywords = body.keywords;
+    if (body.industry) clientData.industry = body.industry;
     renderKeywords(clientData);
     closeKwModal();
-    alert('✅ キーワードを保存しました！\n次回計測時にAI上の存在感が自動更新されます。');
+    alert('✅ キーワードと業種を保存しました！\n次回計測時にAI上の存在感が自動更新されます。');
   } catch (err) {
     alert('❌ 保存に失敗しました: ' + err.message);
   } finally {
@@ -1071,6 +1240,49 @@ function renderCitations(c){
   }).join('');
 }
 
+// ─── SENTIMENT ───────────────────────────────────────────────
+function renderSentiment(s) {
+  const el = document.getElementById('sentimentPanel');
+  if (!el) return;
+  const pos = s.positive || 0, neg = s.negative || 0, neu = s.neutral || 0;
+  const total = pos + neg + neu || 1;
+  const dominant = pos >= neg && pos >= neu ? 'positive' : neg > pos && neg >= neu ? 'negative' : 'neutral';
+  const dominantLabel = { positive: '😊 ポジティブ優勢', negative: '😟 ネガティブ優勢', neutral: '😐 中立' }[dominant];
+  const dominantColor = { positive: '#166534', negative: '#991B1B', neutral: '#4B5563' }[dominant];
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+      <div style="font-size:32px;font-weight:800;color:${dominantColor}">${dominantLabel}</div>
+      <div style="flex:1;min-width:200px">
+        <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+          <span style="font-size:12px;color:#166534;font-weight:700;width:80px">😊 ポジティブ</span>
+          <div style="flex:1;height:12px;background:#E5E7EB;border-radius:6px;overflow:hidden">
+            <div style="width:${pos}%;height:100%;background:#22C55E;border-radius:6px;transition:width .6s"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:#166534;width:36px;text-align:right">${pos}%</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+          <span style="font-size:12px;color:#4B5563;font-weight:700;width:80px">😐 中立</span>
+          <div style="flex:1;height:12px;background:#E5E7EB;border-radius:6px;overflow:hidden">
+            <div style="width:${neu}%;height:100%;background:#9CA3AF;border-radius:6px;transition:width .6s"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:#4B5563;width:36px;text-align:right">${neu}%</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:12px;color:#991B1B;font-weight:700;width:80px">😟 ネガティブ</span>
+          <div style="flex:1;height:12px;background:#E5E7EB;border-radius:6px;overflow:hidden">
+            <div style="width:${neg}%;height:100%;background:#EF4444;border-radius:6px;transition:width .6s"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:#991B1B;width:36px;text-align:right">${neg}%</span>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#9CA3AF;line-height:1.6">
+        言及回数 ${(s.raw?.positive||0) + (s.raw?.negative||0) + (s.raw?.neutral||0)}件を分析<br>
+        ポジティブ ${s.raw?.positive||0}件 / 中立 ${s.raw?.neutral||0}件 / ネガティブ ${s.raw?.negative||0}件
+      </div>
+    </div>`;
+}
+
 // ─── ADVICE ─────────────────────────────────────────────────
 function renderAdvice(c){
   const el = document.getElementById("adviceList");
@@ -1246,6 +1458,229 @@ document.addEventListener("mousemove",function(e){
   const t=document.getElementById("chartTip");
   if(t.style.display==="block"){ t.style.left=e.clientX+"px"; t.style.top=(e.clientY-10)+"px"; }
 });
+
+// ─── ADMIN PANEL ─────────────────────────────────────────────
+const ADMIN_EMAILS_CLIENT = []; // サーバーサイドで判定するので空でOK
+let adminClientsData = [];
+let isAdmin = false;
+
+// ログイン後に管理者かどうか確認してナビ表示を切替
+async function checkAdminStatus() {
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) return;
+    const res = await fetch('/api/admin/clients', {
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+    if (res.ok) {
+      isAdmin = true;
+      document.getElementById('adminNavItem').style.display = 'flex';
+    }
+  } catch(e) { /* 管理者ではない */ }
+}
+
+async function openAdminPanel() {
+  document.getElementById('adminOverlay').style.display = 'flex';
+  await loadAdminClients();
+}
+
+function closeAdminPanel() {
+  document.getElementById('adminOverlay').style.display = 'none';
+}
+
+async function loadAdminClients() {
+  const listEl = document.getElementById('adminClientList');
+  listEl.innerHTML = '<div style="text-align:center;padding:32px;color:#9CA3AF">読み込み中...</div>';
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) throw new Error('ログインが必要です');
+    const res = await fetch('/api/admin/clients', {
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+    if (res.status === 403) throw new Error('管理者権限がありません');
+    if (!res.ok) throw new Error('取得に失敗しました');
+    const body = await res.json();
+    adminClientsData = body.clients || [];
+    document.getElementById('adminClientCount').textContent =
+      `全 ${body.total} クライアント`;
+    renderAdminClients(adminClientsData);
+  } catch(e) {
+    listEl.innerHTML = `<div style="text-align:center;padding:32px;color:#EF4444">${e.message}</div>`;
+  }
+}
+
+function filterAdminClients() {
+  const q = document.getElementById('adminSearch').value.toLowerCase();
+  const filtered = q
+    ? adminClientsData.filter(c =>
+        c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) ||
+        (c.industry||'').toLowerCase().includes(q))
+    : adminClientsData;
+  renderAdminClients(filtered);
+}
+
+function renderAdminClients(list) {
+  const el = document.getElementById('adminClientList');
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:#9CA3AF">クライアントが見つかりません</div>';
+    return;
+  }
+  el.innerHTML = list.map(c => {
+    const scoreCol = c.score >= 60 ? '#10B981' : c.score >= 30 ? '#F59E0B' : '#EF4444';
+    const changeColor = (c.scoreChange || '').startsWith('+') ? '#10B981'
+      : (c.scoreChange || '').startsWith('-') ? '#EF4444' : '#6B7280';
+    const rankBadge = c.competitorRank
+      ? `<span class="admin-badge admin-badge-rank">競合 ${c.competitorRank}位 / ${c.totalCompetitors}社</span>` : '';
+    const alertBadge = c.hasAlert
+      ? `<span class="admin-badge admin-badge-alert">⚠ ${c.alertMessage}</span>` : '';
+    const updatedAt = c.updatedAt
+      ? new Date(c.updatedAt).toLocaleDateString('ja-JP', { year:'numeric', month:'short', day:'numeric' })
+      : '未計測';
+    const engineList = (c.engines || []).map(e =>
+      `<span style="font-size:10px;background:#F3F4F6;color:#374151;padding:1px 6px;border-radius:10px;font-weight:600">${e.name} ${e.val}%</span>`
+    ).join(' ');
+
+    return `<div class="admin-client-card${c.hasAlert ? ' has-alert' : ''}"
+              onclick="loadClientAsAdmin('${c.id}','${c.name.replace(/'/g,"\\'")}')"
+              title="クリックしてこのクライアントのダッシュボードを表示">
+      <div class="admin-score-pill" style="color:${scoreCol}">${c.score}<span style="font-size:11px;font-weight:400;color:#9CA3AF">pt</span></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <div style="font-size:14px;font-weight:700;color:#1F3864">${c.name}</div>
+          ${c.industry ? `<span class="admin-badge admin-badge-industry">${c.industry}</span>` : ''}
+          ${rankBadge} ${alertBadge}
+        </div>
+        <div style="font-size:11px;color:#6B7280;margin-bottom:5px">${c.email}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">${engineList}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:15px;font-weight:700;color:${changeColor}">${c.scoreChange}</div>
+        <div style="font-size:10px;color:#9CA3AF;margin-top:2px">先月比</div>
+        <div style="font-size:10px;color:#9CA3AF;margin-top:4px">更新: ${updatedAt}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// 管理者として別クライアントのデータを表示
+async function loadClientAsAdmin(clientId, clientName) {
+  if (!confirm(`「${clientName}」のダッシュボードを表示しますか？`)) return;
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) throw new Error('ログインが必要です');
+    const res = await fetch(`/api/admin/clients?id=${clientId}`, {
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+    if (!res.ok) throw new Error('データ取得に失敗しました');
+    const body = await res.json();
+    const raw = body.client;
+
+    // 取得した生データをダッシュボード形式に変換
+    const transformed = transformClientData(raw);
+    clientData = transformed;
+    closeAdminPanel();
+    showDashboard();
+    document.getElementById('pageTitle').textContent = `📋 ${clientName} のダッシュボード（管理者表示）`;
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
+}
+
+// Supabase生データ → ダッシュボード形式への変換
+function transformClientData(raw) {
+  const score = raw.current_score || 0;
+  const scoreChange = raw.score_change || '±0pt';
+  const competitors = Array.isArray(raw.competitors) ? raw.competitors : [];
+  const keywords = Array.isArray(raw.keywords) ? raw.keywords : [];
+  const engines = Array.isArray(raw.engines) ? raw.engines : [];
+  const trend = Array.isArray(raw.trend) ? raw.trend : [];
+
+  const sorted = [...competitors].sort((a,b) => b.score - a.score);
+  const selfEntry = sorted.find(x => x.self);
+  const rank = selfEntry ? sorted.indexOf(selfEntry) + 1 : '--';
+
+  const name = raw.name || 'Unknown';
+  const nameShort = name.replace('株式会社','').replace('（株）','').trim();
+  const initials = nameShort.slice(0,2);
+
+  // KPI生成
+  const kpi = [
+    { label:'AIOスコア', val:score, unit:'/100', c:'blue', icon:'📊', dir:'up', change:'—' },
+    { label:'AI言及クエリ数', val:keywords.filter(k=>k.presence>0).length, unit:'件', c:'green', icon:'💬', dir:'up', change:'—' },
+    { label:'競合ランキング', val:rank, unit:'位', c:'purple', icon:'🏆', dir:'up', change:'—' },
+    { label:'追跡キーワード数', val:keywords.length, unit:'件', c:'orange', icon:'🔍', dir:'up', change:'—' },
+  ];
+
+  return {
+    id: raw.id,
+    name,
+    industry: raw.industry || '',
+    email: raw.email || '',
+    color: '#2E75B6',
+    short: initials,
+    userName: name,
+    userRole: '管理者表示',
+    score,
+    scoreChange: scoreChange.replace('pt',''),
+    rank,
+    kpi,
+    trend: trend.map(t => ({ ...t, mentions: t.score || 0 })),
+    weeklyTrend: [],
+    competitors,
+    engines,
+    keywords,
+    citations: Array.isArray(raw.citations) ? raw.citations : [],
+    barData: [],
+    influencers: [],
+    insight: `${name} の管理者ビューです。AIOスコア: ${score}pt`,
+    score_alert: raw.score_alert || null,
+  };
+}
+
+function toggleCreateClientForm() {
+  const form = document.getElementById('createClientForm');
+  const visible = form.style.display !== 'none';
+  form.style.display = visible ? 'none' : 'block';
+  document.getElementById('createClientToggleBtn').textContent = visible ? '＋ 新規クライアント' : '✕ キャンセル';
+}
+
+async function createClient() {
+  const name = document.getElementById('newClientName').value.trim();
+  const email = document.getElementById('newClientEmail').value.trim();
+  const industry = document.getElementById('newClientIndustry').value;
+  const brandsRaw = document.getElementById('newClientBrands').value.trim();
+  const brand_names = brandsRaw ? brandsRaw.split(',').map(s => s.trim()).filter(Boolean) : [name];
+
+  if (!name || !email) { alert('会社名とメールアドレスは必須です'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('正しいメールアドレスを入力してください'); return; }
+
+  const btn = document.getElementById('createClientBtn');
+  btn.textContent = '作成中...'; btn.disabled = true;
+
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) throw new Error('ログインが必要です');
+    const res = await fetch('/api/admin/clients', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, industry, brand_names }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || '作成に失敗しました');
+
+    // フォームリセット
+    document.getElementById('newClientName').value = '';
+    document.getElementById('newClientEmail').value = '';
+    document.getElementById('newClientBrands').value = '';
+    toggleCreateClientForm();
+    alert(`✅ クライアント「${name}」を作成しました！\nSupabaseのAuthentication画面からパスワードを設定してください。`);
+    await loadAdminClients();
+  } catch(e) {
+    alert('❌ ' + e.message);
+  } finally {
+    btn.textContent = '✅ 作成する'; btn.disabled = false;
+  }
+}
 </script>
 </body>
 </html>

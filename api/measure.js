@@ -310,6 +310,23 @@ module.exports = async (req, res) => {
         total: claudeResult.totalQueries,
         skipped: claudeResult.skipped || false,
       },
+      sentiment: (() => {
+        const active = [chatgptResult, perplexityResult, geminiResult, claudeResult]
+          .filter(r => !r.skipped && r.sentiment);
+        const total = { positive: 0, negative: 0, neutral: 0 };
+        active.forEach(r => {
+          total.positive += r.sentiment.positive || 0;
+          total.negative += r.sentiment.negative || 0;
+          total.neutral  += r.sentiment.neutral  || 0;
+        });
+        const sum = total.positive + total.negative + total.neutral || 1;
+        return {
+          positive: Math.round(total.positive / sum * 100),
+          negative: Math.round(total.negative / sum * 100),
+          neutral:  Math.round(total.neutral  / sum * 100),
+          raw: total,
+        };
+      })(),
       citations,
       competitors: updatedCompetitors,
       selfRank,

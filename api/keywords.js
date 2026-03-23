@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
 
   // === POST: キーワード一覧を保存 ===
   if (req.method === 'POST') {
-    const { keywords } = req.body;
+    const { keywords, industry } = req.body;
     if (!Array.isArray(keywords)) {
       return res.status(400).json({ error: 'keywords は配列である必要があります' });
     }
@@ -68,9 +68,12 @@ module.exports = async (req, res) => {
       gsc_position: kw.gsc_position ?? null,
     }));
 
+    const updatePayload = { keywords: normalized, updated_at: new Date().toISOString() };
+    if (industry && typeof industry === 'string') updatePayload.industry = industry;
+
     const { error: updateError } = await supabaseAdmin
       .from('clients')
-      .update({ keywords: normalized, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', client.id);
 
     if (updateError) {
@@ -78,8 +81,8 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'キーワードの保存に失敗しました' });
     }
 
-    console.log(`[keywords] ${userEmail}: ${normalized.length}件のキーワードを保存しました`);
-    return res.status(200).json({ success: true, keywords: normalized });
+    console.log(`[keywords] ${userEmail}: ${normalized.length}件のキーワードを保存しました${industry ? ' / 業種: ' + industry : ''}`);
+    return res.status(200).json({ success: true, keywords: normalized, industry: industry || client.industry });
   }
 
   return res.status(405).json({ error: 'Method Not Allowed' });
