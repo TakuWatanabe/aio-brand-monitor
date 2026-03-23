@@ -400,7 +400,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
       <div class="topbar-right">
         <span class="badge badge-red" id="alertBadge" style="display:none"></span>
         <span class="badge badge-blue" id="dateBadge"></span>
-        <button onclick="downloadReport(event)" style="padding:7px 14px;border-radius:8px;border:none;background:#1F3864;color:#fff;font-size:12px;font-weight:700;cursor:pointer;margin-right:6px">📄 PDF出力</button>
+        <button onclick="downloadReport(event)" style="padding:7px 14px;border-radius:8px;border:none;background:#1F3864;color:#fff;font-size:12px;font-weight:700;cursor:pointer;margin-right:6px">📄 レポート出力</button>
         <button class="measure-btn" id="measureBtn" onclick="doMeasure()">📡 AIスコア計測</button>
         <div class="notif-btn">🔔<div class="notif-dot"></div></div>
         <div class="topbar-avatar" id="topAva" style="background:#2E75B6"></div>
@@ -846,7 +846,7 @@ async function doMeasure() {
 }
 
 
-// ─── PDF出力 ─────────────────────────────────────────────────
+// ─── レポート出力 ────────────────────────────────────────────
 async function downloadReport(event) {
   const btn = event?.currentTarget || document.querySelector('[onclick*="downloadReport"]');
   try {
@@ -855,25 +855,28 @@ async function downloadReport(event) {
     if (!token) { alert('ログインが必要です'); return; }
     btn.textContent = '⏳ 生成中...';
     btn.disabled = true;
+
+    // HTMLレポートを取得してBlob URLで新しいタブに表示
     const res = await fetch('/api/report', {
       headers: { 'Authorization': 'Bearer ' + token },
     });
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'PDF生成失敗'); }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const cd = res.headers.get('Content-Disposition') || '';
-    const match = cd.match(/filename="([^"]+)"/);
-    a.download = match ? decodeURIComponent(match[1]) : 'AIO_Report.pdf';
-    a.href = url;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error || 'レポート生成失敗');
+    }
+    const html = await res.text();
+    const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const win  = window.open(url, '_blank');
+    // タブが開いたらBlobURLを解放（少し遅延）
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    if (!win) {
+      alert('ポップアップがブロックされました。ブラウザのポップアップ許可設定をご確認ください。');
+    }
   } catch (err) {
-    alert('❌ PDF出力に失敗しました: ' + err.message);
+    alert('❌ レポート生成に失敗しました: ' + err.message);
   } finally {
-    if (btn) { btn.textContent = '📄 PDF出力'; btn.disabled = false; }
+    if (btn) { btn.textContent = '📄 レポート出力'; btn.disabled = false; }
   }
 }
 
