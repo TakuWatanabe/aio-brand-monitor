@@ -400,7 +400,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
       <div class="topbar-right">
         <span class="badge badge-red" id="alertBadge" style="display:none"></span>
         <span class="badge badge-blue" id="dateBadge"></span>
-        <button onclick="downloadReport()" style="padding:7px 14px;border-radius:8px;border:none;background:#1F3864;color:#fff;font-size:12px;font-weight:700;cursor:pointer;margin-right:6px">📄 PDF出力</button>
+        <button onclick="downloadReport(event)" style="padding:7px 14px;border-radius:8px;border:none;background:#1F3864;color:#fff;font-size:12px;font-weight:700;cursor:pointer;margin-right:6px">📄 PDF出力</button>
         <button class="measure-btn" id="measureBtn" onclick="doMeasure()">📡 AIスコア計測</button>
         <div class="notif-btn">🔔<div class="notif-dot"></div></div>
         <div class="topbar-avatar" id="topAva" style="background:#2E75B6"></div>
@@ -847,12 +847,12 @@ async function doMeasure() {
 
 
 // ─── PDF出力 ─────────────────────────────────────────────────
-async function downloadReport() {
+async function downloadReport(event) {
+  const btn = event?.currentTarget || document.querySelector('[onclick*="downloadReport"]');
   try {
     const session = await _supabase.auth.getSession();
     const token = session.data.session?.access_token;
     if (!token) { alert('ログインが必要です'); return; }
-    const btn = event.target;
     btn.textContent = '⏳ 生成中...';
     btn.disabled = true;
     const res = await fetch('/api/report', {
@@ -873,7 +873,6 @@ async function downloadReport() {
   } catch (err) {
     alert('❌ PDF出力に失敗しました: ' + err.message);
   } finally {
-    const btn = document.querySelector('[onclick="downloadReport()"]');
     if (btn) { btn.textContent = '📄 PDF出力'; btn.disabled = false; }
   }
 }
