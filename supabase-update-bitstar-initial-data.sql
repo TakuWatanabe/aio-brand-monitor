@@ -4,7 +4,7 @@
 UPDATE clients SET
   short       = 'BS',
   color       = '#1F3864',
-  user_name   = '渡邉 拓',
+  user_name   = '管理者ユーザー',
   user_role   = 'マーケティング担当',
   current_score = 42,
   score_change  = '+0',
@@ -57,9 +57,9 @@ UPDATE clients SET
     {"label":"未計測", "val":1, "color":"#9CA3AF"}
   ]'::jsonb
 
-WHERE email = 't.watanabe@bitstar.tokyo';
+WHERE email = 'admin@your-domain.com';
 
 -- 確認
 SELECT id, name, email, current_score, short, color, user_name
 FROM clients
-WHERE email = 't.watanabe@bitstar.tokyo';
+WHERE email = 'admin@your-domain.com';

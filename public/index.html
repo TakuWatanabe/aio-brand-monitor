@@ -802,14 +802,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
      SCRIPT
 ══════════════════════════════════════ -->
 <script>
-// ─── Supabase 設定 ────────────────────────────────────────────
-// ⚠️ 以下の2つの値を Supabase プロジェクトの値に置き換えてください
-// Supabase ダッシュボード → Project Settings → API
-const SUPABASE_URL      = "https://rtogxzlodebzwnepakam.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_7_BEir1_WNwHRodigv0wLg_HAJSRk64";
+// ─── Supabase 設定（サーバーから動的取得） ──────────────────────
+// 認証情報は /api/config から取得するため、HTML に直書きしない
+let _supabase = null;
 
-// Supabase クライアント初期化（UMD build では supabase.createClient）
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+async function initSupabase() {
+  const res = await fetch('/api/config');
+  if (!res.ok) throw new Error('設定の取得に失敗しました');
+  const { supabaseUrl, supabaseAnonKey } = await res.json();
+  _supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+}
 
 // ─── STATE ──────────────────────────────────────────────────
 let clientData = null;
@@ -817,24 +819,36 @@ let currentTab = "mentions";
 function cl(){ return clientData; }
 function scoreColor(s){ return s>=80?"#10B981":s>=65?"#F59E0B":"#EF4444"; }
 
-// ─── AUTH STATE 監視 ────────────────────────────────────────
-// ページ読み込み時、Supabase が既存セッションを復元するのを待つ
-_supabase.auth.onAuthStateChange(async (event, session) => {
-  if (session && session.user) {
-    // ログイン済み → API からデータを取得してダッシュボードを表示
-    try {
-      await loadClientData(session.access_token);
-      showDashboard();
-    } catch (err) {
-      console.error("Data load error:", err);
-      await _supabase.auth.signOut();
+// ─── アプリ起動 ──────────────────────────────────────────────
+(async () => {
+  try {
+    await initSupabase();
+  } catch(e) {
+    console.error('Supabase init error:', e);
+    document.getElementById('pageLoading').innerHTML =
+      '<div style="color:#EF4444;font-size:14px">サーバーに接続できませんでした。ページを再読み込みしてください。</div>';
+    return;
+  }
+
+  // ─── AUTH STATE 監視 ──────────────────────────────────────
+  // ページ読み込み時、Supabase が既存セッションを復元するのを待つ
+  _supabase.auth.onAuthStateChange(async (event, session) => {
+    if (session && session.user) {
+      // ログイン済み → API からデータを取得してダッシュボードを表示
+      try {
+        await loadClientData(session.access_token);
+        showDashboard();
+      } catch (err) {
+        console.error("Data load error:", err);
+        await _supabase.auth.signOut();
+        showLogin();
+      }
+    } else if (event === "SIGNED_OUT" || !session) {
+      // 未ログイン・ログアウト → ログイン画面を表示
       showLogin();
     }
-  } else if (event === "SIGNED_OUT" || !session) {
-    // 未ログイン・ログアウト → ログイン画面を表示
-    showLogin();
-  }
-});
+  });
+})();
 
 // ─── データ取得（API） ────────────────────────────────────────
 async function loadClientData(accessToken) {

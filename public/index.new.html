@@ -537,14 +537,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
      SCRIPT
 ══════════════════════════════════════ -->
 <script>
-// ─── Supabase 設定 ────────────────────────────────────────────
-// ⚠️ 以下の2つの値を Supabase プロジェクトの値に置き換えてください
-// Supabase ダッシュボード → Project Settings → API
-const SUPABASE_URL      = "https://rtogxzlodebzwnepakam.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_7_BEir1_WNwHRodigv0wLg_HAJSRk64";
+// ─── Supabase 設定（サーバーから動的取得） ──────────────────────
+// 認証情報は /api/config から取得するため、HTML に直書きしない
+// ※ このファイルは index.html のバックアップです
+const SUPABASE_URL      = ""; // /api/config から取得
+const SUPABASE_ANON_KEY = ""; // /api/config から取得
 
-// Supabase クライアント初期化（UMD build では supabase.createClient）
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Supabase クライアント初期化（index.html を参照してください）
+const _supabase = null; // index.html の initSupabase() で初期化
 
 // ─── STATE ──────────────────────────────────────────────────
 let clientData = null;

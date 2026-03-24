@@ -36,12 +36,12 @@ INSERT INTO clients (
   updated_at
 ) VALUES (
   gen_random_uuid(),
-  't.watanabe@bitstar.tokyo',
+  'admin@your-domain.com',
   '株式会社BitStar',
   'BitStar',
   '#2E75B6',
   'インフルエンサーマーケティング',
-  '渡邉 拓',
+  '管理者ユーザー',
   'マーケティング担当',
   'BitStar',
   ARRAY['BitStar', 'ビットスター'],
@@ -86,4 +86,4 @@ ON CONFLICT (email) DO UPDATE SET
   updated_at       = NOW();
 
 -- 登録確認（このクエリ結果が表示されれば成功）
-SELECT id, name, email, industry, brand_name, brand_names FROM clients WHERE email = 't.watanabe@bitstar.tokyo';
+SELECT id, name, email, industry, brand_name, brand_names FROM clients WHERE email = 'admin@your-domain.com';
