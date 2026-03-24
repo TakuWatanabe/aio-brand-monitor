@@ -408,6 +408,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
     </div>
 
     <div class="content">
+
+      <!-- ══ オンボーディングバナー（初回データなし時のみ表示） ══ -->
+      <div id="onboardingBanner" style="display:none;background:linear-gradient(135deg,#EFF6FF 0%,#F0FDF4 100%);border:1.5px solid #BFDBFE;border-radius:14px;padding:20px 24px;margin-bottom:20px">
+        <div style="display:flex;align-items:flex-start;gap:16px">
+          <div style="font-size:28px;flex-shrink:0">🚀</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:#1E3A8A;margin-bottom:4px">AIO Brand Monitor へようこそ！セットアップを始めましょう</div>
+            <div style="font-size:12px;color:#3B82F6;margin-bottom:14px">まだ計測データがありません。以下の手順でセットアップしてください。</div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:180px;background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #DBEAFE">
+                <div style="font-size:11px;font-weight:700;color:#2E75B6;margin-bottom:4px">① キーワード設定</div>
+                <div style="font-size:12px;color:#374151;margin-bottom:8px;line-height:1.5">AI検索で追跡したいキーワードを登録します。</div>
+                <button onclick="openKwModal()"
+                  style="padding:5px 12px;border-radius:6px;background:#2E75B6;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer">
+                  ＋ キーワードを設定
+                </button>
+              </div>
+              <div style="flex:1;min-width:180px;background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #D1FAE5">
+                <div style="font-size:11px;font-weight:700;color:#059669;margin-bottom:4px">② 初回計測を実行</div>
+                <div style="font-size:12px;color:#374151;margin-bottom:8px;line-height:1.5">5つのAIエンジンでブランドの露出を計測します（約2分）。</div>
+                <button onclick="startMeasure()"
+                  style="padding:5px 12px;border-radius:6px;background:#059669;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer">
+                  ▶ 計測を開始
+                </button>
+              </div>
+              <div style="flex:1;min-width:180px;background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #EDE9FE">
+                <div style="font-size:11px;font-weight:700;color:#7C3AED;margin-bottom:4px">③ 自動レポート受信</div>
+                <div style="font-size:12px;color:#374151;line-height:1.5">計測完了後、毎週月曜日にスコアレポートが自動送信されます。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="sec-title">ブランド概要</div>
       <div class="brand-hero" id="brandHero"></div>
 
@@ -527,55 +561,105 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
 
 <!-- ══ クライアント編集 モーダル ══ -->
 <div class="overlay" id="editClientOverlay" onclick="if(event.target===this)closeEditClientModal()" style="display:none;z-index:2001">
-  <div style="background:#fff;border-radius:16px;width:min(520px,95vw);padding:28px 28px 24px;box-shadow:0 20px 60px rgba(0,0,0,.2)">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <div>
-        <div style="font-size:17px;font-weight:700;color:#1F3864">✏️ クライアント情報を編集</div>
-        <div style="font-size:11px;color:#9CA3AF;margin-top:2px" id="editClientSubtitle"></div>
-      </div>
-      <button class="modal-close" onclick="closeEditClientModal()">✕</button>
-    </div>
+  <div style="background:#fff;border-radius:16px;width:min(660px,95vw);max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2)">
 
-    <input type="hidden" id="editClientId">
-
-    <div style="display:flex;flex-direction:column;gap:14px">
-      <div>
-        <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">会社名 *</div>
-        <input class="admin-form-input" id="editClientName" type="text" placeholder="株式会社〇〇" style="width:100%">
+    <!-- ヘッダー -->
+    <div style="padding:22px 24px 0;flex-shrink:0">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+        <div>
+          <div style="font-size:17px;font-weight:700;color:#1F3864">✏️ クライアント設定</div>
+          <div style="font-size:11px;color:#9CA3AF;margin-top:2px" id="editClientSubtitle"></div>
+        </div>
+        <button class="modal-close" onclick="closeEditClientModal()">✕</button>
       </div>
-      <div>
-        <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">業種</div>
-        <select class="admin-form-input" id="editClientIndustry" style="width:100%;cursor:pointer">
-          <option value="">（未設定）</option>
-          <option value="インフルエンサーマーケティング">インフルエンサーマーケティング</option>
-          <option value="採用・HR">採用・HR</option>
-          <option value="EC・通販">EC・通販</option>
-          <option value="不動産">不動産</option>
-          <option value="飲食・外食">飲食・外食</option>
-          <option value="SaaS・IT">SaaS・IT</option>
-          <option value="化粧品・スキンケア">化粧品・スキンケア</option>
-          <option value="ファッション・アパレル">ファッション・アパレル</option>
-          <option value="食品・調味料">食品・調味料</option>
-        </select>
-      </div>
-      <div>
-        <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">ブランド名（カンマ区切り）</div>
-        <input class="admin-form-input" id="editClientBrands" type="text" placeholder="例: BitStar, ビットスター" style="width:100%">
-        <div style="font-size:10px;color:#9CA3AF;margin-top:4px">AI計測時に使用されるブランド名です。複数ある場合はカンマで区切ってください。</div>
+      <!-- タブ -->
+      <div style="display:flex;gap:0;border-bottom:2px solid #E5E7EB">
+        <button id="ecTab1" onclick="switchEditTab(1)"
+          style="padding:8px 18px;border:none;background:none;font-size:13px;font-weight:700;color:#2E75B6;cursor:pointer;border-bottom:2px solid #2E75B6;margin-bottom:-2px">
+          📋 基本情報
+        </button>
+        <button id="ecTab2" onclick="switchEditTab(2)"
+          style="padding:8px 18px;border:none;background:none;font-size:13px;font-weight:600;color:#9CA3AF;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px">
+          🏆 競合設定
+        </button>
       </div>
     </div>
 
-    <div id="editClientError" style="display:none;margin-top:12px;padding:10px 14px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;color:#DC2626;font-size:13px"></div>
+    <!-- ボディ（スクロール可） -->
+    <div style="padding:20px 24px;overflow-y:auto;flex:1">
+      <input type="hidden" id="editClientId">
 
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
-      <button onclick="closeEditClientModal()"
-        style="padding:8px 18px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;color:#374151;font-size:13px;cursor:pointer">
-        キャンセル
-      </button>
-      <button onclick="saveEditClient()" id="saveEditClientBtn"
-        style="padding:8px 18px;border-radius:8px;background:#2E75B6;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">
-        💾 保存する
-      </button>
+      <!-- タブ1: 基本情報 -->
+      <div id="ecTabPane1">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">会社名 *</div>
+            <input class="admin-form-input" id="editClientName" type="text" placeholder="株式会社〇〇" style="width:100%">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">業種</div>
+            <select class="admin-form-input" id="editClientIndustry" style="width:100%;cursor:pointer">
+              <option value="">（未設定）</option>
+              <option value="インフルエンサーマーケティング">インフルエンサーマーケティング</option>
+              <option value="採用・HR">採用・HR</option>
+              <option value="EC・通販">EC・通販</option>
+              <option value="不動産">不動産</option>
+              <option value="飲食・外食">飲食・外食</option>
+              <option value="SaaS・IT">SaaS・IT</option>
+              <option value="化粧品・スキンケア">化粧品・スキンケア</option>
+              <option value="ファッション・アパレル">ファッション・アパレル</option>
+              <option value="食品・調味料">食品・調味料</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">ブランド名（カンマ区切り）</div>
+            <input class="admin-form-input" id="editClientBrands" type="text" placeholder="例: BitStar, ビットスター" style="width:100%">
+            <div style="font-size:10px;color:#9CA3AF;margin-top:4px">AI計測時に使用されます。複数ある場合はカンマで区切ってください。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- タブ2: 競合設定 -->
+      <div id="ecTabPane2" style="display:none">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:14px;line-height:1.6">
+          競合企業を設定します。<strong>「自社」</strong>にチェックされた企業が競合ランキングの自社スコアとして扱われます。<br>
+          スコアは次回の計測時に自動的に算出・更新されます。
+        </div>
+
+        <!-- 競合一覧 -->
+        <div id="editCompList" style="margin-bottom:14px;display:flex;flex-direction:column;gap:6px"></div>
+
+        <!-- 新規追加フォーム -->
+        <div style="background:#F9FAFB;border:1.5px dashed #D1D5DB;border-radius:10px;padding:14px">
+          <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:8px">＋ 競合企業を追加</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="newCompName" type="text" placeholder="例: 株式会社〇〇" onkeydown="if(event.key==='Enter')addCompetitor()"
+              style="flex:1;padding:7px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;outline:none;font-family:inherit">
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#374151;white-space:nowrap;cursor:pointer">
+              <input type="checkbox" id="newCompSelf"> 自社
+            </label>
+            <button onclick="addCompetitor()"
+              style="padding:7px 14px;border-radius:6px;background:#2E75B6;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+              追加
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- フッター -->
+    <div style="padding:14px 24px 20px;border-top:1px solid #F3F4F6;flex-shrink:0">
+      <div id="editClientError" style="display:none;margin-bottom:10px;padding:10px 14px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;color:#DC2626;font-size:13px"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button onclick="closeEditClientModal()"
+          style="padding:8px 18px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;color:#374151;font-size:13px;cursor:pointer">
+          キャンセル
+        </button>
+        <button onclick="saveEditClient()" id="saveEditClientBtn"
+          style="padding:8px 18px;border-radius:8px;background:#2E75B6;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">
+          💾 保存する
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1075,6 +1159,13 @@ function renderDate(){
 // ─── RENDER ALL ─────────────────────────────────────────────
 function renderAll(){
   const c=cl();
+
+  // オンボーディングバナー: スコアが 0 かつキーワード・トレンドがない場合
+  const isNewClient = (c.score || 0) === 0
+    && (!c.keywords || c.keywords.length === 0)
+    && (!c.trend || c.trend.length === 0);
+  document.getElementById('onboardingBanner').style.display = isNewClient ? '' : 'none';
+
   renderHero(c); renderKPI(c); renderLine(c); renderCompetitors(c);
   renderEngines(c); renderKeywords(c); renderBar(c); renderInfluencers(c);
   renderCitations(c); renderAdvice(c);
@@ -1122,8 +1213,19 @@ function renderLine(c){
   if(currentTab==="weekly"){
     const wt=c.weeklyTrend||[];
     if(wt.length < 2){ svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="#9CA3AF" font-size="13">計測データがまだありません（計測を実施すると表示されます）</text>'; return; }
-    drawLineChart(svg, wt.map(d=>d.score), wt.map(d=>d.label),
-      wt.map(d=>`${d.label}週: ${d.score}pt`), "#8B5CF6");
+    // ツールチップにエンジン別スコアを含める
+    const engineNames = { chatgpt:'ChatGPT', perplexity:'Perplexity', google_ai:'Google AI', gemini:'Gemini', claude:'Claude' };
+    const tooltips = wt.map(d => {
+      const lines = [`${d.label}週: 総合 ${d.score}pt`];
+      if (d.engines && Object.keys(d.engines).length > 0) {
+        Object.entries(d.engines).forEach(([k, v]) => {
+          const label = engineNames[k] || k;
+          lines.push(`${label}: ${v}pt`);
+        });
+      }
+      return lines.join('\n');
+    });
+    drawLineChart(svg, wt.map(d=>d.score), wt.map(d=>d.label), tooltips, "#8B5CF6");
     return;
   }
 
@@ -1512,7 +1614,16 @@ function closeModal(){ document.getElementById("overlay").classList.remove("open
 // ─── TOOLTIP ────────────────────────────────────────────────
 function showTip(e,text){
   const t=document.getElementById("chartTip");
-  t.textContent=text; t.style.display="block";
+  // 改行を含む場合はHTML化（エンジン別スコア表示）
+  if(text.includes('\n')){
+    const lines = text.split('\n');
+    t.innerHTML = lines.map((l,i) =>
+      i===0 ? `<strong>${l}</strong>` : `<span style="opacity:.8;font-size:11px">${l}</span>`
+    ).join('<br>');
+  } else {
+    t.textContent = text;
+  }
+  t.style.display="block";
   t.style.left=e.clientX+"px"; t.style.top=(e.clientY-10)+"px";
 }
 function hideTip(){ document.getElementById("chartTip").style.display="none"; }
@@ -1602,9 +1713,7 @@ function renderAdminClients(list) {
       `<span style="font-size:10px;background:#F3F4F6;color:#374151;padding:1px 6px;border-radius:10px;font-weight:600">${e.name} ${e.val}%</span>`
     ).join(' ');
 
-    const brandsEsc = (c.brands || []).join(', ').replace(/'/g, "\\'");
-    const nameEsc   = c.name.replace(/'/g, "\\'");
-    const indEsc    = (c.industry || '').replace(/'/g, "\\'");
+    const nameEsc = c.name.replace(/'/g, "\\'");
 
     return `<div class="admin-client-card${c.hasAlert ? ' has-alert' : ''}">
       <div class="admin-score-pill" style="color:${scoreCol};cursor:pointer"
@@ -1620,7 +1729,7 @@ function renderAdminClients(list) {
         <div style="display:flex;gap:5px;flex-wrap:wrap">${engineList}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-        <button onclick="event.stopPropagation();openEditClientModal('${c.id}','${nameEsc}','${indEsc}','${brandsEsc}')"
+        <button onclick="event.stopPropagation();openEditClientModal('${c.id}')"
           style="padding:5px 11px;border-radius:7px;border:1.5px solid #E5E7EB;background:#fff;font-size:11px;font-weight:700;cursor:pointer;color:#374151;white-space:nowrap">
           ✏️ 編集
         </button>
@@ -1755,22 +1864,131 @@ async function createClient() {
 }
 
 // ══════════════════════════════════════════════
-// クライアント編集モーダル
+// クライアント編集モーダル（タブ付き）
 // ══════════════════════════════════════════════
-function openEditClientModal(id, name, industry, brandsStr) {
+let editCompData = []; // 編集中の競合配列
+let currentEditTab = 1;
+
+function switchEditTab(n) {
+  currentEditTab = n;
+  document.getElementById('ecTabPane1').style.display = n === 1 ? '' : 'none';
+  document.getElementById('ecTabPane2').style.display = n === 2 ? '' : 'none';
+  // タブボタンのスタイル
+  [1, 2].forEach(i => {
+    const btn = document.getElementById(`ecTab${i}`);
+    const active = i === n;
+    btn.style.color = active ? '#2E75B6' : '#9CA3AF';
+    btn.style.fontWeight = active ? '700' : '600';
+    btn.style.borderBottomColor = active ? '#2E75B6' : 'transparent';
+  });
+}
+
+function openEditClientModal(id) {
+  // adminClientsData からクライアントデータを取得
+  const c = adminClientsData.find(x => x.id === id);
+  if (!c) { alert('クライアントデータが見つかりません。一覧を更新してください。'); return; }
+
   document.getElementById('editClientId').value = id;
-  document.getElementById('editClientName').value = name;
-  document.getElementById('editClientSubtitle').textContent = `ID: ${id}`;
-  document.getElementById('editClientBrands').value = brandsStr;
+  document.getElementById('editClientName').value = c.name;
+  document.getElementById('editClientSubtitle').textContent = `${c.email}`;
+  document.getElementById('editClientBrands').value = (c.brands || []).join(', ');
   document.getElementById('editClientError').style.display = 'none';
-  // 業種プルダウンを選択
+
+  // 業種プルダウン
   const sel = document.getElementById('editClientIndustry');
-  for (let opt of sel.options) {
-    opt.selected = opt.value === industry;
+  sel.value = c.industry || '';
+
+  // 競合データ（admin listには含まれていないので別途APIから取得が必要）
+  // ひとまずキャッシュにあれば使用、なければ空で開始
+  editCompData = Array.isArray(c.competitors) ? JSON.parse(JSON.stringify(c.competitors)) : [];
+  renderEditCompList();
+
+  // 競合データがない場合は非同期で取得
+  if (!Array.isArray(c.competitors)) {
+    loadCompetitorsForEdit(id);
   }
-  if (!sel.value) sel.value = '';  // 一致なければ未設定
+
+  switchEditTab(1);
   document.getElementById('editClientOverlay').style.display = 'flex';
   document.getElementById('editClientName').focus();
+}
+
+async function loadCompetitorsForEdit(clientId) {
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) return;
+    const res = await fetch(`/api/admin/clients?id=${encodeURIComponent(clientId)}`, {
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+    if (!res.ok) return;
+    const body = await res.json();
+    if (body.client && Array.isArray(body.client.competitors)) {
+      editCompData = JSON.parse(JSON.stringify(body.client.competitors));
+      // adminClientsDataにもキャッシュ
+      const idx = adminClientsData.findIndex(x => x.id === clientId);
+      if (idx !== -1) adminClientsData[idx].competitors = body.client.competitors;
+      renderEditCompList();
+    }
+  } catch(e) {
+    console.warn('[loadCompetitorsForEdit]', e.message);
+  }
+}
+
+function renderEditCompList() {
+  const el = document.getElementById('editCompList');
+  if (!editCompData.length) {
+    el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:16px;border:1.5px solid #F3F4F6;border-radius:8px">競合企業が登録されていません。下のフォームから追加してください。</div>';
+    return;
+  }
+  el.innerHTML = editCompData.map((comp, i) => {
+    const isSelf = !!comp.self;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;border:1.5px solid ${isSelf ? '#DBEAFE' : '#E5E7EB'};background:${isSelf ? '#EFF6FF' : '#fff'}">
+      <div style="flex:1;font-size:13px;font-weight:${isSelf ? '700' : '500'};color:#1F3864">${comp.name}</div>
+      ${isSelf ? '<span style="font-size:10px;background:#2E75B6;color:#fff;padding:2px 7px;border-radius:10px;font-weight:700">自社</span>' : ''}
+      ${comp.score ? `<span style="font-size:11px;color:#6B7280">${comp.score}pt</span>` : ''}
+      <label style="display:flex;align-items:center;gap:3px;font-size:11px;color:#374151;cursor:pointer;flex-shrink:0">
+        <input type="checkbox" ${isSelf ? 'checked' : ''} onchange="setCompSelf(${i},this.checked)"> 自社
+      </label>
+      <button onclick="removeComp(${i})"
+        style="padding:3px 8px;border-radius:5px;background:#FEE2E2;color:#991B1B;border:none;font-size:11px;cursor:pointer;font-weight:600">削除</button>
+    </div>`;
+  }).join('');
+}
+
+function setCompSelf(idx, checked) {
+  // 「自社」は1社のみ
+  if (checked) {
+    editCompData.forEach((c, i) => c.self = (i === idx));
+  } else {
+    editCompData[idx].self = false;
+  }
+  renderEditCompList();
+}
+
+function removeComp(idx) {
+  const name = editCompData[idx].name;
+  if (!confirm(`「${name}」を競合リストから削除しますか？`)) return;
+  editCompData.splice(idx, 1);
+  renderEditCompList();
+}
+
+function addCompetitor() {
+  const input = document.getElementById('newCompName');
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  if (editCompData.some(c => c.name === name)) {
+    alert('同じ企業名がすでに登録されています');
+    return;
+  }
+  const isSelf = document.getElementById('newCompSelf').checked;
+  if (isSelf) {
+    // 既存の自社フラグをクリア
+    editCompData.forEach(c => c.self = false);
+  }
+  editCompData.push({ name, score: 0, self: isSelf });
+  input.value = '';
+  document.getElementById('newCompSelf').checked = false;
+  renderEditCompList();
 }
 
 function closeEditClientModal() {
@@ -1804,7 +2022,7 @@ async function saveEditClient() {
         Authorization: 'Bearer ' + session.access_token,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, industry, brand_names }),
+      body: JSON.stringify({ name, industry, brand_names, competitors: editCompData }),
     });
     const body = await res.json();
     if (!res.ok) throw new Error(body.error || '更新に失敗しました');
@@ -1813,9 +2031,10 @@ async function saveEditClient() {
     // ローカルのキャッシュも更新
     const idx = adminClientsData.findIndex(c => c.id === id);
     if (idx !== -1) {
-      adminClientsData[idx].name     = name;
-      adminClientsData[idx].industry = industry;
-      adminClientsData[idx].brands   = brand_names;
+      adminClientsData[idx].name        = name;
+      adminClientsData[idx].industry    = industry;
+      adminClientsData[idx].brands      = brand_names;
+      adminClientsData[idx].competitors = editCompData;
       renderAdminClients(adminClientsData);
     } else {
       await loadAdminClients();
