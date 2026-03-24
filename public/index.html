@@ -525,6 +525,61 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
 
 <div class="chart-tip" id="chartTip"></div>
 
+<!-- ══ クライアント編集 モーダル ══ -->
+<div class="overlay" id="editClientOverlay" onclick="if(event.target===this)closeEditClientModal()" style="display:none;z-index:2001">
+  <div style="background:#fff;border-radius:16px;width:min(520px,95vw);padding:28px 28px 24px;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <div style="font-size:17px;font-weight:700;color:#1F3864">✏️ クライアント情報を編集</div>
+        <div style="font-size:11px;color:#9CA3AF;margin-top:2px" id="editClientSubtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeEditClientModal()">✕</button>
+    </div>
+
+    <input type="hidden" id="editClientId">
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">会社名 *</div>
+        <input class="admin-form-input" id="editClientName" type="text" placeholder="株式会社〇〇" style="width:100%">
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">業種</div>
+        <select class="admin-form-input" id="editClientIndustry" style="width:100%;cursor:pointer">
+          <option value="">（未設定）</option>
+          <option value="インフルエンサーマーケティング">インフルエンサーマーケティング</option>
+          <option value="採用・HR">採用・HR</option>
+          <option value="EC・通販">EC・通販</option>
+          <option value="不動産">不動産</option>
+          <option value="飲食・外食">飲食・外食</option>
+          <option value="SaaS・IT">SaaS・IT</option>
+          <option value="化粧品・スキンケア">化粧品・スキンケア</option>
+          <option value="ファッション・アパレル">ファッション・アパレル</option>
+          <option value="食品・調味料">食品・調味料</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">ブランド名（カンマ区切り）</div>
+        <input class="admin-form-input" id="editClientBrands" type="text" placeholder="例: BitStar, ビットスター" style="width:100%">
+        <div style="font-size:10px;color:#9CA3AF;margin-top:4px">AI計測時に使用されるブランド名です。複数ある場合はカンマで区切ってください。</div>
+      </div>
+    </div>
+
+    <div id="editClientError" style="display:none;margin-top:12px;padding:10px 14px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;color:#DC2626;font-size:13px"></div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button onclick="closeEditClientModal()"
+        style="padding:8px 18px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;color:#374151;font-size:13px;cursor:pointer">
+        キャンセル
+      </button>
+      <button onclick="saveEditClient()" id="saveEditClientBtn"
+        style="padding:8px 18px;border-radius:8px;background:#2E75B6;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">
+        💾 保存する
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ 管理者パネル モーダル ══ -->
 <div class="overlay" id="adminOverlay" onclick="if(event.target===this)closeAdminPanel()" style="display:none">
   <div class="admin-modal">
@@ -1547,11 +1602,15 @@ function renderAdminClients(list) {
       `<span style="font-size:10px;background:#F3F4F6;color:#374151;padding:1px 6px;border-radius:10px;font-weight:600">${e.name} ${e.val}%</span>`
     ).join(' ');
 
-    return `<div class="admin-client-card${c.hasAlert ? ' has-alert' : ''}"
-              onclick="loadClientAsAdmin('${c.id}','${c.name.replace(/'/g,"\\'")}')"
-              title="クリックしてこのクライアントのダッシュボードを表示">
-      <div class="admin-score-pill" style="color:${scoreCol}">${c.score}<span style="font-size:11px;font-weight:400;color:#9CA3AF">pt</span></div>
-      <div style="flex:1;min-width:0">
+    const brandsEsc = (c.brands || []).join(', ').replace(/'/g, "\\'");
+    const nameEsc   = c.name.replace(/'/g, "\\'");
+    const indEsc    = (c.industry || '').replace(/'/g, "\\'");
+
+    return `<div class="admin-client-card${c.hasAlert ? ' has-alert' : ''}">
+      <div class="admin-score-pill" style="color:${scoreCol};cursor:pointer"
+           onclick="loadClientAsAdmin('${c.id}','${nameEsc}')"
+           title="クリックしてダッシュボードを表示">${c.score}<span style="font-size:11px;font-weight:400;color:#9CA3AF">pt</span></div>
+      <div style="flex:1;min-width:0;cursor:pointer" onclick="loadClientAsAdmin('${c.id}','${nameEsc}')" title="ダッシュボードを表示">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
           <div style="font-size:14px;font-weight:700;color:#1F3864">${c.name}</div>
           ${c.industry ? `<span class="admin-badge admin-badge-industry">${c.industry}</span>` : ''}
@@ -1560,10 +1619,16 @@ function renderAdminClients(list) {
         <div style="font-size:11px;color:#6B7280;margin-bottom:5px">${c.email}</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap">${engineList}</div>
       </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:15px;font-weight:700;color:${changeColor}">${c.scoreChange}</div>
-        <div style="font-size:10px;color:#9CA3AF;margin-top:2px">先月比</div>
-        <div style="font-size:10px;color:#9CA3AF;margin-top:4px">更新: ${updatedAt}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+        <button onclick="event.stopPropagation();openEditClientModal('${c.id}','${nameEsc}','${indEsc}','${brandsEsc}')"
+          style="padding:5px 11px;border-radius:7px;border:1.5px solid #E5E7EB;background:#fff;font-size:11px;font-weight:700;cursor:pointer;color:#374151;white-space:nowrap">
+          ✏️ 編集
+        </button>
+        <div style="text-align:right">
+          <div style="font-size:15px;font-weight:700;color:${changeColor}">${c.scoreChange}</div>
+          <div style="font-size:10px;color:#9CA3AF;margin-top:2px">先月比</div>
+          <div style="font-size:10px;color:#9CA3AF;margin-top:4px">更新: ${updatedAt}</div>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -1686,6 +1751,80 @@ async function createClient() {
     alert('❌ ' + e.message);
   } finally {
     btn.textContent = '✅ 作成する'; btn.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════
+// クライアント編集モーダル
+// ══════════════════════════════════════════════
+function openEditClientModal(id, name, industry, brandsStr) {
+  document.getElementById('editClientId').value = id;
+  document.getElementById('editClientName').value = name;
+  document.getElementById('editClientSubtitle').textContent = `ID: ${id}`;
+  document.getElementById('editClientBrands').value = brandsStr;
+  document.getElementById('editClientError').style.display = 'none';
+  // 業種プルダウンを選択
+  const sel = document.getElementById('editClientIndustry');
+  for (let opt of sel.options) {
+    opt.selected = opt.value === industry;
+  }
+  if (!sel.value) sel.value = '';  // 一致なければ未設定
+  document.getElementById('editClientOverlay').style.display = 'flex';
+  document.getElementById('editClientName').focus();
+}
+
+function closeEditClientModal() {
+  document.getElementById('editClientOverlay').style.display = 'none';
+}
+
+async function saveEditClient() {
+  const id       = document.getElementById('editClientId').value;
+  const name     = document.getElementById('editClientName').value.trim();
+  const industry = document.getElementById('editClientIndustry').value;
+  const brandsRaw = document.getElementById('editClientBrands').value.trim();
+  const brand_names = brandsRaw
+    ? brandsRaw.split(',').map(s => s.trim()).filter(Boolean)
+    : [name];
+
+  const errEl = document.getElementById('editClientError');
+  errEl.style.display = 'none';
+
+  if (!name) { errEl.textContent = '会社名は必須です'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('saveEditClientBtn');
+  btn.textContent = '保存中...'; btn.disabled = true;
+
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) throw new Error('ログインが必要です');
+
+    const res = await fetch(`/api/admin/clients?id=${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: 'Bearer ' + session.access_token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, industry, brand_names }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || '更新に失敗しました');
+
+    closeEditClientModal();
+    // ローカルのキャッシュも更新
+    const idx = adminClientsData.findIndex(c => c.id === id);
+    if (idx !== -1) {
+      adminClientsData[idx].name     = name;
+      adminClientsData[idx].industry = industry;
+      adminClientsData[idx].brands   = brand_names;
+      renderAdminClients(adminClientsData);
+    } else {
+      await loadAdminClients();
+    }
+  } catch(e) {
+    errEl.textContent = '❌ ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = '💾 保存する'; btn.disabled = false;
   }
 }
 </script>

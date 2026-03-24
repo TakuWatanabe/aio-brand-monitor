@@ -54,7 +54,7 @@ module.exports = async (req, res) => {
     // 全クライアント一覧
     const { data: clients, error } = await supabaseAdmin
       .from('clients')
-      .select('id, name, email, industry, current_score, score_change, updated_at, competitors, score_alert, engines')
+      .select('id, name, email, industry, brand_names, current_score, score_change, updated_at, competitors, score_alert, engines')
       .order('name', { ascending: true });
 
     if (error) {
@@ -73,6 +73,7 @@ module.exports = async (req, res) => {
         name: c.name || '（未設定）',
         email: c.email || '',
         industry: c.industry || '',
+        brands: Array.isArray(c.brand_names) ? c.brand_names : [],
         score: c.current_score || 0,
         scoreChange: c.score_change || '±0pt',
         updatedAt: c.updated_at,

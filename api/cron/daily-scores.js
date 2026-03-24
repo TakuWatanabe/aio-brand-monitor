@@ -13,6 +13,7 @@ const {
   getWeekStart,
   getCurrentMonth,
 } = require('../../lib/aiMeasurement');
+const { sendAlertEmail } = require('../../lib/emailReport');
 
 // スコア急変の閾値（ptポイント）
 const ALERT_THRESHOLD = 10;
@@ -29,7 +30,7 @@ module.exports = async (req, res) => {
 
   const { data: clients, error } = await supabaseAdmin
     .from('clients')
-    .select('id, name, brand_names, brand_name, industry, engines, current_score, kpi, trend, keywords, competitors');
+    .select('id, name, email, brand_names, brand_name, industry, engines, current_score, kpi, trend, keywords, competitors');
 
   if (error || !clients) {
     return res.status(500).json({ error: 'クライアント一覧の取得に失敗しました' });
@@ -62,14 +63,30 @@ module.exports = async (req, res) => {
 
       console.log(`[日次] ${client.name}: ${prevScore}pt → ${dailyScore}pt (${diff >= 0 ? '+' : ''}${diff}pt)${isAlert ? ' ⚠️ 急変アラート' : ''}`);
 
-      // スコア急変の場合は clients テーブルのフラグを更新
+      // スコア急変の場合は DB フラグ更新 + メール通知
       if (isAlert) {
         const alertLabel = diff > 0 ? `▲ +${diff}pt 急上昇中` : `▼ ${diff}pt 急落中`;
+
+        // DB フラグ更新
         await supabaseAdmin.from('clients').update({
           score_alert: alertLabel,
           score_alert_at: new Date().toISOString(),
         }).eq('id', client.id);
         console.log(`[アラート] ${client.name}: ${alertLabel}`);
+
+        // メール通知（email が設定されている場合のみ）
+        if (client.email) {
+          const emailResult = await sendAlertEmail({
+            to: client.email,
+            clientName: client.name,
+            prevScore,
+            newScore: dailyScore,
+            alertLabel,
+          });
+          console.log(`[アラートメール] ${client.name} (${client.email}): ${emailResult.ok ? '送信済み' : `スキップ (${emailResult.error})`}`);
+        } else {
+          console.log(`[アラートメール] ${client.name}: email 未設定のためスキップ`);
+        }
       }
 
       // ai_scores に日次スコアを保存（日次エンジン識別用サフィックス付き）
