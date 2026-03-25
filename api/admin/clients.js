@@ -130,7 +130,24 @@ module.exports = async (req, res) => {
     }
 
     console.log(`[admin/clients] 新規クライアント作成: ${email}`);
-    return res.status(201).json({ client: created });
+
+    // Supabase Auth にユーザーを招待（招待メールを自動送信）
+    const appUrl = process.env.APP_URL || 'https://aio-brand-monitor.vercel.app';
+    const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      email.trim().toLowerCase(),
+      { redirectTo: appUrl }
+    );
+    if (inviteError) {
+      // 招待失敗はログのみ（DB登録は成功しているので 201 を返す）
+      console.warn(`[admin/clients] 招待メール送信失敗 (${email}): ${inviteError.message}`);
+      return res.status(201).json({
+        client: created,
+        inviteWarning: `DBレコードは作成しましたが、招待メールの送信に失敗しました: ${inviteError.message}`,
+      });
+    }
+
+    console.log(`[admin/clients] 招待メール送信完了: ${email}`);
+    return res.status(201).json({ client: created, invited: true });
   }
 
   // ============================================================

@@ -353,9 +353,49 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
         <span id="loginBtnLabel">ログイン</span>
       </button>
 
+      <div style="text-align:center;margin-top:14px">
+        <button onclick="openResetModal()"
+          style="background:none;border:none;color:#2E75B6;font-size:13px;cursor:pointer;text-decoration:underline;font-family:inherit;padding:0">
+          パスワードをお忘れですか？
+        </button>
+      </div>
+
       <div class="login-footer">
         ご不明な点は <a href="#">BitStar担当者</a> までお問い合わせください
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ パスワードリセット モーダル ══ -->
+<div id="resetOverlay" onclick="if(event.target===this)closeResetModal()"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;display:none;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:min(420px,90vw);padding:28px 28px 24px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:17px;font-weight:700;color:#1F3864">🔑 パスワードをリセット</div>
+      <button onclick="closeResetModal()"
+        style="background:none;border:none;font-size:20px;color:#9CA3AF;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <p style="font-size:13px;color:#6B7280;line-height:1.65;margin-bottom:18px">
+      登録済みのメールアドレスを入力してください。<br>
+      パスワード再設定用リンクをお送りします。
+    </p>
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">メールアドレス</div>
+      <input id="resetEmailInput" type="email" placeholder="example@company.com"
+        onkeydown="if(event.key==='Enter')doPasswordReset()"
+        style="width:100%;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box">
+    </div>
+    <div id="resetMsg" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeResetModal()"
+        style="padding:9px 18px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;color:#374151;font-size:13px;cursor:pointer">
+        キャンセル
+      </button>
+      <button onclick="doPasswordReset()" id="resetBtn"
+        style="padding:9px 18px;border-radius:8px;background:#2E75B6;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">
+        リセットメールを送信
+      </button>
     </div>
   </div>
 </div>
@@ -940,6 +980,63 @@ async function doLogout() {
   document.getElementById("loginBtnLabel").textContent = "ログイン";
   hideError();
 }
+// ─── パスワードリセット ──────────────────────────────────────
+function openResetModal() {
+  const overlay = document.getElementById('resetOverlay');
+  overlay.style.display = 'flex';
+  // ログインフォームのメールを自動入力
+  const loginEmail = document.getElementById('emailInput').value.trim();
+  const resetInput = document.getElementById('resetEmailInput');
+  if (loginEmail) resetInput.value = loginEmail;
+  document.getElementById('resetMsg').style.display = 'none';
+  document.getElementById('resetBtn').disabled = false;
+  document.getElementById('resetBtn').textContent = 'リセットメールを送信';
+  setTimeout(() => resetInput.focus(), 50);
+}
+
+function closeResetModal() {
+  document.getElementById('resetOverlay').style.display = 'none';
+}
+
+async function doPasswordReset() {
+  const email = document.getElementById('resetEmailInput').value.trim();
+  const msgEl = document.getElementById('resetMsg');
+  const btn   = document.getElementById('resetBtn');
+
+  if (!email) {
+    msgEl.style.display = 'block';
+    msgEl.style.background = '#FEF2F2';
+    msgEl.style.color = '#EF4444';
+    msgEl.textContent = 'メールアドレスを入力してください';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '送信中…';
+  msgEl.style.display = 'none';
+
+  try {
+    const appUrl = window.location.origin;
+    const { error } = await _supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: appUrl + '/?reset=1',
+    });
+    if (error) throw error;
+
+    msgEl.style.display = 'block';
+    msgEl.style.background = '#F0FDF4';
+    msgEl.style.color = '#16A34A';
+    msgEl.textContent = `✅ ${email} にリセットメールを送信しました。メールをご確認ください。`;
+    btn.textContent = '送信済み';
+  } catch(e) {
+    msgEl.style.display = 'block';
+    msgEl.style.background = '#FEF2F2';
+    msgEl.style.color = '#EF4444';
+    msgEl.textContent = '❌ 送信に失敗しました: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'リセットメールを送信';
+  }
+}
+
 // ─── AI スコア計測 ─────────────────────────────────────────
 async function doMeasure() {
   const btn = document.getElementById("measureBtn");
@@ -1765,6 +1862,11 @@ function renderAdminClients(list) {
           style="padding:5px 11px;border-radius:7px;border:1.5px solid #E5E7EB;background:#fff;font-size:11px;font-weight:700;cursor:pointer;color:#374151;white-space:nowrap">
           ✏️ 編集
         </button>
+        <button onclick="event.stopPropagation();sendInvite('${c.id}','${nameEsc}')"
+          style="padding:5px 11px;border-radius:7px;border:1.5px solid #BFDBFE;background:#EFF6FF;font-size:11px;font-weight:700;cursor:pointer;color:#2563EB;white-space:nowrap"
+          title="招待メールまたはパスワードリセットメールを送信">
+          📧 招待
+        </button>
         <div style="text-align:right">
           <div style="font-size:15px;font-weight:700;color:${changeColor}">${c.scoreChange}</div>
           <div style="font-size:10px;color:#9CA3AF;margin-top:2px">先月比</div>
@@ -1773,6 +1875,24 @@ function renderAdminClients(list) {
       </div>
     </div>`;
   }).join('');
+}
+
+// 招待メール / パスワードリセットメールを送信
+async function sendInvite(clientId, clientName) {
+  if (!confirm(`「${clientName}」に招待メール（またはパスワードリセットメール）を送信しますか？`)) return;
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) throw new Error('ログインが必要です');
+    const res = await fetch(`/api/admin/invite?id=${clientId}`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || '送信に失敗しました');
+    alert(`✅ ${body.message}`);
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
 }
 
 // 管理者として別クライアントのデータを表示
@@ -1886,7 +2006,10 @@ async function createClient() {
     document.getElementById('newClientEmail').value = '';
     document.getElementById('newClientBrands').value = '';
     toggleCreateClientForm();
-    alert(`✅ クライアント「${name}」を作成しました！\nSupabaseのAuthentication画面からパスワードを設定してください。`);
+    const inviteNote = body.invited
+      ? `招待メールを ${email} に送信しました。`
+      : (body.inviteWarning ? `⚠ ${body.inviteWarning}` : '招待メールの送信ができませんでした。管理画面から「📧 招待」ボタンで再送してください。');
+    alert(`✅ クライアント「${name}」を作成しました！\n${inviteNote}`);
     await loadAdminClients();
   } catch(e) {
     alert('❌ ' + e.message);
