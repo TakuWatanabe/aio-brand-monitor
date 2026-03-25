@@ -14,7 +14,14 @@ module.exports = (req, res) => {
   const supabaseAnon = process.env.SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnon) {
-    return res.status(500).json({ error: 'サーバー設定が不完全です (SUPABASE_URL / SUPABASE_ANON_KEY)' });
+    const missing = [
+      !supabaseUrl  && 'SUPABASE_URL',
+      !supabaseAnon && 'SUPABASE_ANON_KEY',
+    ].filter(Boolean).join(', ');
+    console.error(`[config] 環境変数が未設定: ${missing}`);
+    return res.status(500).json({
+      error: `サーバー設定が不完全です。Vercel の環境変数に ${missing} を追加してください。`,
+    });
   }
 
   return res.status(200).json({

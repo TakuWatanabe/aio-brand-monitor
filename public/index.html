@@ -825,8 +825,22 @@ function scoreColor(s){ return s>=80?"#10B981":s>=65?"#F59E0B":"#EF4444"; }
     await initSupabase();
   } catch(e) {
     console.error('Supabase init error:', e);
-    document.getElementById('pageLoading').innerHTML =
-      '<div style="color:#EF4444;font-size:14px">サーバーに接続できませんでした。ページを再読み込みしてください。</div>';
+    // ローディング画面をエラー表示に切り替え（ログイン画面は表示しない）
+    const loadingEl = document.getElementById('pageLoading');
+    loadingEl.innerHTML = `
+      <div style="text-align:center;padding:32px 24px;max-width:420px">
+        <div style="font-size:36px;margin-bottom:16px">⚠️</div>
+        <div style="font-size:16px;font-weight:700;color:#1F3864;margin-bottom:8px">接続エラー</div>
+        <div style="font-size:13px;color:#6B7280;line-height:1.7;margin-bottom:20px">
+          サーバー設定に問題があります。<br>
+          管理者に <code style="background:#F3F4F6;padding:2px 6px;border-radius:4px">SUPABASE_ANON_KEY</code>
+          の環境変数設定をご確認ください。
+        </div>
+        <button onclick="location.reload()"
+          style="padding:10px 24px;background:#2E75B6;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">
+          再読み込み
+        </button>
+      </div>`;
     return;
   }
 
@@ -840,10 +854,13 @@ function scoreColor(s){ return s>=80?"#10B981":s>=65?"#F59E0B":"#EF4444"; }
         showDashboard();
       } catch (err) {
         console.error("Data load error:", err);
-        await _supabase.auth.signOut();
-        showLogin();
+        // クライアントデータが見つからない場合のみサインアウト
+        if (err.message && (err.message.includes('見つかりません') || err.message.includes('403'))) {
+          await _supabase.auth.signOut();
+        }
+        showLogin(err.message);
       }
-    } else if (event === "SIGNED_OUT" || !session) {
+    } else if (event === "SIGNED_OUT" || event === "INITIAL_SESSION" || !session) {
       // 未ログイン・ログアウト → ログイン画面を表示
       showLogin();
     }
@@ -1039,10 +1056,11 @@ async function downloadReport(event) {
 }
 
 // ─── 画面切替 ────────────────────────────────────────────────
-function showLogin() {
+function showLogin(errorMsg) {
   document.getElementById("pageLoading").classList.add("hidden");
   document.getElementById("loginPage").style.display = "flex";
   document.getElementById("dashboardPage").style.display = "none";
+  if (errorMsg) showError(errorMsg);
 }
 
 function showDashboard() {
