@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
 
   const { data: clients, error } = await supabaseAdmin
     .from('clients')
-    .select('id, name, email, brand_names, brand_name, industry, engines, current_score, kpi, trend, keywords, competitors');
+    .select('id, name, email, brand_names, brand_name, industry, engines, current_score, kpi, trend, keywords, competitors, settings');
 
   if (error || !clients) {
     return res.status(500).json({ error: 'クライアント一覧の取得に失敗しました' });
@@ -59,7 +59,9 @@ module.exports = async (req, res) => {
 
       const prevScore = client.current_score || 0;
       const diff = dailyScore - prevScore;
-      const isAlert = Math.abs(diff) >= ALERT_THRESHOLD;
+      // クライアント固有の閾値があれば優先、なければデフォルト
+      const threshold = client.settings?.alertThreshold || ALERT_THRESHOLD;
+      const isAlert = Math.abs(diff) >= threshold;
 
       console.log(`[日次] ${client.name}: ${prevScore}pt → ${dailyScore}pt (${diff >= 0 ? '+' : ''}${diff}pt)${isAlert ? ' ⚠️ 急変アラート' : ''}`);
 
@@ -74,8 +76,9 @@ module.exports = async (req, res) => {
         }).eq('id', client.id);
         console.log(`[アラート] ${client.name}: ${alertLabel}`);
 
-        // メール通知（email が設定されている場合のみ）
-        if (client.email) {
+        // メール通知（email が設定されており、クライアントがオプトインしている場合のみ）
+        const alertEmailEnabled = client.settings?.alertEmail !== false; // デフォルト有効
+        if (client.email && alertEmailEnabled) {
           const emailResult = await sendAlertEmail({
             to: client.email,
             clientName: client.name,
@@ -84,6 +87,8 @@ module.exports = async (req, res) => {
             alertLabel,
           });
           console.log(`[アラートメール] ${client.name} (${client.email}): ${emailResult.ok ? '送信済み' : `スキップ (${emailResult.error})`}`);
+        } else if (!alertEmailEnabled) {
+          console.log(`[アラートメール] ${client.name}: メール通知オフのためスキップ`);
         } else {
           console.log(`[アラートメール] ${client.name}: email 未設定のためスキップ`);
         }

@@ -125,6 +125,7 @@ module.exports = async (req, res) => {
     barData: client.bar_data || [],
     insight: client.insight || '',
     updatedAt: client.updated_at,
+    settings: client.settings || {},
   };
 
   return res.status(200).json({ client: dashboardClient });

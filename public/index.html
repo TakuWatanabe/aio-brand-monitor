@@ -745,6 +745,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
         <div style="font-size:12px;color:#6B7280;margin-top:2px" id="adminClientCount"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="exportClientsCsv()"
+          style="padding:7px 14px;border-radius:8px;background:#fff;border:1.5px solid #E5E7EB;font-size:12px;font-weight:700;cursor:pointer;color:#374151"
+          title="クライアント一覧をCSVでダウンロード">
+          📥 CSV
+        </button>
         <button onclick="toggleCreateClientForm()" id="createClientToggleBtn"
           style="padding:7px 14px;border-radius:8px;background:#1F3864;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer">
           ＋ 新規クライアント
@@ -887,6 +892,92 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
         <button onclick="saveProfile()" id="saveProfileBtn"
           style="padding:9px 18px;border-radius:8px;background:#2E75B6;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">
           保存する
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 設定モーダル ══ -->
+<div class="overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettingsModal()" style="display:none">
+  <div class="modal" style="max-width:500px;width:92%">
+    <div class="modal-head">
+      <div>
+        <div style="font-size:17px;font-weight:700;color:#1F3864">⚙️ 通知・アラート設定</div>
+        <div style="font-size:12px;color:#6B7280;margin-top:3px">スコア変動の通知条件を設定します</div>
+      </div>
+      <button class="modal-close" onclick="closeSettingsModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:18px">
+
+      <!-- メール通知 -->
+      <div style="background:#F8FAFC;border-radius:10px;padding:14px 16px;margin-bottom:14px;border:1px solid #E5E7EB">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#1F3864">📧 アラートメール通知</div>
+            <div style="font-size:11px;color:#6B7280;margin-top:2px">スコアが急変したときにメールでお知らせします</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+            <input type="checkbox" id="settingAlertEmail" style="opacity:0;width:0;height:0"
+              onchange="updateSettingsPreview()">
+            <span id="settingAlertEmailSlider"
+              style="position:absolute;inset:0;border-radius:12px;background:#CBD5E1;transition:.2s;cursor:pointer">
+              <span style="position:absolute;left:3px;bottom:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s"></span>
+            </span>
+          </label>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">週次レポートメール</div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;cursor:pointer">
+            <input type="checkbox" id="settingWeeklyEmail" onchange="updateSettingsPreview()"
+              style="width:14px;height:14px;cursor:pointer;accent-color:#2E75B6">
+            毎週月曜日に週次レポートをメールで受け取る
+          </label>
+        </div>
+      </div>
+
+      <!-- アラート閾値 -->
+      <div style="background:#F8FAFC;border-radius:10px;padding:14px 16px;margin-bottom:14px;border:1px solid #E5E7EB">
+        <div style="font-size:13px;font-weight:700;color:#1F3864;margin-bottom:10px">⚠️ スコア急変アラート閾値</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <input type="range" id="settingAlertThreshold" min="5" max="30" step="1" value="10"
+            oninput="updateSettingsPreview()"
+            style="flex:1;accent-color:#2E75B6;cursor:pointer">
+          <div style="min-width:60px;text-align:right">
+            <span id="settingThresholdLabel" style="font-size:18px;font-weight:700;color:#2E75B6">10</span>
+            <span style="font-size:12px;color:#6B7280">pt以上</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#9CA3AF">前日比でこの値以上スコアが変動したときにアラートを発報します</div>
+      </div>
+
+      <!-- 計測頻度 -->
+      <div style="background:#F8FAFC;border-radius:10px;padding:14px 16px;margin-bottom:16px;border:1px solid #E5E7EB">
+        <div style="font-size:13px;font-weight:700;color:#1F3864;margin-bottom:10px">🕐 自動計測スケジュール</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#374151;padding:8px;border-radius:7px;border:1.5px solid #BFDBFE;background:#EFF6FF;cursor:pointer">
+            <input type="radio" name="settingFreq" value="daily" id="settingFreqDaily"
+              style="accent-color:#2E75B6;cursor:pointer">
+            <div><div style="font-weight:700">毎日</div><div style="color:#6B7280;font-size:10px">ChatGPT + Perplexity</div></div>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#374151;padding:8px;border-radius:7px;border:1.5px solid #E5E7EB;background:#fff;cursor:pointer">
+            <input type="radio" name="settingFreq" value="weekly" id="settingFreqWeekly"
+              style="accent-color:#2E75B6;cursor:pointer">
+            <div><div style="font-weight:700">毎週</div><div style="color:#6B7280;font-size:10px">全エンジン + レポート送信</div></div>
+          </label>
+        </div>
+      </div>
+
+      <div id="settingsMsg" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="closeSettingsModal()"
+          style="padding:9px 18px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;color:#374151;font-size:13px;cursor:pointer">
+          キャンセル
+        </button>
+        <button onclick="saveSettings()" id="saveSettingsBtn"
+          style="padding:9px 18px;border-radius:8px;background:#2E75B6;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">
+          設定を保存
         </button>
       </div>
     </div>
@@ -1098,6 +1189,87 @@ async function doLogout() {
   document.getElementById("loginBtnLabel").textContent = "ログイン";
   hideError();
 }
+// ─── 設定モーダル ────────────────────────────────────────────
+function openSettingsModal() {
+  const c = cl();
+  const settings = c?.settings || {};
+  // 値を復元
+  document.getElementById('settingAlertEmail').checked = settings.alertEmail !== false;
+  document.getElementById('settingWeeklyEmail').checked = settings.weeklyEmail !== false;
+  const threshold = settings.alertThreshold || 10;
+  document.getElementById('settingAlertThreshold').value = threshold;
+  document.getElementById('settingThresholdLabel').textContent = threshold;
+  const freq = settings.measureFreq || 'daily';
+  document.getElementById(freq === 'weekly' ? 'settingFreqWeekly' : 'settingFreqDaily').checked = true;
+  document.getElementById('settingsMsg').style.display = 'none';
+  document.getElementById('saveSettingsBtn').disabled = false;
+  document.getElementById('saveSettingsBtn').textContent = '設定を保存';
+  updateSettingsToggleStyle();
+  document.getElementById('settingsOverlay').style.display = 'flex';
+}
+
+function closeSettingsModal() {
+  document.getElementById('settingsOverlay').style.display = 'none';
+}
+
+function updateSettingsPreview() {
+  const val = document.getElementById('settingAlertThreshold').value;
+  document.getElementById('settingThresholdLabel').textContent = val;
+  updateSettingsToggleStyle();
+}
+
+function updateSettingsToggleStyle() {
+  const checked = document.getElementById('settingAlertEmail').checked;
+  const slider  = document.getElementById('settingAlertEmailSlider');
+  slider.style.background = checked ? '#2E75B6' : '#CBD5E1';
+  const knob = slider.querySelector('span');
+  if (knob) knob.style.transform = checked ? 'translateX(20px)' : 'translateX(0)';
+}
+
+async function saveSettings() {
+  const btn   = document.getElementById('saveSettingsBtn');
+  const msgEl = document.getElementById('settingsMsg');
+  btn.disabled = true;
+  btn.textContent = '保存中…';
+  msgEl.style.display = 'none';
+
+  const settings = {
+    alertEmail:       document.getElementById('settingAlertEmail').checked,
+    weeklyEmail:      document.getElementById('settingWeeklyEmail').checked,
+    alertThreshold:   parseInt(document.getElementById('settingAlertThreshold').value, 10),
+    measureFreq:      document.querySelector('input[name="settingFreq"]:checked')?.value || 'daily',
+  };
+
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) throw new Error('ログインが必要です');
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings })
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || '保存に失敗しました');
+
+    // ローカルデータに反映
+    if (clientData) clientData.settings = settings;
+
+    msgEl.style.display = 'block';
+    msgEl.style.background = '#F0FDF4';
+    msgEl.style.color = '#16A34A';
+    msgEl.textContent = '✅ 設定を保存しました';
+    btn.textContent = '保存済み ✓';
+    setTimeout(() => closeSettingsModal(), 1200);
+  } catch(e) {
+    msgEl.style.display = 'block';
+    msgEl.style.background = '#FEF2F2';
+    msgEl.style.color = '#EF4444';
+    msgEl.textContent = '❌ ' + e.message;
+    btn.disabled = false;
+    btn.textContent = '設定を保存';
+  }
+}
+
 // ─── パスワードリセット ──────────────────────────────────────
 function openResetModal() {
   const overlay = document.getElementById('resetOverlay');
@@ -1496,10 +1668,52 @@ function renderSidebarUser(){
 }
 
 // ─── NAV ────────────────────────────────────────────────────
-function setNav(el, label){
+async function setNav(el, label){
   document.querySelectorAll(".nav-item").forEach(x=>x.classList.remove("active"));
   el.classList.add("active");
   document.getElementById("pageTitle").textContent = label;
+
+  if (label === '月次レポート') {
+    await openMonthlyReport(el);
+    return;
+  }
+  if (label === '設定') {
+    openSettingsModal();
+    return;
+  }
+}
+
+async function openMonthlyReport(navEl) {
+  const orig = navEl.innerHTML;
+  navEl.innerHTML = '<span class="nav-icon">⏳</span>生成中…';
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) throw new Error('ログインが必要です');
+    // レポートを新タブで開く（認証付きURL）
+    const res = await fetch('/api/report', {
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+    if (!res.ok) {
+      const e = await res.json();
+      throw new Error(e.error || 'レポート生成に失敗しました');
+    }
+    const html = await res.text();
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    if (!win) alert('ポップアップがブロックされました。ブラウザの設定を確認してください。');
+    // 少し後にURLを解放
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch(e) {
+    alert('❌ レポートを開けませんでした: ' + e.message);
+  } finally {
+    navEl.innerHTML = orig;
+    // ダッシュボードに戻す
+    const dashEl = document.querySelector('.nav-item.active');
+    if (dashEl) dashEl.classList.remove('active');
+    document.querySelector('.nav-item').classList.add('active');
+    document.getElementById('pageTitle').textContent = 'ブランドダッシュボード';
+  }
 }
 
 // ─── キーワード管理モーダル ──────────────────────────────────
@@ -2114,6 +2328,34 @@ async function loadAdminClients() {
   } catch(e) {
     listEl.innerHTML = `<div style="text-align:center;padding:32px;color:#EF4444">${e.message}</div>`;
   }
+}
+
+function exportClientsCsv() {
+  if (!adminClientsData || adminClientsData.length === 0) {
+    alert('エクスポートするデータがありません。先に読み込んでください。');
+    return;
+  }
+  const headers = ['ID','会社名','メールアドレス','業種','スコア','先月比','アラート','最終更新'];
+  const rows = adminClientsData.map(c => [
+    c.id,
+    `"${(c.name || '').replace(/"/g,'""')}"`,
+    c.email || '',
+    `"${(c.industry || '').replace(/"/g,'""')}"`,
+    c.score || 0,
+    `"${(c.scoreChange || '').replace(/"/g,'""')}"`,
+    c.hasAlert ? `"${(c.alertMessage || 'あり').replace(/"/g,'""')}"` : '',
+    c.updatedAt ? new Date(c.updatedAt).toLocaleDateString('ja-JP') : '',
+  ]);
+  const bom = '\uFEFF'; // Excel用BOM
+  const csv = bom + [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  a.href = url;
+  a.download = `aio-clients-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
 function updateAdminStats(list) {
