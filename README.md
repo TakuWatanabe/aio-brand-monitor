@@ -1,6 +1,8 @@
-# AIO Brand Monitor — セットアップガイド
+# AIO Brand Monitor
 
-Supabase Auth + Node.js (Vercel Serverless) + Vercel デプロイの手順書
+AI検索エンジン（ChatGPT / Perplexity / Google AI Overview / Gemini）でのブランド露出をリアルタイムで計測・管理するSaaSダッシュボード。
+
+**Tech Stack:** Vercel Serverless Functions + Supabase (PostgreSQL + Auth) + Resend (メール)
 
 ---
 
@@ -9,206 +11,135 @@ Supabase Auth + Node.js (Vercel Serverless) + Vercel デプロイの手順書
 ```
 aio-brand-monitor/
 ├── public/
-│   └── index.html          # フロントエンド（Supabase JS SDK 統合済み）
+│   └── index.html                  # フロントエンド（Single Page App）
 ├── api/
-│   ├── client.js           # GET /api/client — 認証済みユーザーのデータを返す
-│   └── health.js           # GET /api/health — 稼働確認
+│   ├── client.js                   # GET  /api/client         — ログイン中ユーザーのデータ取得
+│   ├── config.js                   # GET  /api/config         — Supabase公開設定を返す
+│   ├── health.js                   # GET  /api/health         — 稼働確認
+│   ├── keywords.js                 # GET/POST /api/keywords   — キーワード管理
+│   ├── measure.js                  # POST /api/measure        — リアルタイムAIスコア計測
+│   ├── profile.js                  # POST /api/profile        — プロフィール更新
+│   ├── report.js                   # GET  /api/report         — 月次HTMLレポート生成
+│   ├── settings.js                 # GET/POST /api/settings   — 通知・アラート設定
+│   ├── admin/
+│   │   ├── auth.js                 # POST /api/admin/auth     — 管理者ログイン
+│   │   ├── clients.js              # CRUD /api/admin/clients  — クライアント管理
+│   │   ├── invite.js               # POST /api/admin/invite   — 招待メール送信
+│   │   ├── measure.js              # POST /api/admin/measure  — 手動計測（SSE）
+│   │   └── update-influencers.js   # POST — インフルエンサーデータ更新
+│   └── cron/
+│       ├── daily-scores.js         # 毎日22:00 JST — 日次計測＋アラート
+│       └── weekly-scores.js        # 毎週日曜22:00 JST — 全エンジン計測＋レポートメール
 ├── lib/
-│   ├── supabaseAdmin.js    # Supabase サーバーサイドクライアント
-│   └── data.js             # クライアントデータ（モックDB）
-├── .env.example            # 環境変数テンプレート
-├── .gitignore
-├── package.json
+│   ├── aiMeasurement.js            # AI検索エンジン計測ロジック
+│   ├── emailReport.js              # メール生成＋Resend送信
+│   ├── gscClient.js                # Google Search Console連携
+│   └── supabaseAdmin.js            # Supabase Admin Client
+├── supabase-migrations.sql         # ← Supabase SQL Editor で実行するDDL
+├── supabase-add-bitstar-client.sql # 初期データ投入SQL
 ├── vercel.json
-└── README.md               # このファイル
+└── package.json
 ```
 
 ---
 
-## ① Supabase プロジェクトのセットアップ
+## ① 初回セットアップ
 
 ### 1-1. Supabase プロジェクト作成
 
-1. [supabase.com](https://supabase.com) にアクセス → 「Start your project」
-2. GitHub アカウントでサインアップ（無料）
-3. 「New Project」→ 組織を選択 → プロジェクト名（例: `aio-brand-monitor`）を入力
-4. データベースパスワードを設定（控えておく） → リージョンは「Northeast Asia (Tokyo)」推奨
-5. 「Create new project」→ 約1分で作成完了
+1. [supabase.com](https://supabase.com) → 「New Project」
+2. リージョン: **Northeast Asia (Tokyo)** 推奨
+3. Authentication → Email Providers → Email が有効であることを確認
+4. 開発中は「Confirm email」を **OFF** に設定
 
-### 1-2. Authentication を確認
+### 1-2. DBマイグレーションを実行
 
-Supabase はデフォルトで Authentication が有効です。
+Supabase Dashboard → **SQL Editor** で `supabase-migrations.sql` を実行してください。
 
-1. 左メニュー「Authentication」→「Providers」
-2. 「Email」が有効になっていることを確認（デフォルトで ON）
-3. 開発中は「Confirm email」を **OFF** にすると動作確認が簡単：
-   - 「Authentication」→「Email Templates」→「Enable email confirmations」を無効化
+> これにより以下が作成・追加されます：
+> - `clients` テーブルへの `settings` / `score_alert` 等のカラム追加
+> - `ai_scores` テーブル（スコア履歴）の作成
+> - Row Level Security (RLS) ポリシーの設定
 
-### 1-3. テストユーザーを追加
+### 1-3. 初期クライアントデータを登録
 
-1. 左メニュー「Authentication」→「Users」→「Add user」→「Create new user」
-2. 以下の3ユーザーを登録：
-
-| メールアドレス | パスワード |
-|---|---|
-| `marketing@kose.co.jp` | `demo1234` |
-| `digital@fastretailing.com` | `demo1234` |
-| `digital@ajinomoto.com` | `demo1234` |
-
-> **注意**: 本番環境では推測されにくいパスワードに変更してください
-
-### 1-4. API キーを取得
-
-1. 左メニュー「Project Settings（⚙️）」→「API」
-2. 以下の3つの値を控える：
-
-| 項目 | 用途 |
-|---|---|
-| **Project URL** | `SUPABASE_URL` としてフロントエンド・バックエンド両方で使用 |
-| **anon / public** | `SUPABASE_ANON_KEY` としてフロントエンドで使用（公開可） |
-| **service_role / secret** | `SUPABASE_SERVICE_ROLE_KEY` としてバックエンドのみで使用（絶対公開NG） |
-
-### 1-5. フロントエンドの設定値を更新
-
-`public/index.html` の以下の箇所を書き換えてください：
-
-```javascript
-const SUPABASE_URL      = "https://YOUR_PROJECT_REF.supabase.co"; // ← Project URL
-const SUPABASE_ANON_KEY = "eyJhbGci...";                          // ← anon/public キー
-```
+`supabase-add-bitstar-client.sql` を SQL Editor で実行してください。
 
 ---
 
-## ② ローカル開発環境のセットアップ
+## ② 環境変数の設定
 
-### 2-1. 依存パッケージをインストール
+Vercel Dashboard → Settings → Environment Variables に以下を追加：
+
+| 変数名 | 必須 | 説明 |
+|--------|------|------|
+| `SUPABASE_URL` | ✅ | Supabase Project URL |
+| `SUPABASE_ANON_KEY` | ✅ | Supabase anon/public キー |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | service_role キー（サーバーのみ） |
+| `OPENAI_API_KEY` | ✅ | ChatGPT計測用 |
+| `PERPLEXITY_API_KEY` | ✅ | Perplexity計測用 |
+| `GOOGLE_AI_API_KEY` | ✅ | Google AI Overview計測用 |
+| `GEMINI_API_KEY` | ✅ | Gemini計測用 |
+| `RESEND_API_KEY` | ✅ | メール送信用 |
+| `ADMIN_EMAILS` | ✅ | 管理者メール（カンマ区切り）例: `admin@company.com` |
+| `CRON_SECRET` | ✅ | Vercel Cron認証シークレット |
+| `APP_URL` | ✅ | デプロイURL 例: `https://your-app.vercel.app` |
+| `REPORT_FROM_EMAIL` | ⬜ | 送信元メール（デフォルト: `noreply@bitstar.tokyo`） |
+| `ANTHROPIC_API_KEY` | ⬜ | Claude計測用（オプション） |
+| `GSC_SERVICE_ACCOUNT` | ⬜ | Google Search Console連携用 |
+
+---
+
+## ③ デプロイ
 
 ```bash
-cd aio-brand-monitor
-npm install
-```
-
-### 2-2. 環境変数ファイルを作成
-
-```bash
-cp .env.example .env.local
-```
-
-`.env.local` を編集して Supabase の値を設定：
-
-```env
-SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-### 2-3. ローカルサーバーを起動
-
-```bash
-npm run dev
-```
-
-ブラウザで `http://localhost:3000` を開いてログインを確認します。
-
----
-
-## ③ Vercel へのデプロイ
-
-### 3-1. GitHub にプッシュ（推奨）
-
-```bash
-git init
-git add .
-git commit -m "Initial commit: AIO Brand Monitor"
-git remote add origin https://github.com/YOUR_USERNAME/aio-brand-monitor.git
-git push -u origin main
-```
-
-### 3-2. Vercel ダッシュボードからデプロイ（推奨）
-
-1. [vercel.com](https://vercel.com) にログイン → 「New Project」
-2. GitHub リポジトリを選択 → 「Import」
-3. 「Environment Variables」に以下を追加：
-
-| キー | 値 |
-|---|---|
-| `SUPABASE_URL` | Supabase Project URL |
-| `SUPABASE_ANON_KEY` | anon/public キー |
-| `SUPABASE_SERVICE_ROLE_KEY` | service_role/secret キー |
-
-4. 「Deploy」をクリック → デプロイ完了 🎉
-
-### 3-3. CLI からデプロイする場合
-
-```bash
-npm run deploy
+git push origin main   # GitHub連携で自動デプロイ（推奨）
 ```
 
 ---
 
-## 🔑 APIエンドポイント
+## ④ 機能一覧
 
-| メソッド | パス | 説明 |
-|---|---|---|
-| `GET` | `/api/client` | ログイン中ユーザーのクライアントデータを返す |
-| `GET` | `/api/health` | サーバー稼働確認 |
+### クライアント向け
+- AIOスコア・KPI・トレンド・エンジン別スコアのダッシュボード
+- 競合他社とのスコア比較（競合ランキング）
+- キーワード別AI露出率の管理（最大20件）
+- 月次HTMLレポート（ブラウザ印刷→PDF保存）
+- プロフィール設定（表示名・役職・アバターカラー）
+- 通知・アラート設定（閾値5〜30pt・メール通知オン/オフ）
+- パスワードリセット（メールリンクから新パスワード設定）
 
-### 認証方式
+### 管理者向け（ADMIN_EMAILS ユーザーのみ）
+- クライアント一覧・作成・編集（基本情報・競合設定タブ）
+- **手動計測トリガー** — 任意クライアントのAIスコアを今すぐ計測（リアルタイム進捗表示）
+- 招待メール / パスワードリセットメール送信
+- 統計サマリー（総クライアント数・平均スコア・アラート数・60pt以上）
+- CSVエクスポート（Excel対応BOM付き）
+- 管理者として任意クライアントのダッシュボードを表示
 
-```
-Authorization: Bearer {Supabase Access Token}
-```
-
-フロントエンドは `_supabase.auth.onAuthStateChange` で取得した `session.access_token` を送信します。
-
----
-
-## 🗄️ クライアントデータの管理
-
-現在 `lib/data.js` にモックデータが格納されています。
-本番運用では **Supabase の PostgreSQL** に移行するのが最適です。
-
-### Supabase PostgreSQL への移行手順（将来の拡張）
-
-1. Supabase コンソール「Table Editor」で `clients` テーブルを作成
-2. カラム: `id`, `email`, `name`, `score` など
-3. `lib/supabaseAdmin.js` を使ってクエリ：
-
-```javascript
-// api/client.js の getClientByEmail を置き換えるイメージ
-const { data, error } = await supabase
-  .from("clients")
-  .select("*")
-  .eq("email", user.email)
-  .single();
-```
+### 自動化（Vercel Cron）
+- **日次** (毎日22:00 JST) — ChatGPT+Perplexityで急変検知→アラートメール
+- **週次** (毎週日曜22:00 JST) — 全4エンジン計測→週次レポートメール送信
 
 ---
 
-## 🏗️ 今後の拡張ロードマップ
+## ⑤ AIOスコア計算方式
 
-| フェーズ | 内容 |
-|---|---|
-| Phase 2 | Supabase PostgreSQL でクライアントデータを管理 |
-| Phase 3 | Supabase Realtime でダッシュボードをリアルタイム更新 |
-| Phase 4 | 実際のAI検索データを取得するクローラーを構築 |
-| Phase 5 | Stripe + Supabase で月額課金を実装 |
+| エンジン | ウェイト | API |
+|----------|----------|-----|
+| ChatGPT | 35% | OpenAI API |
+| Perplexity | 35% | Perplexity API |
+| Google AI Overview | 15% | Google Generative AI API |
+| Gemini | 15% | Gemini API |
+
+各エンジンで業界クエリを10問送り、ブランド名が何問に登場したかを0〜100ptで表現。
 
 ---
 
-## 🆘 トラブルシューティング
+## ⑥ セキュリティ設計
 
-**ログインできない場合**
-- Supabase コンソール「Authentication → Users」でユーザーが登録されているか確認
-- 「Email confirmed」が未確認の場合は、Authentication 設定で「Enable email confirmations」を OFF に
-
-**APIが401を返す場合**
-- `public/index.html` の `SUPABASE_URL` と `SUPABASE_ANON_KEY` が正しいか確認
-- Vercel の環境変数に `SUPABASE_SERVICE_ROLE_KEY` が設定されているか確認
-
-**APIが403を返す場合**
-- `lib/data.js` にそのメールアドレスが登録されているか確認
-
-**Vercel デプロイ後に動かない場合**
-- Vercel ダッシュボード「Deployments」→「Functions」でログを確認
-- 環境変数が全て設定されているか再確認
+- 全エンドポイントでSupabase Auth JWTによる認証
+- 管理者判定は `ADMIN_EMAILS` 環境変数で制御（ハードコードなし）
+- Row Level Security (RLS) でクライアントは自分のデータのみアクセス可
+- service_role キーはサーバーサイドのみ使用
+- Supabase公開設定は `/api/config` 経由で配信（フロントエンドへのハードコードなし）

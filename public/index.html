@@ -2429,6 +2429,11 @@ function renderAdminClients(list) {
           title="招待メールまたはパスワードリセットメールを送信">
           📧 招待
         </button>
+        <button id="measureBtn_${c.id}" onclick="event.stopPropagation();triggerMeasure('${c.id}','${nameEsc}',this)"
+          style="padding:5px 11px;border-radius:7px;border:1.5px solid #D1FAE5;background:#F0FDF4;font-size:11px;font-weight:700;cursor:pointer;color:#059669;white-space:nowrap"
+          title="今すぐAIスコアを計測する">
+          📡 計測
+        </button>
         <div style="text-align:right">
           <div style="font-size:15px;font-weight:700;color:${changeColor}">${c.scoreChange}</div>
           <div style="font-size:10px;color:#9CA3AF;margin-top:2px">先月比</div>
@@ -2437,6 +2442,100 @@ function renderAdminClients(list) {
       </div>
     </div>`;
   }).join('');
+}
+
+// 手動計測トリガー（SSEで進捗表示）
+async function triggerMeasure(clientId, clientName, btn) {
+  if (!confirm(`「${clientName}」のAIスコアを今すぐ計測しますか？\n（完了まで1〜2分かかります）`)) return;
+
+  // 進捗モーダルを作成
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;width:min(420px,90vw);padding:28px;box-shadow:0 24px 64px rgba(0,0,0,.25)">
+      <div style="font-size:17px;font-weight:700;color:#1F3864;margin-bottom:6px">📡 AIスコア計測中</div>
+      <div style="font-size:12px;color:#6B7280;margin-bottom:18px">${clientName}</div>
+      <div id="measureProgress" style="font-size:13px;color:#374151;min-height:22px;margin-bottom:14px">接続中…</div>
+      <div style="background:#E5E7EB;border-radius:8px;height:6px;overflow:hidden">
+        <div id="measureBar" style="height:100%;background:linear-gradient(90deg,#2E75B6,#10B981);border-radius:8px;width:0%;transition:width .5s"></div>
+      </div>
+      <div id="measureResult" style="display:none;margin-top:16px;padding:12px;background:#F0FDF4;border-radius:10px;border:1px solid #BBF7D0;font-size:13px;color:#16A34A;font-weight:700"></div>
+      <button id="measureCloseBtn" onclick="this.closest('div[style*=fixed]').remove();loadAdminClients()"
+        style="display:none;margin-top:14px;width:100%;padding:10px;border-radius:8px;background:#1F3864;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">
+        完了 — リストを更新
+      </button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const progressEl = overlay.querySelector('#measureProgress');
+  const barEl      = overlay.querySelector('#measureBar');
+  const resultEl   = overlay.querySelector('#measureResult');
+  const closeBtn   = overlay.querySelector('#measureCloseBtn');
+  const steps = { start: 5, measuring: 30, engines_done: 70, keywords: 80, competitors: 90, saving: 95, done: 100, error: 100 };
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 計測中';
+
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) throw new Error('ログインが必要です');
+
+    const eventSource = new EventSource(`/api/admin/measure?id=${clientId}&_token=${session.access_token}`);
+    // EventSource は Authorization ヘッダーを送れないため fetch + ReadableStream を使う
+    eventSource.close();
+
+    // fetch + ReadableStream でSSEをパース
+    const res = await fetch(`/api/admin/measure?id=${clientId}`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+
+    if (!res.ok) {
+      const e = await res.json();
+      throw new Error(e.error || '計測リクエストに失敗しました');
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const event = JSON.parse(line.slice(6));
+          progressEl.textContent = event.message;
+          barEl.style.width = (steps[event.step] || 50) + '%';
+          if (event.step === 'done') {
+            resultEl.style.display = 'block';
+            resultEl.textContent = `✅ ${event.message}`;
+            closeBtn.style.display = 'block';
+          }
+          if (event.step === 'error') {
+            resultEl.style.display = 'block';
+            resultEl.style.background = '#FEF2F2';
+            resultEl.style.borderColor = '#FECACA';
+            resultEl.style.color = '#DC2626';
+            resultEl.textContent = `❌ ${event.message}`;
+            closeBtn.style.display = 'block';
+          }
+        } catch(_) {}
+      }
+    }
+  } catch(e) {
+    progressEl.textContent = '❌ エラー: ' + e.message;
+    barEl.style.background = '#EF4444';
+    barEl.style.width = '100%';
+    closeBtn.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📡 計測';
+  }
 }
 
 // 招待メール / パスワードリセットメールを送信
