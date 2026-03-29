@@ -400,6 +400,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
   </div>
 </div>
 
+<!-- ══ 新しいパスワード設定モーダル（メールリンク経由） ══ -->
+<div id="newPasswordOverlay"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:3100;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:min(440px,90vw);padding:32px 30px 26px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="font-size:32px;margin-bottom:8px">🔐</div>
+      <div style="font-size:18px;font-weight:700;color:#1F3864">新しいパスワードを設定</div>
+      <div style="font-size:13px;color:#6B7280;margin-top:6px">8文字以上で設定してください</div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">新しいパスワード</div>
+      <input id="newPasswordInput" type="password" placeholder="新しいパスワード（8文字以上）"
+        oninput="checkNewPasswordStrength()"
+        style="width:100%;padding:11px 13px;border:1.5px solid #E5E7EB;border-radius:9px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box">
+      <div id="newPasswordStrength" style="height:4px;border-radius:2px;margin-top:5px;background:#E5E7EB;transition:all .3s">
+        <div id="newPasswordStrengthBar" style="height:100%;border-radius:2px;width:0%;transition:all .3s"></div>
+      </div>
+    </div>
+    <div style="margin-bottom:18px">
+      <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">確認用パスワード</div>
+      <input id="newPasswordConfirm" type="password" placeholder="もう一度入力してください"
+        onkeydown="if(event.key==='Enter')doSetNewPassword()"
+        style="width:100%;padding:11px 13px;border:1.5px solid #E5E7EB;border-radius:9px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box">
+    </div>
+    <div id="newPasswordMsg" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px"></div>
+    <button onclick="doSetNewPassword()" id="newPasswordBtn"
+      style="width:100%;padding:12px;border-radius:9px;background:linear-gradient(135deg,#2E75B6,#1A5EA3);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">
+      パスワードを設定して保存
+    </button>
+  </div>
+</div>
+
 <!-- ══════════════════════════════════════
      DASHBOARD PAGE
 ══════════════════════════════════════ -->
@@ -424,13 +456,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
       <div class="nav-item" onclick="setNav(this,'設定')"><span class="nav-icon">⚙️</span>設定</div>
       <div class="nav-item" id="adminNavItem" style="display:none" onclick="openAdminPanel()"><span class="nav-icon">🛠</span>管理者パネル</div>
     </div>
-    <div class="sb-user">
+    <div class="sb-user" onclick="openProfileModal()" title="プロフィールを編集" style="cursor:pointer">
       <div class="sb-user-ava" id="sbAva" style="background:#2E75B6"></div>
-      <div>
+      <div style="flex:1;min-width:0">
         <div class="sb-user-name" id="sbName"></div>
         <div class="sb-user-role" id="sbRole"></div>
       </div>
-      <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+      <button class="logout-btn" onclick="event.stopPropagation();doLogout()">ログアウト</button>
     </div>
   </div>
 
@@ -772,11 +804,91 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
           style="padding:8px 14px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;font-size:12px;cursor:pointer;color:#374151">🔄 更新</button>
       </div>
 
+      <!-- 統計サマリーバー -->
+      <div id="adminStatsBar" style="display:none;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+        <div style="background:#EFF6FF;border-radius:10px;padding:12px 14px;border:1px solid #BFDBFE">
+          <div style="font-size:10px;color:#6B7280;font-weight:600;margin-bottom:3px">総クライアント数</div>
+          <div style="font-size:20px;font-weight:700;color:#1F3864" id="statTotal">—</div>
+        </div>
+        <div style="background:#F0FDF4;border-radius:10px;padding:12px 14px;border:1px solid #BBF7D0">
+          <div style="font-size:10px;color:#6B7280;font-weight:600;margin-bottom:3px">平均スコア</div>
+          <div style="font-size:20px;font-weight:700;color:#10B981" id="statAvgScore">—</div>
+        </div>
+        <div style="background:#FEF9C3;border-radius:10px;padding:12px 14px;border:1px solid #FDE68A">
+          <div style="font-size:10px;color:#6B7280;font-weight:600;margin-bottom:3px">アラート中</div>
+          <div style="font-size:20px;font-weight:700;color:#D97706" id="statAlerts">—</div>
+        </div>
+        <div style="background:#FDF2F8;border-radius:10px;padding:12px 14px;border:1px solid #F9A8D4">
+          <div style="font-size:10px;color:#6B7280;font-weight:600;margin-bottom:3px">スコア60pt以上</div>
+          <div style="font-size:20px;font-weight:700;color:#DB2777" id="statHighScore">—</div>
+        </div>
+      </div>
+
       <!-- クライアント一覧 -->
       <div id="adminClientList">
         <div style="text-align:center;padding:32px;color:#9CA3AF">読み込み中...</div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- ══ プロフィール設定モーダル ══ -->
+<div class="overlay" id="profileOverlay" onclick="if(event.target===this)closeProfileModal()" style="display:none">
+  <div class="modal" style="max-width:440px;width:92%">
+    <div class="modal-head">
+      <div>
+        <div style="font-size:17px;font-weight:700;color:#1F3864">👤 プロフィール設定</div>
+        <div style="font-size:12px;color:#6B7280;margin-top:3px">表示名・役職などを変更できます</div>
+      </div>
+      <button class="modal-close" onclick="closeProfileModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:18px">
+      <!-- アバタープレビュー -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:14px;background:#F8FAFC;border-radius:10px">
+        <div id="profileAvaPreview"
+          style="width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;background:#2E75B6;flex-shrink:0"></div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#1F3864" id="profileNamePreview">—</div>
+          <div style="font-size:11px;color:#6B7280" id="profileRolePreview">—</div>
+          <div style="font-size:11px;color:#9CA3AF" id="profileEmailPreview">—</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">表示名</div>
+          <input id="profileNameInput" type="text" placeholder="山田 太郎"
+            oninput="updateProfilePreview()"
+            style="width:100%;padding:9px 11px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box">
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">役職</div>
+          <input id="profileRoleInput" type="text" placeholder="マーケティング部長"
+            oninput="updateProfilePreview()"
+            style="width:100%;padding:9px 11px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box">
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px">アバターカラー</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="profileColorPicker">
+          <!-- JS で生成 -->
+        </div>
+      </div>
+
+      <div id="profileMsg" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="closeProfileModal()"
+          style="padding:9px 18px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;color:#374151;font-size:13px;cursor:pointer">
+          キャンセル
+        </button>
+        <button onclick="saveProfile()" id="saveProfileBtn"
+          style="padding:9px 18px;border-radius:8px;background:#2E75B6;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">
+          保存する
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -887,6 +999,12 @@ function scoreColor(s){ return s>=80?"#10B981":s>=65?"#F59E0B":"#EF4444"; }
   // ─── AUTH STATE 監視 ──────────────────────────────────────
   // ページ読み込み時、Supabase が既存セッションを復元するのを待つ
   _supabase.auth.onAuthStateChange(async (event, session) => {
+    // パスワードリセットリンクをクリックした場合 → 新パスワード設定モーダルを表示
+    if (event === 'PASSWORD_RECOVERY') {
+      showNewPasswordModal();
+      return;
+    }
+
     if (session && session.user) {
       // ログイン済み → API からデータを取得してダッシュボードを表示
       try {
@@ -1034,6 +1152,192 @@ async function doPasswordReset() {
     msgEl.textContent = '❌ 送信に失敗しました: ' + e.message;
     btn.disabled = false;
     btn.textContent = 'リセットメールを送信';
+  }
+}
+
+// ─── 新しいパスワード設定（パスワードリセットリンク経由） ────────
+function showNewPasswordModal() {
+  document.getElementById('newPasswordOverlay').style.display = 'flex';
+  document.getElementById('newPasswordInput').value = '';
+  document.getElementById('newPasswordConfirm').value = '';
+  document.getElementById('newPasswordMsg').style.display = 'none';
+  document.getElementById('newPasswordBtn').disabled = false;
+  document.getElementById('newPasswordBtn').textContent = 'パスワードを設定して保存';
+  document.getElementById('newPasswordStrengthBar').style.width = '0%';
+  // ログイン画面も表示しない（モーダルだけ）
+  document.getElementById('pageLoading').classList.add('hidden');
+  document.getElementById('loginPage').style.display = 'none';
+  setTimeout(() => document.getElementById('newPasswordInput').focus(), 100);
+}
+
+function checkNewPasswordStrength() {
+  const val = document.getElementById('newPasswordInput').value;
+  const bar = document.getElementById('newPasswordStrengthBar');
+  let strength = 0;
+  if (val.length >= 8) strength++;
+  if (/[A-Z]/.test(val)) strength++;
+  if (/[0-9]/.test(val)) strength++;
+  if (/[^A-Za-z0-9]/.test(val)) strength++;
+  const colors = ['', '#EF4444', '#F59E0B', '#10B981', '#2E75B6'];
+  const widths  = ['0%', '25%', '50%', '75%', '100%'];
+  bar.style.background = colors[strength] || '#E5E7EB';
+  bar.style.width = widths[strength] || '0%';
+}
+
+async function doSetNewPassword() {
+  const pw1  = document.getElementById('newPasswordInput').value;
+  const pw2  = document.getElementById('newPasswordConfirm').value;
+  const msgEl = document.getElementById('newPasswordMsg');
+  const btn  = document.getElementById('newPasswordBtn');
+
+  const showMsg = (text, ok) => {
+    msgEl.style.display = 'block';
+    msgEl.style.background = ok ? '#F0FDF4' : '#FEF2F2';
+    msgEl.style.color = ok ? '#16A34A' : '#EF4444';
+    msgEl.textContent = text;
+  };
+
+  if (pw1.length < 8) { showMsg('パスワードは8文字以上で入力してください', false); return; }
+  if (pw1 !== pw2)    { showMsg('パスワードが一致しません', false); return; }
+
+  btn.disabled = true;
+  btn.textContent = '保存中…';
+  msgEl.style.display = 'none';
+
+  try {
+    const { error } = await _supabase.auth.updateUser({ password: pw1 });
+    if (error) throw error;
+
+    showMsg('✅ パスワードを設定しました！ダッシュボードに移動します…', true);
+    btn.textContent = '設定完了 ✓';
+
+    // 少し待ってからダッシュボードへ
+    setTimeout(async () => {
+      document.getElementById('newPasswordOverlay').style.display = 'none';
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (session) {
+        try {
+          await loadClientData(session.access_token);
+          showDashboard();
+        } catch(e) {
+          showLogin();
+        }
+      } else {
+        showLogin('パスワードを設定しました。ログインしてください。');
+      }
+    }, 2000);
+  } catch(e) {
+    showMsg('❌ エラー: ' + e.message, false);
+    btn.disabled = false;
+    btn.textContent = 'パスワードを設定して保存';
+  }
+}
+
+// ─── プロフィール設定モーダル ─────────────────────────────────
+const PROFILE_COLORS = ['#2E75B6','#10B981','#8B5CF6','#F59E0B','#EF4444','#0EA5E9','#EC4899','#14B8A6'];
+
+function openProfileModal() {
+  const c = cl();
+  if (!c) return;
+  document.getElementById('profileNameInput').value = c.userName || '';
+  document.getElementById('profileRoleInput').value = c.userRole || '';
+  document.getElementById('profileMsg').style.display = 'none';
+  document.getElementById('saveProfileBtn').disabled = false;
+  document.getElementById('saveProfileBtn').textContent = '保存する';
+
+  // カラーピッカーを生成
+  const picker = document.getElementById('profileColorPicker');
+  picker.innerHTML = PROFILE_COLORS.map(col => `
+    <div onclick="selectProfileColor('${col}')" data-color="${col}"
+      style="width:28px;height:28px;border-radius:50%;background:${col};cursor:pointer;
+             box-shadow:${col === (c.color || '#2E75B6') ? '0 0 0 3px #fff,0 0 0 5px ' + col : 'none'};
+             transition:box-shadow .15s" title="${col}"></div>
+  `).join('');
+  _selectedProfileColor = c.color || '#2E75B6';
+
+  updateProfilePreview();
+  document.getElementById('profileOverlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('profileNameInput').focus(), 50);
+}
+
+let _selectedProfileColor = '#2E75B6';
+
+function selectProfileColor(col) {
+  _selectedProfileColor = col;
+  document.querySelectorAll('#profileColorPicker div').forEach(el => {
+    const c2 = el.dataset.color;
+    el.style.boxShadow = c2 === col ? `0 0 0 3px #fff,0 0 0 5px ${col}` : 'none';
+  });
+  updateProfilePreview();
+}
+
+function updateProfilePreview() {
+  const name = document.getElementById('profileNameInput').value.trim() || '—';
+  const role = document.getElementById('profileRoleInput').value.trim() || '—';
+  const short = name.length >= 2 ? name.charAt(0) : name;
+  document.getElementById('profileAvaPreview').style.background = _selectedProfileColor;
+  document.getElementById('profileAvaPreview').textContent = short;
+  document.getElementById('profileNamePreview').textContent = name;
+  document.getElementById('profileRolePreview').textContent = role;
+  document.getElementById('profileEmailPreview').textContent = cl()?.email || '';
+}
+
+function closeProfileModal() {
+  document.getElementById('profileOverlay').style.display = 'none';
+}
+
+async function saveProfile() {
+  const name = document.getElementById('profileNameInput').value.trim();
+  const role = document.getElementById('profileRoleInput').value.trim();
+  const btn  = document.getElementById('saveProfileBtn');
+  const msgEl = document.getElementById('profileMsg');
+
+  if (!name) {
+    msgEl.style.display = 'block';
+    msgEl.style.background = '#FEF2F2';
+    msgEl.style.color = '#EF4444';
+    msgEl.textContent = '表示名を入力してください';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '保存中…';
+  msgEl.style.display = 'none';
+
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) throw new Error('ログインが必要です');
+    const res = await fetch('/api/profile', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_name: name, user_role: role, color: _selectedProfileColor })
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || '保存に失敗しました');
+
+    // ローカルデータを更新
+    if (clientData) {
+      clientData.userName = name;
+      clientData.userRole = role;
+      clientData.color = _selectedProfileColor;
+      clientData.short = name.charAt(0);
+      renderSidebarUser();
+      renderHero(clientData);
+    }
+
+    msgEl.style.display = 'block';
+    msgEl.style.background = '#F0FDF4';
+    msgEl.style.color = '#16A34A';
+    msgEl.textContent = '✅ プロフィールを保存しました';
+    btn.textContent = '保存済み ✓';
+    setTimeout(() => closeProfileModal(), 1200);
+  } catch(e) {
+    msgEl.style.display = 'block';
+    msgEl.style.background = '#FEF2F2';
+    msgEl.style.color = '#EF4444';
+    msgEl.textContent = '❌ ' + e.message;
+    btn.disabled = false;
+    btn.textContent = '保存する';
   }
 }
 
@@ -1806,9 +2110,25 @@ async function loadAdminClients() {
     document.getElementById('adminClientCount').textContent =
       `全 ${body.total} クライアント`;
     renderAdminClients(adminClientsData);
+    updateAdminStats(adminClientsData);
   } catch(e) {
     listEl.innerHTML = `<div style="text-align:center;padding:32px;color:#EF4444">${e.message}</div>`;
   }
+}
+
+function updateAdminStats(list) {
+  const bar = document.getElementById('adminStatsBar');
+  if (!list.length) { bar.style.display = 'none'; return; }
+  bar.style.display = 'grid';
+  const total = list.length;
+  const scores = list.map(c => c.score || 0);
+  const avg = Math.round(scores.reduce((a, b) => a + b, 0) / total);
+  const alerts = list.filter(c => c.hasAlert).length;
+  const highScore = list.filter(c => (c.score || 0) >= 60).length;
+  document.getElementById('statTotal').textContent = total + '社';
+  document.getElementById('statAvgScore').textContent = avg + 'pt';
+  document.getElementById('statAlerts').textContent = alerts + '件';
+  document.getElementById('statHighScore').textContent = highScore + '社';
 }
 
 function filterAdminClients() {
