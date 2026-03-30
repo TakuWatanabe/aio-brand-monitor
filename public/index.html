@@ -654,6 +654,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
           style="padding:8px 18px;border:none;background:none;font-size:13px;font-weight:600;color:#9CA3AF;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px">
           🏆 競合設定
         </button>
+        <button id="ecTab3" onclick="switchEditTab(3)"
+          style="padding:8px 18px;border:none;background:none;font-size:13px;font-weight:600;color:#9CA3AF;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px">
+          👥 インフルエンサー
+        </button>
       </div>
     </div>
 
@@ -715,6 +719,59 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
               追加
             </button>
           </div>
+        </div>
+      </div>
+
+      <!-- タブ3: インフルエンサー管理 -->
+      <div id="ecTabPane3" style="display:none">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:12px;line-height:1.6;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:10px 12px">
+          📡 登録したインフルエンサーのAI言及数は、<strong>週次クロン</strong>または<strong>「📡 計測」ボタン</strong>で自動的に更新されます。
+        </div>
+
+        <!-- インフルエンサー一覧 -->
+        <div id="editInfList" style="margin-bottom:14px;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto"></div>
+
+        <!-- 新規追加フォーム -->
+        <div style="background:#F9FAFB;border:1.5px dashed #D1D5DB;border-radius:10px;padding:14px">
+          <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:8px">＋ インフルエンサーを追加</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <div style="font-size:10px;color:#6B7280;margin-bottom:3px">名前 *</div>
+              <input id="newInfName" type="text" placeholder="例: 田中みな実"
+                style="width:100%;padding:7px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box">
+            </div>
+            <div>
+              <div style="font-size:10px;color:#6B7280;margin-bottom:3px">カテゴリ</div>
+              <select id="newInfCat"
+                style="width:100%;padding:7px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;outline:none;font-family:inherit;cursor:pointer;box-sizing:border-box">
+                <option value="ビューティー">💄 ビューティー</option>
+                <option value="ファッション">👗 ファッション</option>
+                <option value="グルメ・料理">🍽 グルメ・料理</option>
+                <option value="ライフスタイル">🏠 ライフスタイル</option>
+                <option value="テック・ガジェット">💻 テック・ガジェット</option>
+                <option value="フィットネス">💪 フィットネス</option>
+                <option value="エンタメ">🎬 エンタメ</option>
+                <option value="ビジネス">💼 ビジネス</option>
+                <option value="その他">✨ その他</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <div style="font-size:10px;color:#6B7280;margin-bottom:3px">SNSハンドル（任意）</div>
+              <input id="newInfHandle" type="text" placeholder="@username"
+                style="width:100%;padding:7px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box">
+            </div>
+            <div>
+              <div style="font-size:10px;color:#6B7280;margin-bottom:3px">フォロワー数（任意）</div>
+              <input id="newInfDetail" type="text" placeholder="例: Instagram 50万"
+                style="width:100%;padding:7px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box">
+            </div>
+          </div>
+          <button onclick="addInfluencer()"
+            style="padding:7px 18px;border-radius:6px;background:#2E75B6;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer">
+            ＋ 追加
+          </button>
         </div>
       </div>
     </div>
@@ -2689,8 +2746,10 @@ function switchEditTab(n) {
   currentEditTab = n;
   document.getElementById('ecTabPane1').style.display = n === 1 ? '' : 'none';
   document.getElementById('ecTabPane2').style.display = n === 2 ? '' : 'none';
+  document.getElementById('ecTabPane3').style.display = n === 3 ? '' : 'none';
+  if (n === 3) renderInfEditList();
   // タブボタンのスタイル
-  [1, 2].forEach(i => {
+  [1, 2, 3].forEach(i => {
     const btn = document.getElementById(`ecTab${i}`);
     const active = i === n;
     btn.style.color = active ? '#2E75B6' : '#9CA3AF';
@@ -2719,7 +2778,10 @@ function openEditClientModal(id) {
   editCompData = Array.isArray(c.competitors) ? JSON.parse(JSON.stringify(c.competitors)) : [];
   renderEditCompList();
 
-  // 競合データがない場合は非同期で取得
+  // インフルエンサーデータを初期化
+  editInfData = Array.isArray(c.influencers) ? JSON.parse(JSON.stringify(c.influencers)) : [];
+
+  // 詳細データがない場合は非同期で取得
   if (!Array.isArray(c.competitors)) {
     loadCompetitorsForEdit(id);
   }
@@ -2738,12 +2800,18 @@ async function loadCompetitorsForEdit(clientId) {
     });
     if (!res.ok) return;
     const body = await res.json();
-    if (body.client && Array.isArray(body.client.competitors)) {
-      editCompData = JSON.parse(JSON.stringify(body.client.competitors));
-      // adminClientsDataにもキャッシュ
+    if (body.client) {
       const idx = adminClientsData.findIndex(x => x.id === clientId);
-      if (idx !== -1) adminClientsData[idx].competitors = body.client.competitors;
-      renderEditCompList();
+      if (Array.isArray(body.client.competitors)) {
+        editCompData = JSON.parse(JSON.stringify(body.client.competitors));
+        if (idx !== -1) adminClientsData[idx].competitors = body.client.competitors;
+        renderEditCompList();
+      }
+      if (Array.isArray(body.client.influencers)) {
+        editInfData = JSON.parse(JSON.stringify(body.client.influencers));
+        if (idx !== -1) adminClientsData[idx].influencers = body.client.influencers;
+        if (currentEditTab === 3) renderInfEditList();
+      }
     }
   } catch(e) {
     console.warn('[loadCompetitorsForEdit]', e.message);
@@ -2786,6 +2854,74 @@ function removeComp(idx) {
   if (!confirm(`「${name}」を競合リストから削除しますか？`)) return;
   editCompData.splice(idx, 1);
   renderEditCompList();
+}
+
+// ── インフルエンサー管理（タブ3）───────────────────────────────
+let editInfData = [];
+
+const INF_CAT_EMOJI = {
+  'ビューティー': '💄', 'ファッション': '👗', 'グルメ・料理': '🍽',
+  'ライフスタイル': '🏠', 'テック・ガジェット': '💻', 'フィットネス': '💪',
+  'エンタメ': '🎬', 'ビジネス': '💼', 'その他': '✨',
+};
+const INF_CAT_BG = {
+  'ビューティー': '#FDF2F8', 'ファッション': '#EFF6FF', 'グルメ・料理': '#FFF7ED',
+  'ライフスタイル': '#F0FDF4', 'テック・ガジェット': '#F0F9FF', 'フィットネス': '#F0FDF4',
+  'エンタメ': '#FEF9C3', 'ビジネス': '#F8FAFC', 'その他': '#F5F3FF',
+};
+
+function renderInfEditList() {
+  const el = document.getElementById('editInfList');
+  if (!editInfData.length) {
+    el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:12px">インフルエンサーが登録されていません</div>';
+    return;
+  }
+  el.innerHTML = editInfData.map((inf, i) => {
+    const emoji = INF_CAT_EMOJI[inf.cat] || '✨';
+    const measured = inf.lastMeasured ? `最終計測: ${inf.lastMeasured}` : '未計測';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #E5E7EB;border-radius:8px;background:#fff">
+      <div style="width:32px;height:32px;border-radius:50%;background:${INF_CAT_BG[inf.cat]||'#F5F3FF'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${emoji}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:#1F3864">${inf.name}
+          ${inf.handle ? `<span style="font-size:11px;color:#6B7280;font-weight:400">${inf.handle}</span>` : ''}
+        </div>
+        <div style="font-size:11px;color:#9CA3AF">${inf.cat || 'その他'} ${inf.detail ? '· ' + inf.detail : ''} · ${measured}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:16px;font-weight:700;color:${(inf.impact||0)>0?'#10B981':'#9CA3AF'}">${inf.impact || 0}</div>
+        <div style="font-size:10px;color:#9CA3AF">AI言及数</div>
+      </div>
+      <button onclick="removeInfluencer(${i})"
+        style="padding:4px 8px;border-radius:6px;background:#FEE2E2;color:#991B1B;border:none;font-size:11px;cursor:pointer;font-weight:600;flex-shrink:0">削除</button>
+    </div>`;
+  }).join('');
+}
+
+function addInfluencer() {
+  const name = document.getElementById('newInfName').value.trim();
+  if (!name) { document.getElementById('newInfName').focus(); return; }
+  if (editInfData.some(i => i.name === name)) { alert('同じ名前がすでに登録されています'); return; }
+  const cat = document.getElementById('newInfCat').value;
+  editInfData.push({
+    name,
+    cat,
+    handle: document.getElementById('newInfHandle').value.trim() || null,
+    detail: document.getElementById('newInfDetail').value.trim() || '',
+    emoji:  INF_CAT_EMOJI[cat] || '✨',
+    bg:     INF_CAT_BG[cat] || '#F5F3FF',
+    impact: 0,
+    lastMeasured: null,
+  });
+  document.getElementById('newInfName').value = '';
+  document.getElementById('newInfHandle').value = '';
+  document.getElementById('newInfDetail').value = '';
+  renderInfEditList();
+}
+
+function removeInfluencer(i) {
+  if (!confirm(`「${editInfData[i].name}」を削除しますか？`)) return;
+  editInfData.splice(i, 1);
+  renderInfEditList();
 }
 
 function addCompetitor() {
@@ -2838,7 +2974,7 @@ async function saveEditClient() {
         Authorization: 'Bearer ' + session.access_token,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, industry, brand_names, competitors: editCompData }),
+      body: JSON.stringify({ name, industry, brand_names, competitors: editCompData, influencers: editInfData }),
     });
     const body = await res.json();
     if (!res.ok) throw new Error(body.error || '更新に失敗しました');
@@ -2851,6 +2987,7 @@ async function saveEditClient() {
       adminClientsData[idx].industry    = industry;
       adminClientsData[idx].brands      = brand_names;
       adminClientsData[idx].competitors = editCompData;
+      adminClientsData[idx].influencers = editInfData;
       renderAdminClients(adminClientsData);
     } else {
       await loadAdminClients();

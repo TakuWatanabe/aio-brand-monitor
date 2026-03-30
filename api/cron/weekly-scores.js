@@ -14,6 +14,8 @@ const {
   measureKeywordGoogleAI,
   measureCompetitorListings,
   scoreCompetitorsFromResponses,
+  measureInfluencerMentions,
+  buildBarDataFromInfluencers,
   getWeekStart,
   getCurrentMonth,
 } = require('../../lib/aiMeasurement');
@@ -156,6 +158,16 @@ module.exports = async (req, res) => {
         updatedCompetitors = scoreCompetitorsFromResponses(updatedCompetitors, allResponses, overallScore);
       }
 
+      // === インフルエンサーAI言及数を自動計測 ===
+      let updatedInfluencers = client.influencers || [];
+      let updatedBarData = client.bar_data || [];
+      if (updatedInfluencers.length > 0) {
+        console.log(`[週次] ${client.name}: インフルエンサー計測開始 (${updatedInfluencers.length}名)`);
+        updatedInfluencers = await measureInfluencerMentions(updatedInfluencers, brandNames, industry);
+        updatedBarData = buildBarDataFromInfluencers(updatedInfluencers);
+        console.log(`[週次] ${client.name}: インフルエンサー計測完了`);
+      }
+
       // === clients テーブル更新 ===
       await supabaseAdmin.from('clients').update({
         current_score: overallScore,
@@ -165,6 +177,8 @@ module.exports = async (req, res) => {
         kpi,
         keywords: updatedKeywords,
         competitors: updatedCompetitors,
+        influencers: updatedInfluencers,
+        bar_data: updatedBarData,
         updated_at: new Date().toISOString(),
       }).eq('id', client.id);
 

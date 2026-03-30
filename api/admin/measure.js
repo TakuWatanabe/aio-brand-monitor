@@ -13,6 +13,8 @@ const {
   measureCompetitorListings,
   scoreCompetitorsFromResponses,
   aggregateCitationsByDomain,
+  measureInfluencerMentions,
+  buildBarDataFromInfluencers,
   getWeekStart,
   getCurrentMonth,
 } = require('../../lib/aiMeasurement');
@@ -122,6 +124,15 @@ module.exports = async (req, res) => {
     // === 引用ドメイン集計 ===
     const citations = aggregateCitationsByDomain(allResponses);
 
+    // === インフルエンサーAI言及数を自動計測 ===
+    let updatedInfluencers = client.influencers || [];
+    let updatedBarData = client.bar_data || [];
+    if (updatedInfluencers.length > 0) {
+      send({ step: 'influencers', message: `インフルエンサー ${updatedInfluencers.length}名 のAI言及を計測中…` });
+      updatedInfluencers = await measureInfluencerMentions(updatedInfluencers, brandNames, industry);
+      updatedBarData = buildBarDataFromInfluencers(updatedInfluencers);
+    }
+
     // === スコア変化計算 ===
     const prevScore = client.current_score || 0;
     const diff = overallScore - prevScore;
@@ -160,6 +171,8 @@ module.exports = async (req, res) => {
       keywords: updatedKeywords,
       competitors: updatedCompetitors,
       citations: citations.slice(0, 20),
+      influencers: updatedInfluencers,
+      bar_data: updatedBarData,
       trend,
       score_alert: null, // 手動計測後はアラートをリセット
       score_alert_at: null,
