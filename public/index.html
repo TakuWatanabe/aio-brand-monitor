@@ -323,7 +323,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
           <div class="feat-icon">🚀</div>
           <div class="feat-text">
             <div class="feat-title">インフルエンサー施策の効果計測</div>
-            <div class="feat-desc">BitStarのキャスティング施策がAI言及数に与える影響を可視化</div>
+            <div class="feat-desc">BitStarのキャスティング施策がSNS言及スコアに与える影響を可視化</div>
           </div>
         </div>
       </div>
@@ -602,12 +602,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
         </div>
       </div>
 
-      <div class="sec-title">インフルエンサー施策 — AI言及への貢献</div>
+      <div class="sec-title">インフルエンサー施策 — SNS言及スコアへの貢献</div>
       <div class="two-col" style="margin-bottom:20px">
         <div class="card">
           <div class="card-header">
-            <div class="card-title">施策別 AI言及増加数（今月）</div>
-            <div class="card-sub">インフルエンサー投稿によって誘発されたAI引用数</div>
+            <div class="card-title">カテゴリ別 SNS言及スコア（今月）</div>
+            <div class="card-sub">SNS言及数 × フォロワー影響力倍率による貢献スコア</div>
           </div>
           <div class="card-body"><svg id="barChart" width="100%" viewBox="0 0 440 155" style="display:block"></svg></div>
         </div>
@@ -725,7 +725,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
       <!-- タブ3: インフルエンサー管理 -->
       <div id="ecTabPane3" style="display:none">
         <div style="font-size:12px;color:#6B7280;margin-bottom:12px;line-height:1.6;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:10px 12px">
-          📡 登録したインフルエンサーのAI言及数は、<strong>週次クロン</strong>または<strong>「📡 計測」ボタン</strong>で自動的に更新されます。
+          📡 登録したインフルエンサーの<strong>SNS言及スコア</strong>（言及数 × フォロワー影響力倍率）は、<strong>週次クロン</strong>または<strong>「📡 計測」ボタン</strong>で自動的に更新されます。フォロワー数が多いほどスコアが高くなります。
         </div>
 
         <!-- インフルエンサー一覧 -->
@@ -763,8 +763,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
                 style="width:100%;padding:7px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box">
             </div>
             <div>
-              <div style="font-size:10px;color:#6B7280;margin-bottom:3px">フォロワー数（任意）</div>
-              <input id="newInfDetail" type="text" placeholder="例: Instagram 50万"
+              <div style="font-size:10px;color:#6B7280;margin-bottom:3px">フォロワー数（人） <span style="color:#10B981">※倍率に影響</span></div>
+              <input id="newInfFollowers" type="number" min="0" placeholder="例: 500000"
                 style="width:100%;padding:7px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box">
             </div>
           </div>
@@ -2221,8 +2221,8 @@ function renderAdvice(c){
   // ── インフルエンサー施策アドバイス（BitStar固有）──
   advices.push({
     icon: '🎯', priority: 'low',
-    title: 'インフルエンサー施策でAI言及を加速',
-    desc: 'SNS上のインフルエンサー投稿はAIが学習するコンテンツの重要な源泉です。BitStarのキャスティング施策でブランド言及を組織的に増やせます。',
+    title: 'インフルエンサー施策でSNS言及スコアを加速',
+    desc: 'SNS上でのブランド言及数にフォロワー影響力倍率を掛けたスコアが向上するほどブランド露出が高まります。BitStarのキャスティング施策でフォロワーの多いインフルエンサーを活用しましょう。',
   });
 
   const priorityLabel = { high: '優先', mid: '推奨', low: '参考' };
@@ -2266,16 +2266,20 @@ function renderBar(c){
 
 // ─── INFLUENCERS ─────────────────────────────────────────────
 function renderInfluencers(c){
+  function fmtF(f){const n=Number(f)||0;if(!n)return '';if(n>=10000)return (n/10000).toFixed(n%10000===0?0:1)+'万人';return n.toLocaleString()+'人';}
+  function multLabel(f){const n=Number(f)||0;if(n>=1000000)return '×10';if(n>=500000)return '×7';if(n>=100000)return '×5';if(n>=50000)return '×3';if(n>=10000)return '×2';return '×1';}
   document.getElementById("infList").innerHTML=c.influencers.map(inf=>`
     <div class="inf-row">
       <div class="inf-ava" style="background:${inf.bg}">${inf.emoji}</div>
       <div style="flex:1">
-        <div class="inf-name">${inf.name} <span style="font-size:11px;color:#9CA3AF">${inf.cat}</span></div>
-        <div class="inf-meta">${inf.detail}</div>
+        <div class="inf-name">${inf.name} <span style="font-size:11px;color:#9CA3AF">${inf.cat}</span>
+          <span style="font-size:10px;font-weight:700;background:#ECFDF5;color:#065F46;border-radius:4px;padding:1px 5px;margin-left:4px">${multLabel(inf.followers)}</span>
+        </div>
+        <div class="inf-meta">${fmtF(inf.followers)}</div>
       </div>
       <div style="text-align:right">
-        <div class="impact-val">+${inf.impact}</div>
-        <div class="impact-label">AI言及増</div>
+        <div class="impact-val">${inf.impact || 0}</div>
+        <div class="impact-label">SNS言及スコア</div>
       </div>
     </div>`).join("");
 }
@@ -2876,20 +2880,39 @@ function renderInfEditList() {
     el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:12px">インフルエンサーが登録されていません</div>';
     return;
   }
+  function infFollowerMultiplier(f) {
+    const n = Number(f) || 0;
+    if (n >= 1000000) return 10;
+    if (n >=  500000) return 7;
+    if (n >=  100000) return 5;
+    if (n >=   50000) return 3;
+    if (n >=   10000) return 2;
+    return 1;
+  }
+  function fmtFollowers(f) {
+    const n = Number(f) || 0;
+    if (!n) return '';
+    if (n >= 10000) return (n / 10000).toFixed(n % 10000 === 0 ? 0 : 1) + '万人';
+    return n.toLocaleString() + '人';
+  }
   el.innerHTML = editInfData.map((inf, i) => {
     const emoji = INF_CAT_EMOJI[inf.cat] || '✨';
     const measured = inf.lastMeasured ? `最終計測: ${inf.lastMeasured}` : '未計測';
+    const mult = infFollowerMultiplier(inf.followers);
+    const followerStr = fmtFollowers(inf.followers);
+    const multBadge = `<span style="font-size:10px;font-weight:700;background:#ECFDF5;color:#065F46;border-radius:4px;padding:1px 5px;margin-left:4px">×${mult}</span>`;
     return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #E5E7EB;border-radius:8px;background:#fff">
       <div style="width:32px;height:32px;border-radius:50%;background:${INF_CAT_BG[inf.cat]||'#F5F3FF'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${emoji}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:700;color:#1F3864">${inf.name}
           ${inf.handle ? `<span style="font-size:11px;color:#6B7280;font-weight:400">${inf.handle}</span>` : ''}
+          ${multBadge}
         </div>
-        <div style="font-size:11px;color:#9CA3AF">${inf.cat || 'その他'} ${inf.detail ? '· ' + inf.detail : ''} · ${measured}</div>
+        <div style="font-size:11px;color:#9CA3AF">${inf.cat || 'その他'}${followerStr ? ' · ' + followerStr : ''} · ${measured}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-size:16px;font-weight:700;color:${(inf.impact||0)>0?'#10B981':'#9CA3AF'}">${inf.impact || 0}</div>
-        <div style="font-size:10px;color:#9CA3AF">AI言及数</div>
+        <div style="font-size:10px;color:#9CA3AF">SNS言及スコア</div>
       </div>
       <button onclick="removeInfluencer(${i})"
         style="padding:4px 8px;border-radius:6px;background:#FEE2E2;color:#991B1B;border:none;font-size:11px;cursor:pointer;font-weight:600;flex-shrink:0">削除</button>
@@ -2902,19 +2925,20 @@ function addInfluencer() {
   if (!name) { document.getElementById('newInfName').focus(); return; }
   if (editInfData.some(i => i.name === name)) { alert('同じ名前がすでに登録されています'); return; }
   const cat = document.getElementById('newInfCat').value;
+  const followersRaw = document.getElementById('newInfFollowers').value;
   editInfData.push({
     name,
     cat,
-    handle: document.getElementById('newInfHandle').value.trim() || null,
-    detail: document.getElementById('newInfDetail').value.trim() || '',
-    emoji:  INF_CAT_EMOJI[cat] || '✨',
-    bg:     INF_CAT_BG[cat] || '#F5F3FF',
-    impact: 0,
+    handle:    document.getElementById('newInfHandle').value.trim() || null,
+    followers: followersRaw ? Number(followersRaw) : 0,
+    emoji:     INF_CAT_EMOJI[cat] || '✨',
+    bg:        INF_CAT_BG[cat] || '#F5F3FF',
+    impact:    0,
     lastMeasured: null,
   });
   document.getElementById('newInfName').value = '';
   document.getElementById('newInfHandle').value = '';
-  document.getElementById('newInfDetail').value = '';
+  document.getElementById('newInfFollowers').value = '';
   renderInfEditList();
 }
 
