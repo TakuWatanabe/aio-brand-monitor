@@ -603,13 +603,34 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
       </div>
 
       <div class="sec-title">インフルエンサー施策 — SNS言及スコアへの貢献</div>
+
+      <!-- インフルエンサーサマリー行 -->
+      <div id="infSummaryRow" style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap"></div>
+
       <div class="two-col" style="margin-bottom:20px">
         <div class="card">
-          <div class="card-header">
-            <div class="card-title">カテゴリ別 SNS言及スコア（今月）</div>
-            <div class="card-sub">SNS言及数 × フォロワー影響力倍率による貢献スコア</div>
+          <div class="card-header" style="flex-wrap:wrap;gap:6px">
+            <div>
+              <div class="card-title">カテゴリ別 SNS言及スコア（今月）</div>
+              <div class="card-sub">SNS言及数 × フォロワー影響力倍率による貢献スコア</div>
+            </div>
+            <div style="font-size:10px;color:#6B7280;line-height:1.8;text-align:right;margin-left:auto">
+              <span style="font-weight:600;color:#374151">倍率: </span>
+              <span style="background:#ECFDF5;color:#065F46;border-radius:3px;padding:1px 4px;font-weight:700">×10</span><span style="color:#9CA3AF"> 100万+</span>
+              <span style="background:#ECFDF5;color:#065F46;border-radius:3px;padding:1px 4px;font-weight:700">×7</span><span style="color:#9CA3AF"> 50万+</span>
+              <span style="background:#ECFDF5;color:#065F46;border-radius:3px;padding:1px 4px;font-weight:700">×5</span><span style="color:#9CA3AF"> 10万+</span>
+              <span style="background:#ECFDF5;color:#065F46;border-radius:3px;padding:1px 4px;font-weight:700">×3</span><span style="color:#9CA3AF"> 5万+</span>
+              <span style="background:#ECFDF5;color:#065F46;border-radius:3px;padding:1px 4px;font-weight:700">×2</span><span style="color:#9CA3AF"> 1万+</span>
+            </div>
           </div>
-          <div class="card-body"><svg id="barChart" width="100%" viewBox="0 0 440 155" style="display:block"></svg></div>
+          <div class="card-body" style="position:relative;min-height:175px">
+            <svg id="barChart" width="100%" viewBox="0 0 440 155" style="display:block"></svg>
+            <div id="barChartEmpty" style="display:none;position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px">
+              <div style="font-size:32px" id="barEmptyIcon">👥</div>
+              <div style="font-size:13px;font-weight:700;color:#374151" id="barEmptyTitle">インフルエンサーを登録してください</div>
+              <div style="font-size:12px;color:#9CA3AF;text-align:center" id="barEmptyDesc">クライアント編集 → 「👥 インフルエンサー」タブでインフルエンサーを追加できます</div>
+            </div>
+          </div>
         </div>
         <div class="card">
           <div class="card-header"><div class="card-title">貢献上位インフルエンサー</div></div>
@@ -2241,7 +2262,31 @@ function renderAdvice(c){
 // ─── BAR CHART ──────────────────────────────────────────────
 function renderBar(c){
   const svg=document.getElementById("barChart");
-  if(!c.barData || c.barData.length===0){ svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="#9CA3AF" font-size="13">データがありません</text>'; return; }
+  const emptyEl=document.getElementById("barChartEmpty");
+
+  // 空状態の表示切り替え
+  function showBarEmpty(icon, title, desc) {
+    svg.style.display='none';
+    emptyEl.style.display='flex';
+    document.getElementById('barEmptyIcon').textContent=icon;
+    document.getElementById('barEmptyTitle').textContent=title;
+    document.getElementById('barEmptyDesc').textContent=desc;
+  }
+  function showBarChart() {
+    svg.style.display='block';
+    emptyEl.style.display='none';
+  }
+
+  if(!c.influencers || c.influencers.length===0){
+    showBarEmpty('👥','インフルエンサーを登録してください','クライアント編集 → 「👥 インフルエンサー」タブでインフルエンサーを追加できます');
+    return;
+  }
+  if(!c.barData || c.barData.length===0 || c.barData.every(d=>d.val===0)){
+    showBarEmpty('📡','まだ計測が実行されていません','「📡 計測」ボタンを押すと最新のSNS言及スコアが取得されます');
+    return;
+  }
+
+  showBarChart();
   const W=440,H=155,PL=50,PR=12,PT=10,PB=28,iW=W-PL-PR,iH=H-PT-PB;
   const maxV=Math.max(...c.barData.map(d=>d.val))||1;
   const bW=(iW/c.barData.length)*0.6, gap=(iW/c.barData.length)*0.4;
@@ -2250,11 +2295,11 @@ function renderBar(c){
     const x=PL+i*(iW/c.barData.length)+gap/2;
     const bH=d.val/maxV*iH, y=PT+iH-bH;
     out+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bW.toFixed(1)}" height="${bH.toFixed(1)}"
-      rx="4" fill="${d.color}" opacity=".85" style="cursor:pointer"
-      onmouseenter="this.setAttribute('opacity','1');showTip(event,'${d.label}: ${d.val}件')"
+      rx="4" fill="${d.color||'#6366F1'}" opacity=".85" style="cursor:pointer"
+      onmouseenter="this.setAttribute('opacity','1');showTip(event,'${d.label}: スコア${d.val}')"
       onmouseleave="this.setAttribute('opacity','.85');hideTip()"/>`;
     out+=`<text x="${(x+bW/2).toFixed(1)}" y="${H-6}" font-size="10" fill="#6B7280" text-anchor="middle">${d.label}</text>`;
-    out+=`<text x="${(x+bW/2).toFixed(1)}" y="${(y-4).toFixed(1)}" font-size="11" font-weight="700" fill="${d.color}" text-anchor="middle">${d.val}</text>`;
+    out+=`<text x="${(x+bW/2).toFixed(1)}" y="${(y-4).toFixed(1)}" font-size="11" font-weight="700" fill="${d.color||'#6366F1'}" text-anchor="middle">${d.val}</text>`;
   });
   [0,Math.round(maxV/2),maxV].forEach(v=>{
     const y=PT+iH-v/maxV*iH;
@@ -2268,17 +2313,75 @@ function renderBar(c){
 function renderInfluencers(c){
   function fmtF(f){const n=Number(f)||0;if(!n)return '';if(n>=10000)return (n/10000).toFixed(n%10000===0?0:1)+'万人';return n.toLocaleString()+'人';}
   function multLabel(f){const n=Number(f)||0;if(n>=1000000)return '×10';if(n>=500000)return '×7';if(n>=100000)return '×5';if(n>=50000)return '×3';if(n>=10000)return '×2';return '×1';}
-  document.getElementById("infList").innerHTML=c.influencers.map(inf=>`
-    <div class="inf-row">
-      <div class="inf-ava" style="background:${inf.bg}">${inf.emoji}</div>
-      <div style="flex:1">
-        <div class="inf-name">${inf.name} <span style="font-size:11px;color:#9CA3AF">${inf.cat}</span>
-          <span style="font-size:10px;font-weight:700;background:#ECFDF5;color:#065F46;border-radius:4px;padding:1px 5px;margin-left:4px">${multLabel(inf.followers)}</span>
+  function multColor(f){const n=Number(f)||0;if(n>=100000)return '#059669';if(n>=10000)return '#10B981';return '#6B7280';}
+
+  const infs = Array.isArray(c.influencers) ? c.influencers : [];
+  const el = document.getElementById("infList");
+
+  // ── サマリーバー更新 ──────────────────────────────────────────
+  const summaryEl = document.getElementById('infSummaryRow');
+  if(summaryEl){
+    const totalScore = infs.reduce((s,inf)=>s+(inf.impact||0),0);
+    const measured   = infs.filter(inf=>inf.lastMeasured).length;
+    const topInf     = infs.slice().sort((a,b)=>(b.impact||0)-(a.impact||0))[0];
+    if(infs.length > 0){
+      summaryEl.innerHTML=`
+        <div style="display:flex;align-items:center;gap:8px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:10px 16px;flex:1">
+          <span style="font-size:22px">📊</span>
+          <div><div style="font-size:11px;color:#6B7280">合計SNS言及スコア</div>
+          <div style="font-size:20px;font-weight:800;color:#065F46">${totalScore}</div></div>
         </div>
-        <div class="inf-meta">${fmtF(inf.followers)}</div>
+        <div style="display:flex;align-items:center;gap:8px;background:#F5F3FF;border:1px solid #DDD6FE;border-radius:10px;padding:10px 16px;flex:1">
+          <span style="font-size:22px">👥</span>
+          <div><div style="font-size:11px;color:#6B7280">登録インフルエンサー</div>
+          <div style="font-size:20px;font-weight:800;color:#5B21B6">${infs.length}<span style="font-size:13px;font-weight:400">名</span>
+          ${measured>0?`<span style="font-size:11px;color:#8B5CF6;margin-left:6px">（計測済 ${measured}名）</span>`:''}
+          </div></div>
+        </div>
+        ${topInf&&(topInf.impact||0)>0?`
+        <div style="display:flex;align-items:center;gap:8px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:10px 16px;flex:1">
+          <span style="font-size:22px">🏆</span>
+          <div><div style="font-size:11px;color:#6B7280">トップインフルエンサー</div>
+          <div style="font-size:14px;font-weight:800;color:#92400E">${topInf.name}
+          <span style="font-size:11px;font-weight:400;color:#B45309">スコア ${topInf.impact}</span></div></div>
+        </div>`:''}`;
+    } else {
+      summaryEl.innerHTML='';
+    }
+  }
+
+  // ── インフルエンサーリスト ──────────────────────────────────────
+  if(infs.length===0){
+    el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:8px;text-align:center">
+      <div style="font-size:32px">👥</div>
+      <div style="font-size:13px;font-weight:700;color:#374151">インフルエンサー未登録</div>
+      <div style="font-size:12px;color:#9CA3AF;line-height:1.6">クライアント編集の「👥 インフルエンサー」タブから<br>インフルエンサーを登録してください</div>
+    </div>`;
+    return;
+  }
+
+  const allUnmeasured = infs.every(inf=>!inf.lastMeasured);
+  if(allUnmeasured){
+    el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:8px;text-align:center">
+      <div style="font-size:32px">📡</div>
+      <div style="font-size:13px;font-weight:700;color:#374151">${infs.length}名登録済・未計測</div>
+      <div style="font-size:12px;color:#9CA3AF;line-height:1.6">「📡 計測」ボタンを押すと<br>SNS言及スコアが自動で算出されます</div>
+    </div>`;
+    return;
+  }
+
+  const sorted = infs.slice().sort((a,b)=>(b.impact||0)-(a.impact||0));
+  el.innerHTML=sorted.map(inf=>`
+    <div class="inf-row">
+      <div class="inf-ava" style="background:${inf.bg||'#F5F3FF'}">${inf.emoji||'✨'}</div>
+      <div style="flex:1">
+        <div class="inf-name">${inf.name} <span style="font-size:11px;color:#9CA3AF">${inf.cat||''}</span>
+          <span style="font-size:10px;font-weight:700;background:#ECFDF5;color:${multColor(inf.followers)};border-radius:4px;padding:1px 5px;margin-left:4px">${multLabel(inf.followers)}</span>
+        </div>
+        <div class="inf-meta">${fmtF(inf.followers)}${inf.handle?` · ${inf.handle}`:''}${inf.lastMeasured?' · 計測: '+inf.lastMeasured:''}</div>
       </div>
       <div style="text-align:right">
-        <div class="impact-val">${inf.impact || 0}</div>
+        <div class="impact-val" style="color:${(inf.impact||0)>0?'#10B981':'#9CA3AF'}">${inf.impact||0}</div>
         <div class="impact-label">SNS言及スコア</div>
       </div>
     </div>`).join("");
