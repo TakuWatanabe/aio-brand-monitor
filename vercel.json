@@ -3,10 +3,13 @@
   "buildCommand": "npm install",
   "outputDirectory": "public",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/:path*" }
+    { "source": "/api/settings", "destination": "/api/client?action=settings" },
+    { "source": "/api/profile",  "destination": "/api/client?action=profile" },
+    { "source": "/api/:path*",   "destination": "/api/:path*" }
   ],
   "functions": {
-    "api/report.js": { "maxDuration": 30 }
+    "api/report.js":        { "maxDuration": 10 },
+    "api/admin/measure.js": { "maxDuration": 10 }
   },
   "headers": [
     {
