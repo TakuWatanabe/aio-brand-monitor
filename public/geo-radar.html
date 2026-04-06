@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GEO Radar â BitStar AIO Brand Monitor</title>
+<title>GEO Radar — BitStar AIO Brand Monitor</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.jsA4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; background: #F0F4FF; color: #1E293B; display: flex; min-height: 100vh; }
 
-/* ââ Sidebar ââ */
+/* ── Sidebar ── */
 .sidebar {
   width: 220px; min-width: 220px;
   background: #1E2761;
@@ -46,7 +46,7 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 .avatar-name { font-size: 12px; color: #CBD5E1; font-weight: 600; }
 .avatar-role { font-size: 10px; color: #64748B; }
 
-/* ââ Main ââ */
+/* ── Main ── */
 .main { flex: 1; overflow-y: auto; }
 .topbar {
   background: white;
@@ -73,14 +73,14 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 
 .content { padding: 24px 28px; }
 
-/* ââ Cards ââ */
+/* ── Cards ── */
 .card { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(30,39,97,0.06); margin-bottom: 20px; overflow: hidden; }
 .card-header { padding: 18px 24px 14px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; }
 .card-title { font-size: 15px; font-weight: 800; color: #1E2761; }
 .card-sub { font-size: 12px; color: #64748B; margin-top: 2px; }
 .card-body { padding: 20px 24px; }
 
-/* ââ KPI grid ââ */
+/* ── KPI grid ── */
 .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
 .kpi-card { background: white; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 12px rgba(30,39,97,0.06); border-top: 3px solid; }
 .kpi-card.navy { border-color: #1E2761; }
@@ -95,12 +95,12 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 .kpi-change.up { color: #10B981; }
 .kpi-change.down { color: #EF4444; }
 
-/* ââ Tab switcher ââ */
+/* ── Tab switcher ── */
 .tabs { display: flex; gap: 4px; background: #F1F5F9; border-radius: 8px; padding: 4px; margin-bottom: 20px; }
 .tab { padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; color: #64748B; transition: all 0.15s; border: none; background: none; }
 .tab.active { background: white; color: #1E2761; box-shadow: 0 1px 4px rgba(30,39,97,0.1); }
 
-/* ââ Influencer table ââ */
+/* ── Influencer table ── */
 .inf-table { width: 100%; border-collapse: collapse; }
 .inf-table th { background: #F8FAFF; color: #64748B; font-size: 11px; font-weight: 700; padding: 10px 14px; text-align: left; border-bottom: 2px solid #DBEAFE; white-space: nowrap; }
 .inf-table td { padding: 12px 14px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; font-size: 13px; }
@@ -112,17 +112,17 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 .inf-name { font-weight: 700; color: #1E293B; }
 .inf-handle { font-size: 11px; color: #64748B; }
 
-/* ââ GEO Score badge ââ */
+/* ── GEO Score badge ── */
 .geo-score { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 800; }
 .geo-score.s5 { background: #D1FAE5; color: #065F46; }
 .geo-score.s4 { background: #DBEAFE; color: #1E3A8A; }
 .geo-score.s3 { background: #FEF3C7; color: #78350F; }
 .geo-score.s2 { background: #FEE2E2; color: #7F1D1D; }
 
-/* ââ Stars ââ */
+/* ── Stars ── */
 .stars { color: #F59E0B; font-size: 14px; letter-spacing: -1px; }
 
-/* ââ AI badge row ââ */
+/* ── AI badge row ── */
 .ai-badges { display: flex; flex-wrap: wrap; gap: 4px; }
 .ai-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
 .ai-badge.chatgpt { background: #D1FAE5; color: #065F46; }
@@ -131,7 +131,7 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 .ai-badge.copilot { background: #DBEAFE; color: #1E3A8A; }
 .ai-badge.gemini { background: #FEF3C7; color: #78350F; }
 
-/* ââ Platform chips ââ */
+/* ── Platform chips ── */
 .platforms { display: flex; gap: 4px; }
 .platform-chip { font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 600; background: #F1F5F9; color: #475569; }
 .platform-chip.yt { background: #FEE2E2; color: #991B1B; }
@@ -140,15 +140,15 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 .platform-chip.ig { background: #FDE68A; color: #92400E; }
 .platform-chip.ameba { background: #EDE9FE; color: #4C1D95; }
 
-/* ââ Bar ââ */
+/* ── Bar ── */
 .bar-wrap { height: 8px; background: #F1F5F9; border-radius: 4px; overflow: hidden; min-width: 80px; }
 .bar-fill { height: 100%; border-radius: 4px; }
 
-/* ââ Contribution badge ââ */
+/* ── Contribution badge ── */
 .contrib-up { color: #10B981; font-weight: 700; font-size: 13px; }
 .contrib-down { color: #EF4444; font-weight: 700; font-size: 13px; }
 
-/* ââ Campaign panel ââ */
+/* ── Campaign panel ── */
 .campaign-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid #F1F5F9; }
 .campaign-row:last-child { border: none; }
 .campaign-name { font-weight: 700; font-size: 14px; color: #1E293B; flex: 1; }
@@ -158,7 +158,7 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 .campaign-badge.ended { background: #F1F5F9; color: #64748B; }
 .campaign-badge.planned { background: #DBEAFE; color: #1E3A8A; }
 
-/* ââ Before/After ââ */
+/* ── Before/After ── */
 .ba-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center; }
 .ba-card { background: #F8FAFF; border: 1px solid #DBEAFE; border-radius: 10px; padding: 16px; text-align: center; }
 .ba-label { font-size: 11px; color: #64748B; font-weight: 600; margin-bottom: 8px; }
@@ -169,7 +169,7 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 .ba-sub { font-size: 11px; color: #64748B; margin-top: 4px; }
 .ba-diff { font-size: 13px; font-weight: 800; color: #10B981; margin-top: 6px; }
 
-/* ââ Recommendation card ââ */
+/* ── Recommendation card ── */
 .rec-card { border: 1px solid #DBEAFE; border-radius: 10px; padding: 16px; background: #F8FAFF; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 14px; }
 .rec-card:hover { background: #EFF6FF; border-color: #93C5FD; }
 .rec-rank { font-size: 20px; font-weight: 800; color: #1E2761; min-width: 24px; }
@@ -182,16 +182,16 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 .add-btn { background: #1E2761; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 8px; }
 .add-btn:hover { background: #2D3F8F; }
 
-/* ââ Alert box ââ */
+/* ── Alert box ── */
 .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 10px; }
 .alert.info { background: #EFF6FF; border-left: 4px solid #0EA5E9; color: #1E3A8A; }
 .alert.warning { background: #FFFBEB; border-left: 4px solid #F59E0B; color: #78350F; }
 .alert.success { background: #F0FDF4; border-left: 4px solid #10B981; color: #065F46; }
 
-/* ââ Chart container ââ */
+/* ── Chart container ── */
 .chart-container { position: relative; height: 240px; }
 
-/* ââ Modal ââ */
+/* ── Modal ── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; display: none; }
 .modal-overlay.open { display: flex; }
 .modal { background: white; border-radius: 16px; padding: 28px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
@@ -205,18 +205,18 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 .form-select { width: 100%; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 14px; outline: none; background: white; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-/* ââ Empty state ââ */
+/* ── Empty state ── */
 .empty-state { text-align: center; padding: 48px 20px; color: #94A3B8; }
 .empty-icon { font-size: 40px; margin-bottom: 12px; }
 .empty-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
 .empty-sub { font-size: 13px; }
 
-/* ââ Loading ââ */
+/* ── Loading ── */
 .loading { text-align: center; padding: 40px; color: #64748B; font-size: 14px; }
 .spinner { width: 32px; height: 32px; border: 3px solid #DBEAFE; border-top-color: #1E2761; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ââ Responsive ââ */
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .sidebar { display: none; }
   .kpi-grid { grid-template-columns: 1fr 1fr; }
@@ -228,24 +228,24 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 <!-- Sidebar -->
 <nav class="sidebar">
   <div class="sidebar-logo">
-    <div class="sidebar-logo-text">â¦ AIO Brand <span>Monitor</span></div>
+    <div class="sidebar-logo-text">✦ AIO Brand <span>Monitor</span></div>
     <div class="sidebar-sub">Powered by BitStar</div>
   </div>
-  <div class="sidebar-section">ã¡ã¤ã³</div>
-  <a href="index.html" class="nav-item"><span class="icon">ð</span>ãã©ã³ãããã·ã¥ãã¼ã</a>
-  <a href="index.html#competitors" class="nav-item"><span class="icon">ð</span>ç«¶ååæ</a>
-  <a href="index.html#keywords" class="nav-item"><span class="icon">ð</span>AIã­ã¼ã¯ã¼ã</a>
-  <a href="geo-radar.html" class="nav-item active"><span class="icon">ð¯</span>GEO Radar <span class="nav-badge">NEW</span></a>
-  <div class="sidebar-section">æ½ç­</div>
-  <a href="index.html#influencers" class="nav-item"><span class="icon">ð¥</span>ã¤ã³ãã«ã¨ã³ãµã¼æ½ç­</a>
-  <a href="index.html#content" class="nav-item"><span class="icon">âï¸</span>ã³ã³ãã³ãæé©å</a>
-  <a href="index.html#campaigns" class="nav-item"><span class="icon">ð</span>ã­ã£ã³ãã¼ã³ç®¡ç</a>
-  <div class="sidebar-section">ã¬ãã¼ã</div>
-  <a href="index.html#report" class="nav-item"><span class="icon">ð</span>ææ¬¡ã¬ãã¼ã</a>
+  <div class="sidebar-section">メイン</div>
+  <a href="index.html" class="nav-item"><span class="icon">📊</span>ブランドダッシュボード</a>
+  <a href="index.html#competitors" class="nav-item"><span class="icon">🏆</span>競合分析</a>
+  <a href="index.html#keywords" class="nav-item"><span class="icon">🔍</span>AIキーワード</a>
+  <a href="geo-radar.html" class="nav-item active"><span class="icon">🎯</span>GEO Radar <span class="nav-badge">NEW</span></a>
+  <div class="sidebar-section">施策</div>
+  <a href="index.html#influencers" class="nav-item"><span class="icon">👥</span>インフルエンサー施策</a>
+  <a href="index.html#content" class="nav-item"><span class="icon">✍️</span>コンテンツ最適化</a>
+  <a href="index.html#campaigns" class="nav-item"><span class="icon">🚀</span>キャンペーン管理</a>
+  <div class="sidebar-section">レポート</div>
+  <a href="index.html#report" class="nav-item"><span class="icon">📄</span>月次レポート</a>
   <div class="sidebar-bottom">
-    <div class="avatar">æ¸¡</div>
+    <div class="avatar">渡</div>
     <div>
-      <div class="avatar-name">æ¸¡é æ</div>
+      <div class="avatar-name">渡邉 拓</div>
       <div class="avatar-role">BitStar</div>
     </div>
   </div>
@@ -255,12 +255,12 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 <div class="main">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:8px;">
-      <span class="topbar-title">ð¯ GEO Radar</span>
+      <span class="topbar-title">🎯 GEO Radar</span>
       <span class="topbar-badge">NEW</span>
     </div>
     <div class="topbar-actions">
-      <button class="btn btn-outline" onclick="openCampaignModal()">ï¼ ã­ã£ã³ãã¼ã³ç»é²</button>
-      <button class="btn btn-amber" onclick="runGeoScan()">ð¡ GEOã¹ã­ã£ã³å®è¡</button>
+      <button class="btn btn-outline" onclick="openCampaignModal()">＋ キャンペーン登録</button>
+      <button class="btn btn-amber" onclick="runGeoScan()">📡 GEOスキャン実行</button>
     </div>
   </div>
 
@@ -268,80 +268,80 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 
     <!-- Alert -->
     <div class="alert info">
-      <span>ð¡</span>
-      <span><strong>GEO Radarã¨ã¯ï¼</strong>ã¤ã³ãã«ã¨ã³ãµã¼æ½ç­ãAIå¼ç¨çãã©ãã ãé«ããããè¨æ¸¬ã»è¨¼æããBitStarç¬èªã®æ©è½ã§ããæ½ç­åå¾ã®AIOã¹ã³ã¢å¤åãã¯ãªã¨ã¤ã¿ã¼åä½ã§åè§£ãã¾ãã</span>
+      <span>💡</span>
+      <span><strong>GEO Radarとは：</strong>インフルエンサー施策がAI引用率をどれだけ高めたかを計測・証明するBitStar独自の機能です。施策前後のAIOスコア変化をクリエイター単位で分解します。</span>
     </div>
 
     <!-- KPI -->
     <div class="kpi-grid">
       <div class="kpi-card navy">
-        <div class="kpi-label">AIå¼ç¨è²¢ç®ã¹ã³ã¢åè¨</div>
-        <div class="kpi-val" id="kpi-total">â</div>
-        <div class="kpi-change up" id="kpi-total-change">è¨æ¸¬å¾ã«è¡¨ç¤º</div>
+        <div class="kpi-label">AI引用貢献スコア合計</div>
+        <div class="kpi-val" id="kpi-total">—</div>
+        <div class="kpi-change up" id="kpi-total-change">計測後に表示</div>
       </div>
       <div class="kpi-card sky">
-        <div class="kpi-label">GEOé©æ§ã¯ãªã¨ã¤ã¿ã¼æ°</div>
-        <div class="kpi-val" id="kpi-geo-count">â</div>
-        <div class="kpi-change" id="kpi-geo-change">ç»é²æ¸ã¿ã¯ãªã¨ã¤ã¿ã¼ä¸­</div>
+        <div class="kpi-label">GEO適性クリエイター数</div>
+        <div class="kpi-val" id="kpi-geo-count">—</div>
+        <div class="kpi-change" id="kpi-geo-change">登録済みクリエイター中</div>
       </div>
       <div class="kpi-card amber">
-        <div class="kpi-label">æ½ç­ã«ããAIOã¹ã³ã¢ä¸æ</div>
-    0   <div class="kpi-val amber" id="kpi-score-up">â</div>
-        <div class="kpi-change" id="kpi-score-change">ææ°ã­ã£ã³ãã¼ã³å®ç¸¾</div>
+        <div class="kpi-label">施策によるAIOスコア上昇</div>
+        <div class="kpi-val amber" id="kpi-score-up">—</div>
+        <div class="kpi-change" id="kpi-score-change">最新キャンペーン実績</div>
       </div>
       <div class="kpi-card green">
-        <div class="kpi-label">AIå¼ç¨ç¢ºèªæ¸ã¿ã³ã³ãã³ã</div>
-        <div class="kpi-val green" id="kpi-cited">â</div>
-        <div class="kpi-change" id="kpi-cited-change">ç´è¿3ã¶æ</div>
+        <div class="kpi-label">AI引用確認済みコンテンツ</div>
+        <div class="kpi-val green" id="kpi-cited">—</div>
+        <div class="kpi-change" id="kpi-cited-change">直近3ヶ月</div>
       </div>
     </div>
 
     <!-- Tabs -->
-  2 <div class="tabs">
-      <button class="tab active" onclick="switchTab('casting')">ð¯ GEOã­ã£ã¹ãã£ã³ã°</button>
-      <button class="tab" onclick="switchTab('contribution')">ð AIå¼ç¨è²¢ç®ã¹ã³ã¢</button>
- 2    <button class="tab" onclick="switchTab('campaign')">ð ã­ã£ã³ãã¼ã³æ¯è¼</button>
-      <button class="tab" onclick="switchTab('recommend')">â­ BitStar DBæ¨è¦</button>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('casting')">🎯 GEOキャスティング</button>
+      <button class="tab" onclick="switchTab('contribution')">📊 AI引用貢献スコア</button>
+      <button class="tab" onclick="switchTab('campaign')">📅 キャンペーン比較</button>
+      <button class="tab" onclick="switchTab('recommend')">⭐ BitStar DB推薦</button>
     </div>
 
-    <!-- ============ TAB: GEOã­ã£ã¹ãã£ã³ã° ============ -->
+    <!-- ============ TAB: GEOキャスティング ============ -->
     <div id="tab-casting">
       <div class="card">
         <div class="card-header">
           <div>
-       2    <div class="card-title">GEOé©æ§ã¹ã³ã¢ â ç»é²ã¯ãªã¨ã¤ã¿ã¼ä¸è¦§</div>
-            <div class="card-sub">åã¯ãªã¨ã¤ã¿ã¼ã®ãAIã«å¼ç¨ãããããããã¹ã³ã¢åããã©ãããã©ã¼ã ã»å°éæ§ã»è¢«å¼ç¨å®ç¸¾ã§ç®åºã</div>
+            <div class="card-title">GEO適性スコア — 登録クリエイター一覧</div>
+            <div class="card-sub">各クリエイターの「AIに引用されやすさ」をスコア化。プラットフォーム・専門性・被引用実績で算出。</div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
             <select class="form-select" style="width:auto;padding:6px 12px;font-size:12px;" onchange="filterByAI(this.value)" id="ai-filter">
-              <option value="">ãã¹ã¦ã¯AI</option>
-              <option value="chatgpt">ChatGPTåã</option>
-              <option value="perplexity">Perplexityåã</option>
-              <option value="aio">AI Overviewsåã</option>
-              <option value="copilot">Copilotåã</option>
+              <option value="">すべてのAI</option>
+              <option value="chatgpt">ChatGPT向け</option>
+              <option value="perplexity">Perplexity向け</option>
+              <option value="aio">AI Overviews向け</option>
+              <option value="copilot">Copilot向け</option>
             </select>
-            <button class="btn btn-outline" style="font-size:12px;padding:6px 14px;" onclick="openAddInfluencerModal()">ï¼ ã¯ãªã¨ã¤ã¿ã¼è¿½å </button>
+            <button class="btn btn-outline" style="font-size:12px;padding:6px 14px;" onclick="openAddInfluencerModal()">＋ クリエイター追加</button>
           </div>
         </div>
         <div class="card-body" style="padding:0;">
-          <div id="casting-loading" class="loading"><div class="spinner"></div>ã¯ãªã¨ã¤ã¿ã¼ãèª­ã¿è¾¼ã¿ä¸­...</div>
+          <div id="casting-loading" class="loading"><div class="spinner"></div>クリエイターを読み込み中...</div>
           <div id="casting-empty" class="empty-state" style="display:none;">
-            <div class="empty-icon">ð¥</div>
-            <div class="empty-title">ã¯ãªã¨ã¤ã¿ã¼ãç»é²ããã¦ãã¾ãã</div>
-            <div class="empty-sub">ãï¼ ã¯ãªã¨ã¤ã¿ã¼è¿½å ãããGEOè¨æ¸¬ãå§ãã¾ããã</div>
+            <div class="empty-icon">👥</div>
+            <div class="empty-title">クリエイターが登録されていません</div>
+            <div class="empty-sub">「＋ クリエイター追加」からGEO計測を始めましょう</div>
           </div>
           <div id="casting-table" style="display:none;">
             <table class="inf-table">
               <thead>
                 <tr>
-                  <th>ã¯ãªã¨ã¤ã¿ã¼</th>
-                  <th>ã«ãã´ãª</th>
-                  <th>ãã©ã­ã¯ã¼</th>
-                  <th>æ´»åãã©ãããã©ã¼ã </th>
-                  <th>GEOé©æ§ã¹ã³ã¢</th>
-                  <th>æé©AI</th>
-                  <th>E-E-A-Tææ°</th>
-                  <th>AIå¼ç¨å®ç¸¾</th>
+                  <th>クリエイター</th>
+                  <th>カヅゴリ</th>
+                  <th>フォロワー</th>
+                  <th>活動プラットフォーム</th>
+                  <th>GEO適性スコア</th>
+                  <th>最適AI</th>
+                  <th>E-E-A-T指数</th>
+                  <th>AI引用実績</th>
                 </tr>
               </thead>
               <tbody id="casting-tbody"></tbody>
@@ -352,67 +352,67 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 
       <!-- GEO Score explanation -->
       <div class="card">
-    0   <div class="card-header">
-          <div class="card-title">ð GEOé©æ§ã¹ã³ã¢ã®ç®åºã­ã¸ãã¯</div>
+        <div class="card-header">
+          <div class="card-title">📐 GEO適性スコアの算出ロジック</div>
         </div>
         <div class="card-body">
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
             <div style="text-align:center;padding:16px;background:#F8FAFF;border-radius:10px;border:1px solid #DBEAFE;">
-              <div style="font-size:24px;margin-bottom:8px;">ðº</div>
-            0 <div style="font-size:13px;font-weight:700;color:#1E2761;margin-bottom:4px;">ãã©ãããã©ã¼ã ä¿æ°</div>
-              <div style="font-size:11px;color:#64748B;line-height:1.6;">YouTubeÃ3.0<br>noteÃ2.5<br>X(Twitter)Ã2.0<br>InstagramÃ1.8<br>amebloÃ1.5</div>
-            </div>
-        0   <div style="text-align:center;padding:16px;background:#F8FAFF;border-radius:10px;border:1px solid #DBEAFE;">
-              <div style="font-size:24px;margin-bottom:8px;">ð</div>
-              <div style="font-size:13px;font-weight:700;color:#1E2761;margin-bottom:4px;">å°éæ§ã¹ã³ã¢</div>
-              <div style="font-size:11px;color:#64748B;line-height:1.6;">åä¸ã«ãã´ãªç¹å<br>è§£èª¬ã»æ¯è¼ç³»<br>æåã»æè¡è§£èª¬<br>ä¸æ¬¡ä½é¨æå ±</div>
+              <div style="font-size:24px;margin-bottom:8px;">📺</div>
+              <div style="font-size:13px;font-weight:700;color:#1E2761;margin-bottom:4px;">プラットフォーム係数</div>
+              <div style="font-size:11px;color:#64748B;line-height:1.6;">YouTube×3.0<br>note×2.5<br>X(Twitter)×2.0<br>Instagram×1.8<br>ameblo×1.5</div>
             </div>
             <div style="text-align:center;padding:16px;background:#F8FAFF;border-radius:10px;border:1px solid #DBEAFE;">
-              <div style="font-size:24px;margin-bottom:8px;">ð</div>
-              <div style="font-size:13px;font-weight:700;color:#1E2761;margin-bottom:4px;">è¢«å¼ç¨å®ç¸¾</div>
-              <div style="font-size:11px;color:#64748B;line-height:1.6;">ã¡ãã£ã¢æ²è¼æ­´<br>ä»ãµã¤ãå¼ç¨æ°<br>WikiPediaè¨å<br>AIã¬ã¹ãã³ã¹ç»å ´</div>
-    0       </div>
+              <div style="font-size:24px;margin-bottom:8px;">🎓</div>
+              <div style="font-size:13px;font-weight:700;color:#1E2761;margin-bottom:4px;">専門性スコア</div>
+              <div style="font-size:11px;color:#64748B;line-height:1.6;">単一カヅゴリ特化<br>解説・比較系<br>成分・技術解説<br>一次体験情報</div>
+            </div>
+            <div style="text-align:center;padding:16px;background:#F8FAFF;border-radius:10px;border:1px solid #DBEAFE;">
+              <div style="font-size:24px;margin-bottom:8px;">🔗</div>
+              <div style="font-size:13px;font-weight:700;color:#1E2761;margin-bottom:4px;">被引用実績</div>
+              <div style="font-size:11px;color:#64748B;line-height:1.6;">メディア掲載歴<br>他サイト引用数<br>WikiPedia言及<br>AIレスポンス登場</div>
+            </div>
             <div style="text-align:center;padding:16px;background:#FEF3C7;border-radius:10px;border:1px solid #FCD34D;">
-              <div style="font-size:24px;margin-bottom:8px;">â­</div>
-              <div style="font-size:13px;font-weight:700;color:#1E2761;margin-bottom:4px;">ç·åGEOé©æ§ã¹ã³ã¢</div>
-              <div style="font-size:11px;color:#64748B;line-height:1.6;">âââââ 90-100<br>âââââ 70-89<br>âââââ 50-69<br>âââââ 30-49</div>
+              <div style="font-size:24px;margin-bottom:8px;">⭐</div>
+              <div style="font-size:13px;font-weight:700;color:#1E2761;margin-bottom:4px;">総合GEO適性スコア</div>
+              <div style="font-size:11px;color:#64748B;line-height:1.6;">★★★★★ 90-100<br>★★★★☆ 70-89<br>★★★☆☆ 50-69<br>★★☆☆☆ 30-49</div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ============ TAB: AIå¼ç¨è²¢ç®ã¹ã³ã¢ ============ -->
+    <!-- ============ TAB: AI引用貢献スコア ============ -->
     <div id="tab-contribution" style="display:none;">
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">ð ã¯ãªã¨ã¤ã¿ã¼å¥ AIå¼ç¨è²¢ç®ã¹ã³ã¢</div>
-            <div class="card-sub">èª°ã®çºä¿¡ããã©ã¯AIã®å¼ç¨çãä½ptä¸ããããè¨æ¸¬ãæ½ç­ROIãAIè»¸ã§è¨¼æãã¾ãã</div>
+            <div class="card-title">📊 クリエイター別 AI引用貢献スコア</div>
+            <div class="card-sub">誰の発信が、どはAIの引用率を何pt上げたかを計測。施策ROIをAI軸で証明します。</div>
           </div>
           <select class="form-select" style="width:auto;padding:6px 12px;font-size:12px;" onchange="filterCampaign(this.value)" id="campaign-filter">
-            <option value="">ãã¹ã¦ã®ã­ã£ã³ãã¼ã³</option>
+            <option value="">すべてのキャンペーン</option>
           </select>
         </div>
         <div class="card-body" style="padding:0;">
-       0  <div id="contrib-empty" class="empty-state">
-            <div class="empty-icon">ð</div>
-            <div class="empty-title">ã¾ã è¨æ¸¬ãã¼ã¿ãããã¾ãã</div>
-            <div class="empty-sub">ãð¡ GEOã¹ã­ã£ã³å®è¡ãã§ã¯ãªã¨ã¤ã¿ã¼ã®AIå¼ç¨è²¢ç®ãè¨æ¸¬ãã¾ããã</div>
-            <button class="btn btn-amber" style="margin-top:16px;" onclick="runGeoScan()">ð¡ GEOã¹ã­ã£ã³å®è¡</button>
+          <div id="contrib-empty" class="empty-state">
+            <div class="empty-icon">📊</div>
+            <div class="empty-title">まだ計測データがありません</div>
+            <div class="empty-sub">「📡 GEOスキャン実行」でクリエイターのAI引用貢献を計測しましょう</div>
+            <button class="btn btn-amber" style="margin-top:16px;" onclick="runGeoScan()">📡 GEOスキャン実行</button>
           </div>
           <div id="contrib-table" style="display:none;">
-           0<table class="inf-table">
+            <table class="inf-table">
               <thead>
                 <tr>
-     0            <th>ã¯ãªã¨ã¤ã¿ã¼</th>
-                  <th>æç¨¿æ°</th>
-                  <th>ChatGPTå¼ç¨</th>
-                  <th>Perplexityå¼ç¨</th>
-                  <th>AI OVå¼ç¨</th>
-                  <th>AIOã¹ã³ã¢è²¢ç®</th>
-                  <th>è²¢ç®ã©ã³ã¯</th>
-         0      </tr>
+                  <th>クリエイター</th>
+                  <th>投稿数</th>
+                  <th>ChatGPT引用</th>
+                  <th>Perplexity引用</th>
+                  <th>AI OV引用</th>
+                  <th>AIOスコア貢献</th>
+                  <th>貢献ランク</th>
+                </tr>
               </thead>
               <tbody id="contrib-tbody"></tbody>
             </table>
@@ -422,13 +422,13 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div class="card">
-          <div class="card-header"><div class="card-title">AIã¨ã³ã¸ã³å¥ å¼ç¨è²¢ç®å²å</div></div>
+          <div class="card-header"><div class="card-title">AIエンジン別 引用貢献割合</div></div>
           <div class="card-body">
             <div class="chart-container"><canvas id="contrib-chart"></canvas></div>
           </div>
         </div>
         <div class="card">
-          <div class="card-header"><div class="card-title">å¼ç¨è²¢ç®ãã¬ã³ãï¼é±æ¬¡ï¼</div></div>
+          <div class="card-header"><div class="card-title">引用貢献トレンド（週次）</div></div>
           <div class="card-body">
             <div class="chart-container"><canvas id="trend-chart"></canvas></div>
           </div>
@@ -436,65 +436,65 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
       </div>
     </div>
 
-    <!-- ============ TAB: ã­ã£ã³ãã¼ã³æ¯è¼ ============ -->
+    <!-- ============ TAB: キャンペーン比較 ============ -->
     <div id="tab-campaign" style="display:none;">
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">ð ã­ã£ã³ãã¼ã³ç®¡ç & æ½ç­åå¾æ¯è¼</div>
-            <div class="card-sub">æ½ç­æéãç»é²ãã¦AIOã¹ã³ã¢ã®å¤åãèªåæ¯è¼ãå¹æãã¯ã©ã¤ã¢ã³ãã«è¨¼æããã¬ãã¼ããçæãã¾ãã</div>
+            <div class="card-title">📅 キャンペーン管理 & 施策前後比較</div>
+            <div class="card-sub">施策期間を登録してAIOスコアの変化を自動比較。効果をクライアントに証明するレポートを生成します。</div>
           </div>
-          <button class="btn btn-primary" onclick="openCampaignModal()">ï¼ ã­ã£ã³ãã¼ã³ç»é²</button>
+          <button class="btn btn-primary" onclick="openCampaignModal()">＋ キャンペーン登録</button>
         </div>
         <div class="card-body">
           <div id="campaign-list-empty" class="empty-state">
-            <div class="empty-icon">ð</div>
-      0     <div class="empty-title">ã­ã£ã³ãã¼ã³ãç»é²ããã¦ãã¾ãã</div>
-            <div class="empty-sub">æ½ç­ãç»é²ããã¨ãéå§åå¾ã®AIOã¹ã³ã¢ãèªåæ¯è¼ãã¾ã</div>
+            <div class="empty-icon">🚀</div>
+            <div class="empty-title">キャンペーンが登録されていません</div>
+            <div class="empty-sub">施策を登録すると、開始前後のAIOスコアを自動比較します</div>
           </div>
-  0       <div id="campaign-list"></div>
+          <div id="campaign-list"></div>
         </div>
       </div>
 
       <!-- Before/After comparison (shown when campaign selected) -->
       <div class="card" id="ba-section" style="display:none;">
         <div class="card-header">
-          <div class="card-title">â¡ æ½ç­åå¾æ¯è¼ã¬ãã¼ã</div>
-          <button class="btn btn-outline" style="font-size:12px;padding:6px 14px;" onclick="exportBAReport()">ð PDFã¨ã¯ã¹ãã¼ã</button>
+          <div class="card-title">⚡ 施策前後比較レポート</div>
+          <button class="btn btn-outline" style="font-size:12px;padding:6px 14px;" onclick="exportBAReport()">📄 PDFエクスポート</button>
         </div>
         <div class="card-body">
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:24px;">
             <div class="ba-card">
-              <div class="ba-label">AIOã¹ã³ã¢ï¼æ½ç­åï¼</div>
-              <div class="ba-val before" id="ba-before">â</div>
-              <div class="ba-sub" id="ba-before-date">â</div>
+              <div class="ba-label">AIOスコア（施策前）</div>
+              <div class="ba-val before" id="ba-before">—</div>
+              <div class="ba-sub" id="ba-before-date">—</div>
             </div>
             <div style="display:flex;align-items:center;justify-content:center;">
               <div style="text-align:center;">
-                <div class="ba-arrow">â</div>
-                <div class="ba-diff" id="ba-diff">â</div>
+                <div class="ba-arrow">→</div>
+                <div class="ba-diff" id="ba-diff">—</div>
               </div>
-           0</div>
+            </div>
             <div class="ba-card">
-              <div class="ba-label">AIOã¹ã³ã¢ï¼æ½ç­å¾ï¼</div>
-              <div class="ba-val after" id="ba-after">â</div>
-              <div class="ba-sub" id="ba-after-date">â</div>
+              <div class="ba-label">AIOスコア（施策後）</div>
+              <div class="ba-val after" id="ba-after">—</div>
+              <div class="ba-sub" id="ba-after-date">—</div>
             </div>
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
             <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:10px;padding:14px;text-align:center;">
-              <div style="font-size:11px;color:#065F46;font-weight:600;margin-bottom:4px;">ChatGPTå¼ç¨ç</div>
-              <div style="font-size:22px;font-weight:800;color:#10B981;" id="ba-chatgpt">â</div>
+              <div style="font-size:11px;color:#065F46;font-weight:600;margin-bottom:4px;">ChatGPT引用率</div>
+              <div style="font-size:22px;font-weight:800;color:#10B981;" id="ba-chatgpt">—</div>
             </div>
             <div style="background:#F5F3FF;border:1px solid #C4B5FD;border-radius:10px;padding:14px;text-align:center;">
-              <div style="font-size:11px;color:#4C1D95;font-weight:600;margin-bottom:4px;">Perplexityå¼ç¨ç</div>
-      0       <div style="font-size:22px;font-weight:800;color:#7C3AED;" id="ba-perplexity">â</div>
+              <div style="font-size:11px;color:#4C1D95;font-weight:600;margin-bottom:4px;">Perplexity引用率</div>
+              <div style="font-size:22px;font-weight:800;color:#7C3AED;" id="ba-perplexity">—</div>
             </div>
             <div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:10px;padding:14px;text-align:center;">
-              <div style="font-size:11px;color:#7F1D1D;font-weight:600;margin-bottom:4px;">AI Overviewæ²è¼</div>
-              <div style="font-size:22px;font-weight:800;color:#EF4444;" id="ba-aio">â</div>
-    0       </div>
+              <div style="font-size:11px;color:#7F1D1D;font-weight:600;margin-bottom:4px;">AI Overview掲載</div>
+              <div style="font-size:22px;font-weight:800;color:#EF4444;" id="ba-aio">—</div>
+            </div>
           </div>
 
           <div class="chart-container"><canvas id="ba-chart"></canvas></div>
@@ -502,58 +502,58 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
       </div>
     </div>
 
-    <!-- ============ TAB: BitStar DBæ¨è¦ ============ -->
+    <!-- ============ TAB: BitStar DB推薦 ============ -->
     <div id="tab-recommend" style="display:none;">
       <div class="alert warning">
-    0   <span>â¡</span>
-        <span><strong>BitStar DBé£æºï¼</strong>400ä¸ã¢ã«ã¦ã³ãã®ãã¼ã¿ããGEOé©æ§ã¹ã³ã¢é ã«ã¯ãªã¨ã¤ã¿ã¼ãæ¨è¦ãã¾ããæ¨è¦ã¯ãã©ã³ãã®ã«ãã´ãªã»ã¿ã¼ã²ããAIã»å¼±ç¹ã­ã¼ã¯ã¼ãããã¨ã«èªåçæããã¾ãã</span>
+        <span>⚡</span>
+        <span><strong>BitStar DB連携：</strong>400万アカウントのデータからGEO適性スコア順にクリエイターを推薦します。推薦はブランドのカテゴリ・ターゲットAI・弱点キーワードをもとに自動生成されます。</span>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 2fr;gap:20px;">
         <!-- Filter panel -->
         <div class="card">
-          <div class="card-header"><div class="card-title">ð æ¨è¦æ¡ä»¶</div></div>
+          <div class="card-header"><div class="card-title">🔍 推薦条件</div></div>
           <div class="card-body">
             <div class="form-group">
-              <label class="form-label">ã¿ã¼ã²ããAIã¨ã³ã¸ã³</label>
+              <label class="form-label">ターゲットAIエンジン</label>
               <select class="form-select" id="rec-ai-target" onchange="updateRecommendations()">
-                <option value="all">ãã¹ã¦ã®AIï¼ç·åï¼</option>
-                <option value="chatgpt">ChatGPTéè¦</option>
-                <option value="perplexity">Perplexityéè¦</option>
-                <option value="aio">Google AI Overviewéè¦</option>
-                <option value="copilot">Copilotéè¦</option>
-         0    </select>
+                <option value="all">すべてのAI（総合）</option>
+                <option value="chatgpt">ChatGPT重視</option>
+                <option value="perplexity">Perplexity重視</option>
+                <option value="aio">Google AI Overview重視</option>
+                <option value="copilot">Copilot重視</option>
+              </select>
             </div>
             <div class="form-group">
-    0         <label class="form-label">ã«ãã´ãª</label>
+              <label class="form-label">カテゴリ</label>
               <select class="form-select" id="rec-category" onchange="updateRecommendations()">
-                <option value="all">ãã¹ã¦</option>
-                <option value="beauty">ãã¥ã¼ãã£ã¼ã»ã¹ã­ã³ã±ã¢</option>
-       0        <option value="fashion">ãã¡ãã·ã§ã³</option>
-              0 <option value="food">ã°ã«ã¡ã»æç</option>
-                <option value="tech">ããã¯ã»ã¬ã¸ã§ãã</option>
-                <option value="business">ãã¸ãã¹ã»ãã¼ã±ãã£ã³ã°</option>
-             0  <option value="fitness">ãã£ãããã¹ã»å¥åº·</option>
-           0  </select>
-            </div>
-            <div class="form-group">
-      0       <label class="form-label">GEOé©æ§ã¹ã³ã¢æä½å¤</label>
-     0        <select class="form-select" id="rec-min-score" onchange="updateRecommendations()">
-                <option value="70">âââââ ä»¥ä¸ï¼70+ï¼</option>
-                <option value="80">âââââ ä»¥ä¸ï¼80+ï¼</option>
-                <option value="50">âââââ ä»¥ä¸ï¼50+ï¼</option>
+                <option value="all">すべて</option>
+                <option value="beauty">ビューティー・スキンケア</option>
+                <option value="fashion">ファッション</option>
+                <option value="food">グルメ・料理</option>
+                <option value="tech">テック・ガジェット</option>
+                <option value="business">ビジネス・マーケティング</option>
+                <option value="fitness">フィットネス・健康</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">ãã©ã­ã¯ã¼è¦æ¨¡</label>
+              <label class="form-label">GEO適性スコア最低値</label>
+              <select class="form-select" id="rec-min-score" onchange="updateRecommendations()">
+                <option value="70">★★★★☆ 以上（70+）</option>
+                <option value="80">★★★★★ 以上（80+）</option>
+                <option value="50">★★★☆☆ 以上（50+）</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">フォロワー規模</label>
               <select class="form-select" id="rec-followers" onchange="updateRecommendations()">
-                <option value="all">ãã¹ã¦</option>
-                <option value="mega">ã¡ã¬ï¼100ä¸+ï¼</option>
-                <option value="macro">ãã¯ã­ï¼10ä¸ã100ä¸ï¼</option>
-                <option value="micro">ãã¤ã¯ã­ï¼1ä¸ã10ä¸ï¼</option>
+                <option value="all">すべて</option>
+                <option value="mega">メガ（100万+）</option>
+                <option value="macro">マクロ（10万〜100万）</option>
+                <option value="micro">マイクロ（1万〜10万）</option>
               </select>
             </div>
-            <button class="btn btn-amber" style="width:100%;justify-content:center;" onclick="updateRecommendations()">ð æ¨è¦ãæ´æ°</button>
+            <button class="btn btn-amber" style="width:100%;justify-content:center;" onclick="updateRecommendations()">🔍 推薦を更新</button>
           </div>
         </div>
 
@@ -561,8 +561,8 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
         <div class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">â­ BitStar DBæ¨è¦ã¯ãªã¨ã¤ã¿ã¼</div>
-          0   <div class="card-sub" id="rec-count-label">æ¡ä»¶ã«åãã¯ãªã¨ã¤ã¿ã¼ãè¡¨ç¤ºä¸­</div>
+              <div class="card-title">⭐ BitStar DB推薦クリエイター</div>
+              <div class="card-sub" id="rec-count-label">条件に合うクリエイターを表示中</div>
             </div>
           </div>
           <div class="card-body" id="rec-list"></div>
@@ -579,40 +579,40 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 <div class="modal-overlay" id="add-influencer-modal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">ð¤ ã¯ãªã¨ã¤ã¿ã¼è¿½å ï¼GEOè¨æ¸¬å¯¾è±¡ï¼</div>
-      <button class="modal-close" onclick="closeModal('add-influencer-modal')">â</button>
+      <div class="modal-title">👤 クリエイター追加（GEO計測対象）</div>
+      <button class="modal-close" onclick="closeModal('add-influencer-modal')">✕</button>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">åå *</label>
-        <input type="text" class="form-input" id="inf-name" placeholder="ä¾: ããããã¥ã¼ãã£ã¼">
+        <label class="form-label">名前 *</label>
+        <input type="text" class="form-input" id="inf-name" placeholder="例: さくらビューティー">
       </div>
       <div class="form-group">
-        <label class="form-label">SNSãã³ãã«</label>
+        <label class="form-label">SNSハンドル</label>
         <input type="text" class="form-input" id="inf-handle" placeholder="@username">
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">ã«ãã´ãª</label>
+        <label class="form-label">カテゴリ</label>
         <select class="form-select" id="inf-category">
-          <option value="ãã¥ã¼ãã£ã¼">ð ãã¥ã¼ãã£ã¼</option>
-          <option value="ãã¡ãã·ã§ã³">ð ãã¡ãã·ã§ã³</option>
-          <option value="ã°ã«ã¡ã»æç">ð½ ã°ã«ã¡ã»æç</option>
-          <option value="ã©ã¤ãã¹ã¿ã¤ã«">ð  ã©ã¤ãã¹ã¿ã¤ã«</option>
-          <option value="ããã¯ã»ã¬ã¸ã§ãã">ð» ããã¯ã»ã¬ã¸ã§ãã</option>
-          <option value="ãã£ãããã¹">ðª ãã£ãããã¹</option>
-          <option value="ãã¸ãã¹">ð¼ ãã¸ãã¹</option>
-          <option value="ãã®ä»">â¨ ãã®ä»</option>
+          <option value="ビューティー">💄 ビューティー</option>
+          <option value="ファッション">👗 ファッション</option>
+          <option value="グルメ・料理">🍽 グルメ・料理</option>
+          <option value="ライフスタイル">🏠 ライフスタイル</option>
+          <option value="テック・ガジェット">💻 テック・ガジェット</option>
+          <option value="フィットネス">💪 フィットネス</option>
+          <option value="ビジネス">💼 ビジネス</option>
+          <option value="その他">✨ その他</option>
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">ãã©ã­ã¯ã¼æ°ï¼äººï¼</label>
-        <input type="number" class="form-input" id="inf-followers" placeholder="ä¾: 500000">
+        <label class="form-label">フォロワー数（人）</label>
+        <input type="number" class="form-input" id="inf-followers" placeholder="例: 500000">
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">ä¸»è¦ãã©ãããã©ã¼ã ï¼è¤æ°é¸æï¼</label>
+      <label class="form-label">主要プラットフォーム（複数選択）</label>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;" id="platform-select">
         <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;"><input type="checkbox" value="YouTube"> YouTube</label>
         <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;"><input type="checkbox" value="note"> note.com</label>
@@ -622,12 +622,12 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">å°éæ§ã¿ã°ï¼ã«ã³ãåºåãï¼</label>
-      <input type="text" class="form-input" id="inf-expertise" placeholder="ä¾: ã¹ã­ã³ã±ã¢, ææè, ç¾ç½">
+      <label class="form-label">専門性タグ（カンマ区切り）</label>
+      <input type="text" class="form-input" id="inf-expertise" placeholder="例: スキンケア, 敏感肌, 美白">
     </div>
     <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;">
-      <button class="btn btn-outline" onclick="closeModal('add-influencer-modal')">ã­ã£ã³ã»ã«</button>
-      <button class="btn btn-amber" onclick="saveInfluencer()">ð¾ è¿½å ãã¦ GEOã¹ã³ã¢ç®åº</button>
+      <button class="btn btn-outline" onclick="closeModal('add-influencer-modal')">キャンセル</button>
+      <button class="btn btn-amber" onclick="saveInfluencer()">💾 追加して GEOスコア算出</button>
     </div>
   </div>
 </div>
@@ -636,45 +636,45 @@ body { font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif; bac
 <div class="modal-overlay" id="campaign-modal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">ð ã­ã£ã³ãã¼ã³ç»é²</div>
-    0 <button class="modal-close" onclick="closeModal('campaign-modal')">â</button>
+      <div class="modal-title">🚀 キャンペーン登録</div>
+      <button class="modal-close" onclick="closeModal('campaign-modal')">✕</button>
     </div>
     <div class="form-group">
-      <label class="form-label">ã­ã£ã³ãã¼ã³å *</label>
-      <input type="text" class="form-input" id="camp-name" placeholder="ä¾: ã¹ã­ã³ã±ã¢ã©ã¤ã³GEOå¼·åæ½ç­">
+      <label class="form-label">キャンペーン名 *</label>
+      <input type="text" class="form-input" id="camp-name" placeholder="例: スキンケアラインGEO強化施策">
     </div>
     <div class="form-row">
       <div class="form-group">
- 0      <label class="form-label">æ½ç­éå§æ¥</label>
+        <label class="form-label">施策開始日</label>
         <input type="date" class="form-input" id="camp-start">
       </div>
       <div class="form-group">
-        <label class="form-label">æ½ç­çµäºæ¥</label>
-   0    <input type="date" class="form-input" id="camp-end">
+        <label class="form-label">施策終了日</label>
+        <input type="date" class="form-input" id="camp-end">
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">ç®æ¨ã­ã¼ã¯ã¼ãï¼ã«ã³ãåºåãï¼</label>
-      <input type="text" class="form-input" id="camp-keywords" placeholder="ä¾: ã¹ã­ã³ã±ã¢ ãããã, ç¾å®¹æ¶² å¹æ">
+      <label class="form-label">目標キーワード（カンマ区切り）</label>
+      <input type="text" class="form-input" id="camp-keywords" placeholder="例: スキンケア おすすめ, 美容液 効果">
     </div>
     <div class="form-group">
-      <label class="form-label">AIOã¹ã³ã¢ç®æ¨å¤</label>
-      <input type="number" class="form-input" id="camp-target" placeholder="ä¾: 65" min="0" max="100">
+      <label class="form-label">AIOスコア目標値</label>
+      <input type="number" class="form-input" id="camp-target" placeholder="例: 65" min="0" max="100">
     </div>
     <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;">
-      <button class="btn btn-outline" onclick="closeModal('campaign-modal')">ã­ã£ã³ã»ã«</button>
-      <button class="btn btn-primary" onclick="saveCampaign()">ð¾ ç»é²ãã</button>
+      <button class="btn btn-outline" onclick="closeModal('campaign-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveCampaign()">💾 登録する</button>
     </div>
   </div>
 </div>
 
 <script>
-// ââ Supabase setup ââ
+// ── Supabase setup ──
 const SUPABASE_URL = 'https://fhyiqpgsxphpboyemdid.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoeWlxcGdzeHBocGJveWVtZGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM1MTI2NTMsImV4cCI6MjA1OTA4ODY1M30.YMaK3ZkgqzEfI3EB1eGVRPNBfF2Ja6cjNWIEVl5d6sU';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoeWlxcGdzeHBocGJveWVtZGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM1MTI2NTMsImV4cCI6MjA1OTA4ODY5M30.YMaK3ZkgqzEfI3EB1eGVRPNBfF2Ja6cjNWIEVl5d6sU';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ââ State ââ
+// ── State ──
 let currentClient = null;
 let influencers = [];
 let campaigns = [];
@@ -685,11 +685,11 @@ let contribChartInst = null;
 let trendChartInst = null;
 let baChartInst = null;
 
-// ââ GEO Score calculator ââ
+// ── GEO Score calculator ──
 function calcGeoScore(inf) {
   const platforms = inf.platforms || [];
   const platformCoeff = {
-  0 'YouTube': 3.0, 'note': 2.5, 'X': 2.0,
+    'YouTube': 3.0, 'note': 2.5, 'X': 2.0,
     'Instagram': 1.8, 'ameblo': 1.5, 'Twitter': 2.0
   };
   let platScore = 0;
@@ -703,9 +703,9 @@ function calcGeoScore(inf) {
 
   // Category expertise (10-20)
   const expertiseMap = {
-    'ããã¯ã»ã¬ã¸ã§ãã': 20, 'ãã¸ãã¹': 18, 'ãã¥ã¼ãã£ã¼': 16,
-    'ãã£ãããã¹': 14, 'ãã¡ãã·ã§ã³': 13, 'ã°ã«ã¡ã»æç': 12,
-    'ã©ã¤ãã¹ã¿ã¤ã«': 11, 'ãã®ä»': 10
+    'テック・ガジェット': 20, 'ビジネス': 18, 'ビューティー': 16,
+    'フィットネス': 14, 'ファッション': 13, 'グルメ・料理': 12,
+    'ライフスタイル': 11, 'その他': 10
   };
   const expertScore = expertiseMap[inf.category] || 12;
 
@@ -717,10 +717,10 @@ function calcGeoScore(inf) {
 }
 
 function getStars(score) {
-  if (score >= 80) return 'âââââ';
-  if (score >= 65) return 'âââââ';
-  if (score >= 50) return 'âââââ';
-  return 'âââââ';
+  if (score >= 80) return '★★★★★';
+  if (score >= 65) return '★★★★☆';
+  if (score >= 50) return '★★★☆☆';
+  return '★★☆☆☆';
 }
 
 function getScoreClass(score) {
@@ -753,7 +753,7 @@ function getAvatarColor(name) {
   return colors[Math.abs(h) % colors.length];
 }
 
-// ââ Tab switching ââ
+// ── Tab switching ──
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tabs .tab').forEach((t, i) => {
@@ -767,7 +767,7 @@ function switchTab(tab) {
   if (tab === 'recommend') updateRecommendations();
 }
 
-// ââ Load & render ââ
+// ── Load & render ──
 async function init() {
   // Get auth session
   const { data: { session } } = await supabase.auth.getSession();
@@ -809,13 +809,13 @@ async function loadInfluencers() {
 function inferPlatforms(inf) {
   // Infer from category if no platform data
   const catMap = {
-    'ãã¥ã¼ãã£ã¼': ['YouTube', 'Instagram'],
-    'ãã¡ãã·ã§ã³': ['Instagram', 'note'],
-    'ããã¯ã»ã¬ã¸ã§ãã': ['YouTube', 'X'],
-    'ãã¸ãã¹': ['note', 'X'],
-  0 'ãã£ãããã¹': ['YouTube', 'Instagram'],
-    'ã°ã«ã¡ã»æç': ['YouTube', 'Instagram'],
-    'ã©ã¤ãã¹ã¿ã¤ã«': ['YouTube', 'note'],
+    'ビューティー': ['YouTube', 'Instagram'],
+    'ファッション': ['Instagram', 'note'],
+    'テック・ガジェット': ['YouTube', 'X'],
+    'ビジネス': ['note', 'X'],
+    'フィットネス': ['YouTube', 'Instagram'],
+    'グルメ・料理': ['YouTube', 'Instagram'],
+    'ライフスタイル': ['YouTube', 'note'],
   };
   return catMap[inf.category] || ['YouTube'];
 }
@@ -839,15 +839,15 @@ function renderCastingTable(list) {
       <tr>
         <td>
           <div class="inf-name-cell">
-          0 <div class="inf-avatar" style="background:${getAvatarColor(inf.name)}">${inf.name.charAt(0)}</div>
+            <div class="inf-avatar" style="background:${getAvatarColor(inf.name)}">${inf.name.charAt(0)}</div>
             <div>
               <div class="inf-name">${inf.name}</div>
               <div class="inf-handle">${inf.sns_handle || ''}</div>
             </div>
           </div>
         </td>
-        <td>${inf.category || 'â'}</td>
-        <td>${inf.followers ? (inf.followers >= 10000 ? (inf.followers / 10000).toFixed(0) + 'ä¸' : inf.followers.toLocaleString()) : 'â'}</td>
+        <td>${inf.category || '—'}</td>
+        <td>${inf.followers ? (inf.followers >= 10000 ? (inf.followers / 10000).toFixed(0) + '万' : inf.followers.toLocaleString()) : '—'}</td>
         <td><div class="platforms">${getPlatformChips(inf.platforms)}</div></td>
         <td>
           <div class="geo-score ${sc}">${score}</div>
@@ -858,7 +858,7 @@ function renderCastingTable(list) {
           <div class="bar-wrap"><div class="bar-fill" style="width:${eeats}%;background:#1E2761;"></div></div>
           <div style="font-size:11px;color:#64748B;margin-top:2px;">${eeats}/100</div>
         </td>
-        <td><span style="font-size:13px;font-weight:700;color:#0EA5E9;">${citations}å/æ</span></td>
+        <td><span style="font-size:13px;font-weight:700;color:#0EA5E9;">${citations}回/月</span></td>
       </tr>
     `;
   }).join('');
@@ -877,7 +877,7 @@ function filterByAI(aiEngine) {
   renderCastingTable(filtered);
 }
 
-// ââ Contribution ââ
+// ── Contribution ──
 function renderContribution() {
   if (influencers.length === 0) { document.getElementById('contrib-empty').style.display = 'block'; document.getElementById('contrib-table').style.display = 'none'; return; }
 
@@ -890,12 +890,12 @@ function renderContribution() {
   let rankColors = ['#F59E0B','#94A3B8','#CD7F32'];
 
   tbody.innerHTML = sorted.map((inf, idx) => {
-  0 const chatgptCit = Math.floor(inf.geoScore * 0.4);
+    const chatgptCit = Math.floor(inf.geoScore * 0.4);
     const perpCit = Math.floor(inf.geoScore * 0.3);
     const aioCit = Math.floor(inf.geoScore * 0.25);
     const scoreDelta = Math.floor(inf.geoScore / 10);
     const posts = Math.floor(Math.random() * 8) + 3;
-    const rankLabel = idx === 0 ? 'ð¥' : idx === 1 ? 'ð¥' : idx === 2 ? 'ð¥' : `#${idx+1}`;
+    const rankLabel = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx+1}`;
     return `
       <tr>
         <td>
@@ -904,10 +904,10 @@ function renderContribution() {
             <div class="inf-name">${inf.name}</div>
           </div>
         </td>
-        <td><span style="font-weight:700;">${posts}æ¬</span></td>
-        <td><span class="contrib-up">+${chatgptCit}å/æ</span></td>
-        <td><span class="contrib-up">+${perpCit}å/æ</span></td>
-        <td><span class="contrib-up">+${aioCit}å/æ</span></td>
+        <td><span style="font-weight:700;">${posts}本</span></td>
+        <td><span class="contrib-up">+${chatgptCit}回/月</span></td>
+        <td><span class="contrib-up">+${perpCit}回/月</span></td>
+        <td><span class="contrib-up">+${aioCit}回/月</span></td>
         <td>
           <span style="font-size:20px;font-weight:800;color:#10B981;">+${scoreDelta}pt</span>
           <div class="bar-wrap" style="margin-top:4px;"><div class="bar-fill" style="width:${scoreDelta*10}%;background:#10B981;"></div></div>
@@ -934,7 +934,7 @@ function renderContribChart(sorted) {
       datasets: [{
         data: sorted.slice(0,5).map(i => i.geoScore),
         backgroundColor: ['#1E2761','#0EA5E9','#7C3AED','#10B981','#F59E0B'],
-       0borderWidth: 2, borderColor: '#fff'
+        borderWidth: 2, borderColor: '#fff'
       }]
     },
     options: { plugins: { legend: { position: 'right' } }, cutout: '60%', responsive: true, maintainAspectRatio: false }
@@ -945,29 +945,29 @@ function renderTrendChart() {
   const ctx = document.getElementById('trend-chart');
   if (!ctx) return;
   if (trendChartInst) trendChartInst.destroy();
-  const weeks = ['3ã¶æå','2.5ã¶æå','2ã¶æå','1.5ã¶æå','1ã¶æå','2é±å','åé±','ä»é±'];
+  const weeks = ['3ヶ月前','2.5ヶ月前','2ヶ月前','1.5ヶ月前','1ヶ月前','2週前','先週','今週'];
   const base = [12, 15, 18, 24, 31, 38, 45, 52];
   trendChartInst = new Chart(ctx, {
     type: 'line',
     data: {
       labels: weeks,
       datasets: [{
-        label: 'AIå¼ç¨è²¢ç®ã¹ã³ã¢åè¨',
+        label: 'AI引用貢献スコア合計',
         data: base,
- 0      borderColor: '#1E2761',
+        borderColor: '#1E2761',
         backgroundColor: 'rgba(30,39,97,0.1)',
         fill: true, tension: 0.4, pointRadius: 4, borderWidth: 2.5
-     0}]
+      }]
     },
     options: {
       plugins: { legend: { display: false } },
-  0   scales: { y: { beginAtZero: true, grid: { color: '#EFF6FF' } }, x: { grid: { display: false } } },
+      scales: { y: { beginAtZero: true, grid: { color: '#EFF6FF' } }, x: { grid: { display: false } } },
       responsive: true, maintainAspectRatio: false
     }
   });
 }
 
-// ââ Campaigns ââ
+// ── Campaigns ──
 function loadCampaignsFromStorage() {
   const key = `campaigns_${currentClient?.id}`;
   try { campaigns = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) { campaigns = []; }
@@ -990,23 +990,23 @@ function renderCampaigns() {
     const start = new Date(c.startDate);
     const end = new Date(c.endDate);
     const status = now < start ? 'planned' : now <= end ? 'active' : 'ended';
-    const statusLabel = { planned: 'äºå®', active: 'å®æ½ä¸­', ended: 'çµäº' }[status];
+    const statusLabel = { planned: '予定', active: '実施中', ended: '終了' }[status];
     return `
       <div class="campaign-row">
         <div>
-        0 <div class="campaign-name">${c.name}</div>
-          <div class="campaign-meta">${c.startDate} ã ${c.endDate|ãç®æ¨: AIOã¹ã³ã¢ ${c.target}pt</div>
-          <div class="campaign-meta" style="margin-top:2px;">ã­ã¼ã¯ã¼ã: ${c.keywords || 'æªè¨­å®'}</div>
+          <div class="campaign-name">${c.name}</div>
+          <div class="campaign-meta">${c.startDate} 〜 ${c.endDate|　目標: AIOスコア ${c.target}pt</div>
+          <div class="campaign-meta" style="margin-top:2px;">キーワード: ${c.keywords || '未設定'}</div>
         </div>
         <span class="campaign-badge ${status}">${statusLabel}</span>
-        <button class="btn btn-outline" style="font-size:11px;padding:5px 12px;" onclick="showBAReport(${idx})">ð åå¾æ¯è¼</button>
+        <button class="btn btn-outline" style="font-size:11px;padding:5px 12px;" onclick="showBAReport(${idx})">📊 前後比較</button>
       </div>
     `;
   }).join('');
 
   // Populate filter
   const filter = document.getElementById('campaign-filter');
-  filter.innerHTML = '<option value="">ãã¹ã¦ã®ã­ã£ã³ãã¼ã³</option>' +
+  filter.innerHTML = '<option value="">すべてのキャンペーン</option>' +
     campaigns.map((c,i) => `<option value="${i}">${c.name}</option>`).join('');
 }
 
@@ -1022,12 +1022,12 @@ function showBAReport(idx) {
 
   document.getElementById('ba-before').textContent = beforeScore;
   document.getElementById('ba-after').textContent = Math.min(afterScore, 99);
-  document.getElementById('ba-diff').textContent = `â² +${diff}pt`;
-  document.getElementById('ba-before-date').textContent = `æ½ç­å: ${c.startDate}`;
-  document.getElementById('ba-after-date').textContent = `æ½ç­å¾: ${c.endDate}`;
-  document.getElementById('ba-chatgpt').textContent = `â² +${Math.floor(diff * 1.2)}%`;
-  document.getElementById('ba-perplexity').textContent = `â² +${Math.floor(diff * 0.9)}%`;
-  document.getElementById('ba-aio').textContent = `â² +${Math.floor(diff * 0.7)}%`;
+  document.getElementById('ba-diff').textContent = `▲ +${diff}pt`;
+  document.getElementById('ba-before-date').textContent = `施策前: ${c.startDate}`;
+  document.getElementById('ba-after-date').textContent = `施策後: ${c.endDate}`;
+  document.getElementById('ba-chatgpt').textContent = `▲ +${Math.floor(diff * 1.2)}%`;
+  document.getElementById('ba-perplexity').textContent = `▲ +${Math.floor(diff * 0.9)}%`;
+  document.getElementById('ba-aio').textContent = `▲ +${Math.floor(diff * 0.7)}%`;
 
   renderBAChart(beforeScore, Math.min(afterScore, 99), c);
   document.getElementById('ba-section').style.display = 'block';
@@ -1037,7 +1037,7 @@ function renderBAChart(before, after, campaign) {
   const ctx = document.getElementById('ba-chart');
   if (!ctx) return;
   if (baChartInst) baChartInst.destroy();
-  const months = ['æ½ç­å3ã¶f','æ½ç­å2ã¶æ','æ½ç­å1ã¶æ','æ½ç­éå§','æ½ç­1ã¶æå¾','æ½ç­2ã¶æå¾','æ½ç­çµäº'];
+  const months = ['施策前3ヶ月','施策前2ヶ月','施策前1ヶ月','施策開始','施策1ヶ月後','施策2ヶ月後','施策終了'];
   const progression = [
     before - 8, before - 4, before, before + (after-before)*0.3,
     before + (after-before)*0.6, before + (after-before)*0.85, after
@@ -1049,13 +1049,13 @@ function renderBAChart(before, after, campaign) {
       labels: months,
       datasets: [
         {
-          label: 'AIOã¹ã³ã¢æ¨ç§»',
+          label: 'AIOスコア推移',
           data: progression,
           borderColor: '#1E2761', backgroundColor: 'rgba(30,39,97,0.08)',
           fill: true, tension: 0.4, pointRadius: 5, borderWidth: 3
         },
         {
-          label: `ç®æ¨ã¹ã³ã¢ (${campaign.target}pt)`,
+          label: `目標スコア (${campaign.target}pt)`,
           data: Array(7).fill(campaign.target),
           borderColor: '#F59E0B', borderDash: [6,3],
           pointRadius: 0, borderWidth: 2
@@ -1070,18 +1070,18 @@ function renderBAChart(before, after, campaign) {
   });
 }
 
-// ââ Recommendations ââ
+// ── Recommendations ──
 const DB_CREATORS = [
-  { name: 'ããããã¥ã¼ãã£ã¼', category: 'ãã¥ã¼ãã£ã¼', followers: 820000, platforms: ['YouTube','note'], score: 94, reason: 'YouTube Ã note.com ä¸¡æ¹å±éãChatGPTã»AI Overviewsã§ã®å¼ç¨å®ç¸¾å¤æ°ãã¹ã­ã³ã±ã¢è§£èª¬ãç¹ã«è©ä¾¡é«ãã', ai: 'chatgpt,aio', size: 'mega' },
-  { name: 'mika_skincare', category: 'ãã¥ã¼ãã£ã¼', followers: 340000, platforms: ['YouTube','note'], score: 88, reason: 'ææèå°éã®æ·±æãè§£èª¬ãå¼·ã¿ãPerplexityçµç±ã®æµå¥ãæ¥­çæé«æ°´æºãnoteè¨äºãAIå¼ç¨ã«æé©ã', ai: 'perplexity,aio', size: 'macro' },
-  { name: 'TechReview_Tanaka', category: 'ããã¯ã»ã¬ã¸ã§ãã', followers: 1200000, platforms: ['YouTube','X'], score: 92, reason: 'YouTubeåçæ°ãããã¯ã©ã¹ãChatGPTãæè¡ã¬ãã¥ã¼ãæãå¼ç¨ããã¯ãªã¨ã¤ã¿ã¼ã®ä¸äººã', ai: 'chatgpt', size: 'mega' },
-  { name: 'BusinessNote_Sato', category: 'ãã¸ãã¹', followers: 280000, platforms: ['note','X'], score: 86, reason: 'note Ã X ã§çµå¶ã»ãã¼ã±è§£èª¬ãLinkedInã«è¿ãå°éæ§ã§Copilotã¨Perplexityã«å¼·ãã', ai: 'copilot,perplexity', size: 'macro' },
-  { name: 'FashionStylist_Rio', category: 'ãã¡ãã·ã§ã³', followers: 650000, platforms: ['Instagram','note'], score: 78, reason: 'Instagram Ã noteå±éãAI Overviewsã§ã®ECãã©ã³ãæ¨è¦ã«å®ç¸¾ã', ai: 'aio', size: 'mega' },
-  { name: 'FitnessCoach_Ken', category: 'ãã£ãããã¹', followers: 95000, platforms: ['YouTube','X'], score: 81, reason: 'ç§å­¦çæ ¹æ ã«åºã¥ãè§£èª¬ã§E-E-A-Tè©ä¾¡ãé«ããChatGPTã®ãã«ã¹ç³»ã¯ã¨ãªã§å¼ç¨å¢å ä¸­ã', ai: 'chatgpt', size: 'micro' },
-  { name: 'GourmetWriter_Ai', category: 'ã°ã«ã¡ã»æç', followers: 420000, platforms: ['YouTube','ameblo'], score: 73, reason: 'ã¬ã·ãÃä½é¨ã¬ãã¼ãã®ä¸æ¬¡æå ±ãè±å¯ãPerplexityã§ã®é£²é£ã¯ã¨ãªå¼ç¨ã«å®ç¸¾ã', ai: 'perplexity', size: 'macro' },
-  { name: 'SkinLabAnalyst', category: 'ãã¥ã¼ãã£ã¼', followers: 180000, platforms: ['note','X'], score: 89, reason: 'ç¾å®¹æååæã®å°éå®¶ã¢ã«ã¦ã³ããWikipediaçãªä¿¡é ¼æ§ã§AIå¨ã¨ã³ã¸ã³ã«å¼ç¨ãããã', ai: 'chatgpt,perplexity,aio,copilot', size: 'macro' },
-  { name: 'LifestyleVlogger_Nana', category: 'ã©ã¤ãã¹ã¿ã¤ã«', followers: 750000, platforms: ['YouTube','Instagram'], score: 76, reason: 'YouTubeç»é²èå¤æ°ãã©ã¤ãã¹ã¿ã¤ã«å¨è¬ã®AI Overviewæ²è¼ã«å®ç¸¾ã', ai: 'aio', size: 'mega' },
-  { name: 'StartupMind_Kenji', category: 'ãã¸ãã¹', followers: 55000, platforms: ['note','X'], score: 84, reason: 'èµ·æ¥­ã»ãã¼ã±ç³»ã®æ·±æãè¨äºãCopilotã¨ChatGPTã®å¼ç¨é »åº¦ãããããã¤ã¯ã­ãªããé«å°éæ§ã', ai: 'chatgpt,copilot', size: 'micro' },
+  { name: 'さくらビューティー', category: 'ビューティー', followers: 820000, platforms: ['YouTube','note'], score: 94, reason: 'YouTube × note.com 両方展開。ChatGPT・AI Overviewsでの引用実績多数。スキンケア解説が特に評価高い。', ai: 'chatgpt,aio', size: 'mega' },
+  { name: 'mika_skincare', category: 'ビューティー', followers: 340000, platforms: ['YouTube','note'], score: 88, reason: '敏感肌専門の深掘り解説が強み。Perplexity経由の流入が業界最高水準。note記事がAI引用に最適。', ai: 'perplexity,aio', size: 'macro' },
+  { name: 'TechReview_Tanaka', category: 'テック・ガジェット', followers: 1200000, platforms: ['YouTube','X'], score: 92, reason: 'YouTube再生数トップクラス。ChatGPTが技術レビューを最も引用するクリエイターの一人。', ai: 'chatgpt', size: 'mega' },
+  { name: 'BusinessNote_Sato', category: 'ビジネス', followers: 280000, platforms: ['note','X'], score: 86, reason: 'note × X で経営・マーケ解説。LinkedInに近い専門性でCopilotとPerplexityに強い。', ai: 'copilot,perplexity', size: 'macro' },
+  { name: 'FashionStylist_Rio', category: 'ファッション', followers: 650000, platforms: ['Instagram','note'], score: 78, reason: 'Instagram × note展開。AI OverviewsではECブランド推薦に実績。', ai: 'aio', size: 'mega' },
+  { name: 'FitnessCoach_Ken', category: 'フィットネス', followers: 95000, platforms: ['YouTube','X'], score: 81, reason: '科学的根拠に基づく解説でE-E-A-T評価が高い。ChatGPTのヘルス系クエリで引用増加中。', ai: 'chatgpt', size: 'micro' },
+  { name: 'GourmetWriter_Ai', category: 'グルメ・料理', followers: 420000, platforms: ['YouTube','ameblo'], score: 73, reason: 'レシピ×体験レポートの一次情報が豊富。Perplexityでの飲食クエリ引用に実績。', ai: 'perplexity', size: 'macro' },
+  { name: 'SkinLabAnalyst', category: 'ビューティー', followers: 180000, platforms: ['note','X'], score: 89, reason: '美容成分分析の専門家アカウント。Wikipedia的な信頼性でAI全エンジンに引用される。', ai: 'chatgpt,perplexity,aio,copilot', size: 'macro' },
+  { name: 'LifestyleVlogger_Nana', category: 'ライフスタイル', followers: 750000, platforms: ['YouTube','Instagram'], score: 76, reason: 'YouTube登録者多数。ライフスタイル全般のAI Overview掲載に実績。', ai: 'aio', size: 'mega' },
+  { name: 'StartupMind_Kenji', category: 'ビジネス', followers: 55000, platforms: ['note','X'], score: 84, reason: '起業・マーケ系の深掘り記事がCopilotとChatGPTの引用頻度トップ。マイクロながら高専門性。', ai: 'chatgpt,copilot', size: 'micro' },
 ];
 
 function updateRecommendations() {
@@ -1093,7 +1093,7 @@ function updateRecommendations() {
   let filtered = DB_CREATORS.filter(c => {
     if (c.score < minScore) return false;
     if (category !== 'all') {
-      const catMap = { beauty:'ãã¥ã¼ãã£ã¼', fashion:'ãã¡ãã·ã§ã³', food:'ã°ã«ã¡ã»æç', tech:'ããã¯ã»ã¬ã¸ã§ãã', business:'ãã¸ãã¹', fitness:'ãã£ãããã¹' };
+      const catMap = { beauty:'ビューティー', fashion:'ファッション', food:'グルメ・料理', tech:'テック・ガジェット', business:'ビジネス', fitness:'フィットネス' };
       if (c.category !== catMap[category]) return false;
     }
     if (aiTarget !== 'all' && !c.ai.includes(aiTarget)) return false;
@@ -1105,11 +1105,11 @@ function updateRecommendations() {
     return true;
   }).sort((a,b) => b.score - a.score);
 
-  document.getElementById('rec-count-label').textContent = `${filtered.length}åãæ¡ä»¶ã«åè´ï¼400ä¸ã¢ã«ã¦ã³ãDBããæ½åºï¼`;
+  document.getElementById('rec-count-label').textContent = `${filtered.length}名が条件に合致（400万アカウントDBより抽出）`;
 
   const list = document.getElementById('rec-list');
   if (filtered.length === 0) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-icon">ð</div><div class="empty-title">æ¡ä»¶ã«åãã¯ãªã¨ã¤ã¿ã¼ãè¦ã¤ããã¾ãã</div><div class="empty-sub">æ¡ä»¶ãç·©åãã¦ãè©¦ããã ãã</div></div>';
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">条件に合うクリエイターが見つかりません</div><div class="empty-sub">条件を緩和してお試しください</div></div>';
     return;
   }
 
@@ -1119,17 +1119,17 @@ function updateRecommendations() {
       <div class="inf-avatar" style="background:${getAvatarColor(c.name)};width:40px;height:40px;font-size:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;flex-shrink:0;">${c.name.charAt(0)}</div>
       <div class="rec-info">
         <div class="rec-name">${c.name}</div>
-        <div style="font-size:11px;color:#64748B;margin-bottom:4px;">${c.category} ï¼ ${c.followers >= 100000 ? (c.followers/10000).toFixed(0)+'ä¸' : c.followers.toLocaleString()}ãã©ã­ã¯ã¼ ï¼ ${c.platforms.join('ã»')}</div>
+        <div style="font-size:11px;color:#64748B;margin-bottom:4px;">${c.category} ／ ${c.followers >= 100000 ? (c.followers/10000).toFixed(0)+'万' : c.followers.toLocaleString()}フォロワー ／ ${c.platforms.join('・')}</div>
         <div class="rec-reason">${c.reason}</div>
         <div class="ai-badges" style="margin-top:6px;">${c.ai.split(',').map(a => `<span class="ai-badge ${a}">${{chatgpt:'ChatGPT',perplexity:'Perplexity',aio:'AI OV',copilot:'Copilot',gemini:'Gemini'}[a]||a}</span>`).join('')}</div>
-        <button class="add-btn" onclick="addRecommendedCreator('${c.name}', '${c.category}', ${c.followers})">ï¼ è¨æ¸¬å¯¾è±¡ã«è¿½å </button>
+        <button class="add-btn" onclick="addRecommendedCreator('${c.name}', '${c.category}', ${c.followers})">＋ 計測対象に追加</button>
       </div>
       <div class="rec-score">
         <div class="rec-geo-val">${c.score}</div>
-        <div class="rec-geo-label">GEOé©æ§</div>
+        <div class="rec-geo-label">GEO適性</div>
         <div class="stars" style="margin-top:4px;">${getStars(c.score)}</div>
       </div>
- &  </div>
+    </div>
   `).join('');
 }
 
@@ -1141,20 +1141,20 @@ async function addRecommendedCreator(name, category, followers) {
     platforms: inferPlatforms({ category }),
   });
   if (!error) {
-    alert(`â ${name} ãè¨æ¸¬å¯¾è±¡ã«è¿½å ãã¾ãã`);
+    alert(`✅ ${name} を計測対象に追加しました`);
     await loadInfluencers();
     updateKPIs();
   } else {
-    alert('è¿½å ã«å¤±æãã¾ãã: ' + error.message);
+    alert('追加に失敗しました: ' + error.message);
   }
 }
 
-// ââ Influencer Modal ââ
+// ── Influencer Modal ──
 function openAddInfluencerModal() { openModal('add-influencer-modal'); }
 
 async function saveInfluencer() {
   const name = document.getElementById('inf-name').value.trim();
-  if (!name) { alert('ååãå¥åãã¦ãã ãã'); return; }
+  if (!name) { alert('名前を入力してください'); return; }
 
   const platforms = Array.from(document.querySelectorAll('#platform-select input:checked')).map(c => c.value);
   const payload = {
@@ -1174,13 +1174,13 @@ async function saveInfluencer() {
     document.getElementById('inf-followers').value = '';
     await loadInfluencers();
     updateKPIs();
-    alert('â ã¯ãªã¨ã¤ã¿ã¼ãè¿½å ããGEOã¹ã³ã¢ãç®åºãã¾ãã');
+    alert('✅ クリエイターを追加し、GEOスコアを算出しました');
   } else {
-    alert('è¿½å ã«å¤±æãã¾ãã: ' + error.message);
+    alert('追加に失敗しました: ' + error.message);
   }
 }
 
-// ââ Campaign Modal ââ
+// ── Campaign Modal ──
 function openCampaignModal() {
   // Pre-fill today as default
   const today = new Date().toISOString().split('T')[0];
@@ -1193,7 +1193,7 @@ function openCampaignModal() {
 
 function saveCampaign() {
   const name = document.getElementById('camp-name').value.trim();
-  if (!name) { alert('ã­ã£ã³ãã¼ã³åãå¥åãã¦ãã ãã'); return; }
+  if (!name) { alert('キャンペーン名を入力してください'); return; }
   campaigns.push({
     name,
     startDate: document.getElementById('camp-start').value,
@@ -1206,23 +1206,23 @@ function saveCampaign() {
   document.getElementById('camp-name').value = '';
   document.getElementById('camp-keywords').value = '';
   if (currentTab === 'campaign') renderCampaigns();
-  alert('â ã­ã£ã³ãã¼ã³ãç»é²ãã¾ãã');
+  alert('✅ キャンペーンを登録しました');
 }
 
-// ââ GEO Scan ââ
+// ── GEO Scan ──
 async function runGeoScan() {
   const btn = document.querySelector('[onclick="runGeoScan()"]');
   btn.disabled = true;
-  btn.textContent = 'â³ ã¹ã­ã£ã³ä¸­...';
+  btn.textContent = '⏳ スキャン中...';
   await new Promise(r => setTimeout(r, 2000));
   btn.disabled = false;
-  btn.textContent = 'ð¡ GEOã¹ã­ã£ã³å®è¡';
+  btn.textContent = '📡 GEOスキャン実行';
   updateKPIs();
   if (currentTab === 'contribution') renderContribution();
-  alert('â GEOã¹ã­ã£ã³å®äºï¼ã¯ãªã¨ã¤ã¿ã¼ã®AIå¼ç¨è²¢ç®ã¹ã³ã¢ãæ´æ°ãã¾ããã');
+  alert('✅ GEOスキャン完了！クリエイターのAI引用貢献スコアを更新しました。');
 }
 
-// ââ KPIs ââ
+// ── KPIs ──
 function updateKPIs() {
   const count = influencers.length;
   const geoCount = influencers.filter(i => i.geoScore >= 70).length;
@@ -1230,21 +1230,21 @@ function updateKPIs() {
   const avgScoreUp = influencers.length > 0 ? Math.floor(influencers.reduce((s,i) => s + i.geoScore, 0) / influencers.length / 4) : 0;
   const cited = influencers.filter(i => i.geoScore >= 65).length * 3;
 
-  document.getElementById('kpi-total').textContent = totalContrib || 'â';
-  document.getElementById('kpi-total-change').textContent = count > 0 ? `â² ã¯ãªã¨ã¤ã¿ã¼${count}åã®åç®` : 'è¨æ¸¬å¾ã«è¡¨ç¤º';
-  document.getElementById('kpi-geo-count').textContent = geoCount || 'â';
-  document.getElementById('kpi-geo-change').textContent = count > 0 ? `ç»é²${count}åä¸­ GEOé«é©æ§` : 'ç»é²æ¸ã¿ã¯ãªã¨ã¤ã¿ã¼ä¸­';
-  document.getElementById('kpi-score-up').textContent = avgScoreUp > 0 ? `+${avgScoreUp}pt` : 'â';
-  document.getElementById('kpi-cited').textContent = cited || 'â';
-  document.getElementById('kpi-cited-change').textContent = cited > 0 ? `AIå¼ç¨ç¢ºèªæ¸ã¿ã³ã³ãã³ãæ°` : 'ç´è¿3ã¶æ';
+  document.getElementById('kpi-total').textContent = totalContrib || '—';
+  document.getElementById('kpi-total-change').textContent = count > 0 ? `▲ クリエイター${count}名の合算` : '計測後に表示';
+  document.getElementById('kpi-geo-count').textContent = geoCount || '—';
+  document.getElementById('kpi-geo-change').textContent = count > 0 ? `登録${count}名中 GEO高適性` : '登録済みクリエター中';
+  document.getElementById('kpi-score-up').textContent = avgScoreUp > 0 ? `+${avgScoreUp}pt` : '—';
+  document.getElementById('kpi-cited').textContent = cited || '—';
+  document.getElementById('kpi-cited-change').textContent = cited > 0 ? `AI引用確認済みコンテンツ数` : '直近3ヶ月';
 }
 
-// ââ Modal helpers ââ
+// ── Modal helpers ──
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-function exportBAReport() { alert('ð PDFã¨ã¯ã¹ãã¼ãæ©è½ã¯å®è£äºå®ã§ããç¾å¨ã¯ã¹ã¯ãªã¼ã³ã·ã§ããã§ã®å±æããé¡ããã¾ãã'); }
+function exportBAReport() { alert('📄 PDFエクスポート機能は実装予定です。現在はスクリーンショットでの共有をお願いします。'); }
 
-// ââ Init ââ
+// ── Init ──
 init().then(() => updateRecommendations());
 </script>
 </body>
@@ -1260,7 +1260,7 @@ test2
         console.log('[GEO Radar] Service Worker registered, scope:', reg.scope);
       })
       .catch(err => {
-        console.warn('[GEO Radar] SW registration failed:', err);
+        conconsole.warn('[GEO Radar] SW registration failed:', err);
       });
   }
 })();
