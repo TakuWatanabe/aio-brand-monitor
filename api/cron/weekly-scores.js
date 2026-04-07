@@ -21,6 +21,7 @@ const {
 } = require('../../lib/aiMeasurement');
 const { updateKeywordsWithGSC } = require('../../lib/gscClient');
 const { buildReportHtml, sendReportEmail } = require('../../lib/emailReport');
+const { buildGeoReportSection } = require('../../lib/geoReportSection');
 
 module.exports = async (req, res) => {
   // Vercel Cron は Authorization ヘッダーに CRON_SECRET をセットして呼び出す
@@ -238,10 +239,18 @@ module.exports = async (req, res) => {
         };
 
         const html = buildReportHtml(clientForReport, overallScore, enginesPayload);
+        // === GEO report section ===
+        let geoReportHtml = '';
+        try {
+          const geoSec = await buildGeoReportSection(client.id, weekStart, weekStart);
+          if (geoSec && geoSec.hasData) geoReportHtml = geoSec.html;
+        } catch (geoErr) {
+          console.error('[GEO Report]', geoErr.message);
+        }
         emailResult = await sendReportEmail({
           to: client.email,
           clientName: client.name,
-          html,
+          html: html + geoReportHtml,
         });
       } else {
         console.log(`[Email] ${client.name}: email アドレス未設定のためスキップ`);
