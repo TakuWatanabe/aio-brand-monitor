@@ -1,10 +1,7 @@
 // api/cron/daily-scores.js
 // GET /api/cron/daily-scores
-// 毎日 22:00 JST（13:00 UTC）に全クライアントのAIスコアを自動計測し、急変アラートを検知する
+// Runs daily at 13:00 UTC (22:00 JST) to measure AIO scores for all clients
 // vercel.json: { "path": "/api/cron/daily-scores", "schedule": "0 13 * * *" }
-// ※ 週次クロン（weekly-scores）と役割分担：
-//    日次 = 素早いスコア変動検知（ChatGPT + Perplexity のみ）
-//    週次 = 全エンジン計測 + メールレポート送信
 
 const supabaseAdmin = require('../../lib/supabaseAdmin');
 const {
@@ -16,25 +13,23 @@ const {
 const { sendAlertEmail } = require('../../lib/emailReport');
 const { runCampaignTracker } = require('../../lib/campaignTracker');
 
-// スコア急変の閾値（ptポイント）
 const ALERT_THRESHOLD = 10;
 
 module.exports = async (req, res) => {
   const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== ('Bearer ' + process.env.CRON_SECRET)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-
   if (req.method !== 'GET') return res.status(405).end();
 
-  console.log('[日次クロン] 全クライアントのスコア急変チェックを開始');
+  console.log('[Daily Cron] Starting AIO score measurement for all clients');
 
   const { data: clients, error } = await supabaseAdmin
     .from('clients')
     .select('id, name, email, brand_names, brand_name, industry, engines, current_score, kpi, trend, keywords, competitors, settings');
 
   if (error || !clients) {
-    return res.status(500).json({ error: 'クライアント一覧の取得に失敗しました' });
+    return res.status(500).json({ error: 'Failed to fetch clients' });
   }
 
   const weekStart = getWeekStart();
@@ -43,42 +38,32 @@ module.exports = async (req, res) => {
 
   for (const client of clients) {
     const brandNames = client.brand_names || [client.brand_name || client.name];
-    const industry = client.industry || '食品・調味料';
-
+    const industry = client.industry || 'food';
     try {
-      console.log(`[日次計測中] ${client.name}`);
+      console.log('[Daily] Measuring: ' + client.name);
 
-      // 日次は ChatGPT + Perplexity のみ（API消費を抑制）
       const [chatgptResult, perplexityResult] = await Promise.all([
         measureWithChatGPT(brandNames, industry),
         measureWithPerplexity(brandNames, industry),
       ]);
 
-      // 有効エンジンの平均スコア（日次簡易計算）
       const scores = [chatgptResult.score, perplexityResult.score];
       const dailyScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-
       const prevScore = client.current_score || 0;
       const diff = dailyScore - prevScore;
-      // クライアント固有の閾値があれば優先、なければデフォルト
-      const threshold = client.settings?.alertThreshold || ALERT_THRESHOLD;
+      const threshold = (client.settings && client.settings.alertThreshold) || ALERT_THRESHOLD;
       const isAlert = Math.abs(diff) >= threshold;
 
-      console.log(`[日次] ${client.name}: ${prevScore}pt → ${dailyScore}pt (${diff >= 0 ? '+' : ''}${diff}pt)${isAlert ? ' ⚠️ 急変アラート' : ''}`);
+      console.log('[Daily] ' + client.name + ': ' + prevScore + 'pt -> ' + dailyScore + 'pt (' + (diff >= 0 ? '+' : '') + diff + 'pt)' + (isAlert ? ' ALERT' : ''));
 
-      // スコア急変の場合は DB フラグ更新 + メール通知
       if (isAlert) {
-        const alertLabel = diff > 0 ? `▲ +${diff}pt 急上昇中` : `▼ ${diff}pt 急落中`;
-
-        // DB フラグ更新
+        const alertLabel = diff > 0 ? ('UP +' + diff + 'pt') : ('DOWN ' + diff + 'pt');
         await supabaseAdmin.from('clients').update({
           score_alert: alertLabel,
           score_alert_at: new Date().toISOString(),
         }).eq('id', client.id);
-        console.log(`[アラート] ${client.name}: ${alertLabel}`);
 
-        // メール通知（email が設定されており、クライアントがオプトインしている場合のみ）
-        const alertEmailEnabled = client.settings?.alertEmail !== false; // デフォルト有効
+        const alertEmailEnabled = !client.settings || client.settings.alertEmail !== false;
         if (client.email && alertEmailEnabled) {
           const emailResult = await sendAlertEmail({
             to: client.email,
@@ -87,15 +72,10 @@ module.exports = async (req, res) => {
             newScore: dailyScore,
             alertLabel,
           });
-          console.log(`[アラートメール] ${client.name} (${client.email}): ${emailResult.ok ? '送信済み' : `スキップ (${emailResult.error})`}`);
-        } else if (!alertEmailEnabled) {
-          console.log(`[アラートメール] ${client.name}: メール通知オフのためスキップ`);
-        } else {
-          console.log(`[アラートメール] ${client.name}: email 未設定のためスキップ`);
+          console.log('[AlertMail] ' + client.name + ': ' + (emailResult.ok ? 'sent' : 'skip (' + emailResult.error + ')'));
         }
       }
 
-      // ai_scores に日次スコアを保存（日次エンジン識別用サフィックス付き）
       await supabaseAdmin.from('ai_scores').upsert([
         {
           client_id: client.id,
@@ -124,27 +104,32 @@ module.exports = async (req, res) => {
         alert: isAlert,
         status: 'success',
       });
-
     } catch (err) {
-      console.error(`[日次エラー] ${client.name}: ${err.message}`);
+      console.error('[Daily Error] ' + client.name + ': ' + err.message);
       results.push({ id: client.id, name: client.name, error: err.message, status: 'error' });
     }
-
-    // クライアント間で500ms待機
     await new Promise(r => setTimeout(r, 500));
   }
 
   const alerts = results.filter(r => r.alert);
-  console.log(`[日次クロン] 完
-  // Phase 3: キャンペーンライフサイクルトラッカー
+
+  // Phase 3: Campaign lifecycle tracker
   const latestScores = {};
   for (const r of results) {
     if (r.status === 'success') {
-      latestScores[r.id] = { aio_score: r.dailyScore, chatgpt_score: null, perplexity_score: null };
+      latestScores[r.id] = {
+        aio_score: r.dailyScore,
+        chatgpt_score: null,
+        perplexity_score: null,
+      };
     }
   }
-  try { await runCampaignTracker(latestScores); } catch (e) { console.error('[CampaignTracker]', e.message); }
+  try {
+    await runCampaignTracker(latestScores);
+  } catch (e) {
+    console.error('[CampaignTracker]', e.message);
+  }
 
-  了: ${results.length}社計測 / ${alerts.length}社急変アラート`);
+  console.log('[Daily Cron] Done: ' + results.length + ' clients / ' + alerts.length + ' alerts');
   return res.status(200).json({ success: true, date: new Date().toISOString(), results });
 };
