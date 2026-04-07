@@ -1252,6 +1252,13 @@ async function saveInfluencer() {
   const name = document.getElementById('inf-name').value.trim();
   if (!name) { alert('名前を入力してください'); return; }
 
+  const followersVal = parseInt(document.getElementById('inf-followers').value);
+  if (isNaN(followersVal) || followersVal < 0) { alert('フォロワー数は0以上の数値を入力してください'); return; }
+
+  // Duplicate check
+  const dupCheck = influencers.find(i => i.name.toLowerCase() === name.toLowerCase());
+  if (dupCheck) { alert(`「${name}」はすでに登録されています`); return; }
+
   const platforms = Array.from(document.querySelectorAll('#platform-select input:checked')).map(c => c.value);
   const payload = {
     client_id: currentClient.id,
@@ -1290,6 +1297,21 @@ function openCampaignModal() {
 async function saveCampaign() {
   const name = document.getElementById('camp-name').value.trim();
   if (!name) { alert('キャンペーン名を入力してください'); return; }
+
+  // Date validation
+  const startDate = document.getElementById('camp-start').value;
+  const endDate = document.getElementById('camp-end').value;
+  if (!startDate || !endDate) { alert('開始日・終了日を入力してください'); return; }
+  if (endDate <= startDate) { alert('終了日は開始日より後の日付を設定してください'); return; }
+
+  // Target score validation
+  const targetScore = parseInt(document.getElementById('camp-target').value);
+  if (isNaN(targetScore) || targetScore < 1 || targetScore > 99) { alert('目標スコアは1〜99の範囲で入力してください'); return; }
+
+  // Duplicate check
+  const dupCamp = campaigns.find(c => c.name.toLowerCase() === name.toLowerCase());
+  if (dupCamp) { alert(`「${name}」はすでに登録されています`); return; }
+
   const kwRaw = document.getElementById('camp-keywords').value;
   const keywords = kwRaw ? kwRaw.split(/[,、\s]+/).map(k => k.trim()).filter(k => k) : [];
   const payload = {
