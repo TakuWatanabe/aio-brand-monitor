@@ -3127,5 +3127,92 @@ async function saveEditClient() {
   }
 }
 </script>
+
+<!-- ============================================================ -->
+<!-- Phase 4: GEO Campaign Impact Section -->
+<!-- ============================================================ -->
+<style>
+#geo-impact { margin-top: 2rem; }
+#geo-impact h2 { font-size: 1.4rem; font-weight: 700; color: #1e293b; margin-bottom: 1rem; }
+.geo-campaign-card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.geo-campaign-card h3 { font-size: 1.05rem; font-weight: 600; color: #334155; margin-bottom: .75rem; }
+.geo-lift-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.geo-lift-badge { display: inline-flex; align-items: center; gap: .35rem; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; border-radius: 9999px; padding: .25rem .75rem; font-size: .85rem; font-weight: 600; }
+.geo-lift-badge.negative { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+.geo-lift-badge.neutral { background: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+.geo-score-pill { font-size: .78rem; background: #eff6ff; color: #2563eb; border-radius: 6px; padding: .15rem .5rem; font-weight: 500; }
+.geo-influencer-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.geo-influencer-table th { text-align: left; color: #64748b; font-weight: 500; border-bottom: 1px solid #e2e8f0; padding: .4rem .6rem; }
+.geo-influencer-table td { padding: .45rem .6rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+.geo-influencer-table tr:last-child td { border-bottom: none; }
+.geo-engine-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; }
+.geo-engine-dot.cited { background: #22c55e; }
+.geo-engine-dot.uncited { background: #e2e8f0; }
+.geo-empty-state { text-align: center; color: #94a3b8; padding: 2rem; font-size: .9rem; }
+</style>
+
+<section id="geo-impact" style="display:none;" class="content-section">
+  <h2>📡 GEO キャンペーン効果</h2>
+  <div id="geo-campaigns-container">
+    <div class="geo-empty-state">データを読み込み中...</div>
+  </div>
+</section>
+
+<script>
+async function loadGeoImpact(clientId) {
+  const section = document.getElementById('geo-impact');
+  const container = document.getElementById('geo-campaigns-container');
+  if (!section || !container || !window._supabase) return;
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const { data: campaigns } = await window._supabase.from('campaigns')
+      .select('id, name, start_date, end_date, target_score, result_baseline_score, result_final_score, result_lift, result_lift_pct')
+      .eq('client_id', clientId).order('start_date', { ascending: false }).limit(5);
+    if (!campaigns || campaigns.length === 0) {
+      container.innerHTML = '<div class="geo-empty-state">キャンペーンデータがありません</div>';
+      section.style.display = 'block'; return;
+    }
+    let html = '';
+    for (const campaign of campaigns) {
+      const isActive = campaign.start_date <= today && campaign.end_date >= today;
+      const isCompleted = campaign.end_date < today;
+      const { data: geoScores } = await window._supabase.from('geo_scores')
+        .select('influencer_id, geo_score, cited_by_chatgpt, cited_by_perplexity, cited_by_google_aio, cited_by_gemini, cited_by_claude, influencers ( name, sns_handle, geo_platform )')
+        .eq('client_id', clientId).gte('scored_at', campaign.start_date).lte('scored_at', campaign.end_date)
+        .order('geo_score', { ascending: false }).limit(10);
+      const infMap = {};
+      for (const row of geoScores || []) { const id = row.influencer_id; if (!infMap[id] || row.geo_score > infMap[id].geo_score) infMap[id] = row; }
+      const topInf = Object.values(infMap).sort((a,b) => b.geo_score - a.geo_score).slice(0,5);
+      const lift = campaign.result_lift; const liftPct = campaign.result_lift_pct;
+      let liftBadge = '';
+      if (isCompleted && lift != null) {
+        const cls = lift > 0 ? '' : lift < 0 ? 'negative' : 'neutral';
+        const sign = lift > 0 ? '+' : '';
+        liftBadge = '<span class="geo-lift-badge ' + cls + '">' + (lift > 0 ? '↑' : lift < 0 ? '↓' : '→') + ' AIO ' + sign + lift + 'pts (' + sign + liftPct + '%)</span>';
+      } else if (isActive) { liftBadge = '<span class="geo-lift-badge neutral">🟢 実施中</span>'; }
+      else { liftBadge = '<span class="geo-lift-badge neutral">準備中</span>'; }
+      const scorePills = (isCompleted && campaign.result_baseline_score != null) ? '<span class="geo-score-pill">開始前: ' + campaign.result_baseline_score + 'pts</span><span class="geo-score-pill">終了後: ' + campaign.result_final_score + 'pts</span>' : '';
+      const engines = ['chatgpt','perplexity','google_aio','gemini','claude'];
+      const engineLabels = {chatgpt:'GPT',perplexity:'Perp',google_aio:'GAIO',gemini:'Gem',claude:'Claude'};
+      let infRows = '';
+      for (const inf of topInf) {
+        const d = inf.influencers || {};
+        const dots = engines.map(e => '<span class="geo-engine-dot ' + (inf['cited_by_'+e] ? 'cited' : 'uncited') + '" title="' + engineLabels[e] + '"></span>').join('');
+        infRows += '<tr><td>' + (d.name||'—') + '</td><td>' + (d.geo_platform||'—') + '</td><td>' + dots + '</td><td><strong>' + (inf.geo_score||0) + '</strong></td></tr>';
+      }
+      const infTable = topInf.length > 0 ? '<table class="geo-influencer-table"><thead><tr><th>インフルエンサー</th><th>プラットフォーム</th><th>AI引用</th><th>GEOスコア</th></tr></thead><tbody>' + infRows + '</tbody></table>' : '<div class="geo-empty-state" style="padding:.75rem;">GEOデータなし</div>';
+      html += '<div class="geo-campaign-card"><h3>' + campaign.name + '</h3><div class="geo-lift-row">' + liftBadge + scorePills + '<span style="font-size:.78rem;color:#94a3b8;">' + campaign.start_date + ' 〜 ' + campaign.end_date + '</span></div>' + infTable + '</div>';
+    }
+    container.innerHTML = html || '<div class="geo-empty-state">データなし</div>';
+    section.style.display = 'block';
+  } catch(err) {
+    console.error('[GEO Impact]', err);
+    container.innerHTML = '<div class="geo-empty-state">読み込みエラー: ' + err.message + '</div>';
+    section.style.display = 'block';
+  }
+}
+// Call loadGeoImpact(clientId) after loading client data
+</script>
+
 </body>
 </html>
