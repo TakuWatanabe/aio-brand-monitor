@@ -3,19 +3,38 @@
   "buildCommand": "npm install",
   "outputDirectory": "public",
   "rewrites": [
-    { "source": "/api/settings", "destination": "/api/client?action=settings" },
-    { "source": "/api/profile",  "destination": "/api/client?action=profile" },
-    { "source": "/api/:path*",   "destination": "/api/:path*" }
+    {
+      "source": "/api/settings",
+      "destination": "/api/client?action=settings"
+    },
+    {
+      "source": "/api/profile",
+      "destination": "/api/client?action=profile"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    }
   ],
   "functions": {
-    "api/report.js":        { "maxDuration": 10 },
-    "api/admin/measure.js": { "maxDuration": 10 }
+    "api/report.js": {
+      "maxDuration": 10
+    },
+    "api/admin/measure.js": {
+      "maxDuration": 10
+    },
+    "api/geo-scan.js": {
+      "maxDuration": 60
+    }
   },
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "no-store" }
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
       ]
     }
   ],
@@ -27,6 +46,10 @@
     {
       "path": "/api/cron/daily-scores",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/geo-scan",
+      "schedule": "30 22 * * 6"
     }
   ]
 }
