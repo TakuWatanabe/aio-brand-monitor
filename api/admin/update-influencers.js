@@ -59,6 +59,27 @@ module.exports = async (req, res) => {
     })
     .eq('id', clientId);
 
+  // === influencers テーブルへ同期 ===
+  try {
+    if (cleanInfluencers && cleanInfluencers.length > 0) {
+      const infUpserts = cleanInfluencers.map(inf => ({
+        client_id: clientId,
+        name: inf.name || null,
+        sns_handle: inf.handle || inf.sns_handle || null,
+        geo_platform: inf.geo_platform || null,
+        followers: inf.followers || null,
+        category: inf.category || null,
+        geo_score: inf.geo_score != null ? +inf.geo_score : null,
+        geo_scored_at: inf.geo_scored_at || null,
+      }));
+      await supabaseAdmin
+        .from('influencers')
+        .upsert(infUpserts, { onConflict: 'client_id,sns_handle' });
+    }
+  } catch (infSyncErr) {
+    console.error('[update-influencers] influencers table sync error:', infSyncErr.message);
+  }
+
   if (error) {
     console.error('[update-influencers] 更新エラー:', error);
     return res.status(500).json({ error: '更新に失敗しました', detail: error.message });
