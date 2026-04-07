@@ -1179,6 +1179,7 @@ function scoreColor(s){ return s>=80?"#10B981":s>=65?"#F59E0B":"#EF4444"; }
       try {
         await loadClientData(session.access_token);
         showDashboard();
+        await loadGeoImpact(clientData.id);
       } catch (err) {
         console.error("Data load error:", err);
         // クライアントデータが見つからない場合のみサインアウト
@@ -3211,7 +3212,7 @@ async function loadGeoImpact(clientId) {
     section.style.display = 'block';
   }
 }
-// Call loadGeoImpact(clientId) after loading client data
+
 </script>
 
 </body>
