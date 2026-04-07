@@ -168,7 +168,43 @@ module.exports = async (req, res) => {
         console.log(`[週次] ${client.name}: インフルエンサー計測完了`);
       }
 
-      // === clients テーブル更新 ===
+            // === geo_scores テーブルへ書き込み ===
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { data: infRows } = await supabaseAdmin
+          .from('influencers').select('id, name, sns_handle').eq('client_id', client.id);
+        if (infRows && infRows.length > 0 && updatedInfluencers.length > 0) {
+          const geoUpserts = [];
+          for (const inf of updatedInfluencers) {
+            const row = infRows.find(r =>
+              (r.name && inf.name && r.name === inf.name) ||
+              (r.sns_handle && (r.sns_handle === inf.handle || r.sns_handle === inf.sns_handle))
+            );
+            if (!row) continue;
+            const geoScore = +(inf.geo_score || 0);
+            geoUpserts.push({
+              influencer_id: row.id,
+              client_id: client.id,
+              scored_at: today,
+              geo_score: geoScore,
+              cited_by_chatgpt:    !!(inf.cited_by_chatgpt    || inf.chatgpt_cited),
+              cited_by_perplexity: !!(inf.cited_by_perplexity || inf.perplexity_cited),
+              cited_by_google_aio: !!(inf.cited_by_google_aio || inf.google_aio_cited),
+              cited_by_gemini:     !!(inf.cited_by_gemini     || inf.gemini_cited),
+              cited_by_claude:     !!(inf.cited_by_claude     || inf.claude_cited),
+            });
+          }
+          if (geoUpserts.length > 0) {
+            await supabaseAdmin.from('geo_scores')
+              .upsert(geoUpserts, { onConflict: 'influencer_id,scored_at' });
+            console.log('[GEO] ' + client.name + ': geo_scores ' + geoUpserts.length + '');
+          }
+        }
+      } catch (geoErr) {
+        console.error('[GEO] geo_scores upsert error:', geoErr.message);
+      }
+
+// === clients テーブル更新 ===
       await supabaseAdmin.from('clients').update({
         current_score: overallScore,
         score_change: `${overallScore - (client.current_score || 0) >= 0 ? '+' : ''}${overallScore - (client.current_score || 0)}`,
