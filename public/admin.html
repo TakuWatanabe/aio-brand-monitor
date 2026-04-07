@@ -166,6 +166,43 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',san
         </div>
       </div>
 
+
+      <!-- AIGEOキャンペーン管理 -->
+      <div class="section-card" id="geoCampaignSection">
+        <div class="section-head">
+          <div>
+            <div class="section-title">&#x1F4CA; AIGEO&#x30AD;&#x30E3;&#x30F3;&#x30DA;&#x30FC;&#x30F3;&#x7BA1;&#x7406;</div>
+            <div class="section-sub">&#x30D9;&#x30FC;&#x30B9;&#x30E9;&#x30A4;&#x30F3;&#x8A08;&#x6E2C;&#xFF5E;&#x7D42;&#x4E86;&#x30B9;&#x30B3;&#x30A2;&#x8A18;&#x9332;</div>
+          </div>
+          <div class="section-head-actions">
+            <button class="tpl-btn" onclick="toggleGeoCampaignForm()">&#xFF0B; &#x65B0;&#x898F;&#x4F5C;&#x6210;</button>
+          </div>
+        </div>
+        <div id="geoCampaignForm" style="display:none;padding:12px 0 8px;border-bottom:1px solid #e5e7eb;margin-bottom:12px">
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:4px">&#x30AD;&#x30E3;&#x30F3;&#x30DA;&#x30FC;&#x30F3;&#x540D; *</label>
+              <input id="gcName" class="row-input" placeholder="&#x4F8B;&#xFF1A;2024Q1 AIGEO&#x8A08;&#x6E2C;" style="width:100%;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:4px">&#x958B;&#x59CB;&#x65E5;</label>
+              <input id="gcStart" type="date" class="row-input" style="width:100%;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:4px">&#x7D42;&#x4E86;&#x65E5;</label>
+              <input id="gcEnd" type="date" class="row-input" style="width:100%;box-sizing:border-box">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="save-btn" style="padding:6px 16px;font-size:13px" onclick="createGeoCampaign()">&#x4F5C;&#x6210;</button>
+            <button class="tpl-btn" onclick="toggleGeoCampaignForm()">&#x30AD;&#x30E3;&#x30F3;&#x30BB;&#x30EB;</button>
+            <span id="gcFormStatus" style="font-size:12px;color:#6b7280"></span>
+          </div>
+        </div>
+        <div id="geoCampaignList">
+          <div style="color:#9ca3af;font-size:13px;text-align:center;padding:20px 0">&#x30AF;&#x30E9;&#x30A4;&#x30A2;&#x30F3;&#x30C8;&#x3092;&#x9078;&#x629E;&#x3059;&#x308B;&#x3068;&#x30AD;&#x30E3;&#x30F3;&#x30DA;&#x30FC;&#x30F3;&#x304C;&#x8868;&#x793A;&#x3055;&#x308C;&#x307E;&#x3059;</div>
+        </div>
+      </div>
       <!-- 保存バー -->
       <div class="save-bar">
         <div class="save-status" id="saveStatus">変更を加えたら「保存する」を押してください</div>
@@ -279,6 +316,7 @@ async function loadClient() {
 
   renderInfluencers(client.influencers || []);
   renderCampaigns(client.bar_data || []);
+  loadGeoCampaigns(currentClientId);
 
   document.getElementById('editorArea').style.display = 'block';
   document.getElementById('emptyState').style.display = 'none';
@@ -493,6 +531,89 @@ async function saveData() {
     btn.innerHTML = '💾 保存する';
   }
 }
-</script>
+
+
+// ─── AIGEOキャンペーン管理 ──────────────────────────────────────────────────
+async function loadGeoCampaigns(clientId) {
+  const list = document.getElementById('geoCampaignList');
+  if (!list) return;
+  list.innerHTML = '<div style="color:#9ca3af;font-size:13px;padding:8px 0">読み込み中...</div>';
+  const res = await fetch('/api/admin/campaigns?clientId=' + encodeURIComponent(clientId), {
+    headers: { Authorization: 'Bearer ' + getToken() },
+  });
+  if (!res.ok) { list.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:8px">取得エラー</div>'; return; }
+  const { campaigns } = await res.json();
+  renderGeoCampaigns(campaigns || []);
+}
+
+function renderGeoCampaigns(campaigns) {
+  const list = document.getElementById('geoCampaignList');
+  if (!list) return;
+  if (campaigns.length === 0) {
+    list.innerHTML = '<div style="color:#9ca3af;font-size:13px;text-align:center;padding:20px 0">キャンペーンはまだありません</div>';
+    return;
+  }
+  const rows = campaigns.map(c => {
+    const lift = c.result_lift;
+    const liftColor = lift > 0 ? '#10b981' : lift < 0 ? '#ef4444' : '#6b7280';
+    const liftStr = lift != null ? (lift > 0 ? '+' : '') + lift : '―';
+    const liftPct = c.result_lift_pct != null ? (c.result_lift_pct > 0 ? '+' : '') + c.result_lift_pct + '%' : '';
+    return '<tr style="border-bottom:1px solid #f3f4f6">' +
+      '<td style="padding:8px;font-weight:500">' + escGeoHtml(c.name||'―') + '</td>' +
+      '<td style="padding:8px;color:#6b7280">' + (c.start_date||'―') + '</td>' +
+      '<td style="padding:8px;color:#6b7280">' + (c.end_date||'―') + '</td>' +
+      '<td style="padding:8px;text-align:right">' + (c.result_baseline_score!=null?c.result_baseline_score:'―') + '</td>' +
+      '<td style="padding:8px;text-align:right">' + (c.result_final_score!=null?c.result_final_score:'―') + '</td>' +
+      '<td style="padding:8px;text-align:right;color:' + liftColor + '">' + liftStr + ' ' + liftPct + '</td>' +
+      '</tr>';
+  }).join('');
+  list.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+    '<thead><tr style="border-bottom:2px solid #e5e7eb;color:#6b7280">' +
+    '<th style="text-align:left;padding:6px 8px">キャンペーン名</th>' +
+    '<th style="text-align:left;padding:6px 8px">開始日</th>' +
+    '<th style="text-align:left;padding:6px 8px">終了日</th>' +
+    '<th style="text-align:right;padding:6px 8px">開始スコア</th>' +
+    '<th style="text-align:right;padding:6px 8px">終了スコア</th>' +
+    '<th style="text-align:right;padding:6px 8px">リフト</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+async function createGeoCampaign() {
+  const name = document.getElementById('gcName').value.trim();
+  if (!name) { alert('キャンペーン名を入力してください'); return; }
+  if (!currentClientId) { alert('クライアントを選択してください'); return; }
+  const status = document.getElementById('gcFormStatus');
+  status.textContent = '作成中...';
+  const res = await fetch('/api/admin/campaigns', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      clientId: currentClientId,
+      name,
+      start_date: document.getElementById('gcStart').value || null,
+      end_date: document.getElementById('gcEnd').value || null,
+    }),
+  });
+  if (res.ok) {
+    status.textContent = '';
+    document.getElementById('gcName').value = '';
+    document.getElementById('gcStart').value = '';
+    document.getElementById('gcEnd').value = '';
+    toggleGeoCampaignForm();
+    await loadGeoCampaigns(currentClientId);
+  } else {
+    const body = await res.json().catch(()=>({}));
+    status.textContent = '作成エラー: ' + (body.error || res.status);
+  }
+}
+
+function toggleGeoCampaignForm() {
+  const form = document.getElementById('geoCampaignForm');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function escGeoHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}</script>
 </body>
 </html>
