@@ -14,6 +14,7 @@ const {
   getCurrentMonth,
 } = require('../../lib/aiMeasurement');
 const { sendAlertEmail } = require('../../lib/emailReport');
+const { runCampaignTracker } = require('../../lib/campaignTracker');
 
 // スコア急変の閾値（ptポイント）
 const ALERT_THRESHOLD = 10;
@@ -134,6 +135,16 @@ module.exports = async (req, res) => {
   }
 
   const alerts = results.filter(r => r.alert);
-  console.log(`[日次クロン] 完了: ${results.length}社計測 / ${alerts.length}社急変アラート`);
+  console.log(`[日次クロン] 完
+  // Phase 3: キャンペーンライフサイクルトラッカー
+  const latestScores = {};
+  for (const r of results) {
+    if (r.status === 'success') {
+      latestScores[r.id] = { aio_score: r.dailyScore, chatgpt_score: null, perplexity_score: null };
+    }
+  }
+  try { await runCampaignTracker(latestScores); } catch (e) { console.error('[CampaignTracker]', e.message); }
+
+  了: ${results.length}社計測 / ${alerts.length}社急変アラート`);
   return res.status(200).json({ success: true, date: new Date().toISOString(), results });
 };
